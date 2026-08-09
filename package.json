@@ -1,0 +1,15 @@
+{
+  "name": "deepforge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A mobile-first fantasy mining game prototype.",
+  "scripts": {
+    "test": "playwright test",
+    "test:desktop": "playwright test --project=desktop",
+    "test:mobile": "playwright test --project=iphone"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.0"
+  }
+}
+

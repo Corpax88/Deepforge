@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#101711">
+  <title>Deepforge - Mining Prototype</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="game" aria-label="Deepforge mining game">
+    <header class="topbar">
+      <div class="brand" aria-label="Deepforge">
+        <span class="brand-mark" aria-hidden="true">D</span>
+        <div>
+          <h1>DEEPFORGE</h1>
+          <small id="areaName">MOSSVEIN QUARRY</small>
+        </div>
+      </div>
+      <div class="resources" aria-label="Resources">
+        <div class="resource gold" title="Gold"><i aria-hidden="true">G</i><b id="goldValue">0</b></div>
+        <div class="resource cargo" title="Carried resources"><i aria-hidden="true"></i><b id="cargoValue">0</b></div>
+        <button id="menuButton" class="icon-button" type="button" aria-label="Open menu" title="Menu"><span></span></button>
+      </div>
+    </header>
+
+    <section id="viewport" aria-label="Continuous mining area">
+      <canvas id="gameCanvas"></canvas>
+
+      <div id="areaBanner" class="area-banner" aria-live="polite">
+        <span>DISCOVERED</span>
+        <b id="areaBannerName">MOONGLASS CAVERN</b>
+      </div>
+
+      <div id="objective" class="objective" aria-live="polite">
+        <span>NEXT GOAL</span>
+        <b id="objectiveText">Mine a rock</b>
+      </div>
+
+      <div id="focusMeter" class="focus-meter" aria-live="polite" hidden>
+        <span>MINING FOCUS</span>
+        <div aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <b id="focusCount">1/5</b>
+      </div>
+
+      <aside id="contextPanel" class="context-panel" hidden>
+        <div class="context-icon" id="contextIcon" aria-hidden="true"></div>
+        <div class="context-copy">
+          <span id="contextEyebrow">WORKSHOP</span>
+          <b id="contextTitle">Copper Pickaxe</b>
+          <small id="contextDetail">Mine faster and hit harder.</small>
+        </div>
+        <button id="contextButton" type="button">UPGRADE</button>
+        <div id="starforgeChoices" class="starforge-choices" hidden aria-label="Starforge pickaxe choices">
+          <button type="button" data-starforge="crusher"><b>ASTRAL CRUSHER</b><small>Heavy power</small></button>
+          <button type="button" data-starforge="swift"><b>COMET EDGE</b><small>Rapid strikes</small></button>
+          <button type="button" data-starforge="prospector"><b>CROWNSEEKER</b><small>Bonus yield</small></button>
+        </div>
+      </aside>
+
+      <div id="joystick" class="joystick" aria-label="Movement joystick">
+        <div id="joystickKnob"></div>
+      </div>
+
+      <div class="action-cluster">
+        <button id="mineButton" class="mine-button" type="button" aria-label="Mine nearby rock">
+          <span class="pickaxe-icon" aria-hidden="true"></span>
+          <b>MINE</b>
+          <small>HOLD</small>
+        </button>
+      </div>
+
+      <div id="toast" class="toast" aria-live="polite"></div>
+    </section>
+
+    <footer class="progress-bar">
+      <div class="tool-badge"><span class="pickaxe-icon small" aria-hidden="true"></span></div>
+      <div class="tool-copy">
+        <span>YOUR PICKAXE</span>
+        <b id="pickaxeName">Worn Pickaxe</b>
+      </div>
+      <div class="tool-stats">
+        <div><span>POWER</span><b id="powerValue">4</b></div>
+        <div><span>SPEED</span><b id="speedValue">1.0x</b></div>
+      </div>
+      <div class="area-progress">
+        <span id="unlockLabel">MOONGLASS CAVERN</span>
+        <div><i id="unlockFill"></i></div>
+      </div>
+    </footer>
+
+    <div id="menuShade" class="menu-shade" hidden>
+      <section class="menu-card" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+        <span>DEEPFORGE</span>
+        <h2 id="menuTitle">Miner's Ledger</h2>
+        <div class="ledger-grid">
+          <div><span>Stone mined</span><b id="stoneMined">0</b></div>
+          <div><span>Copper mined</span><b id="copperMined">0</b></div>
+          <div><span>Moonglass mined</span><b id="crystalMined">0</b></div>
+          <div><span>Emberstone mined</span><b id="emberMined">0</b></div>
+          <div><span>Astralite mined</span><b id="astraliteMined">0</b></div>
+          <div><span>Rare ore mined</span><b id="rareMined">0</b></div>
+          <div><span>Bonus veins cleared</span><b id="veinsCleared">0</b></div>
+          <div><span>Ember mastery</span><b id="masteryRank">0 / 5</b></div>
+          <div><span>Deepest frontier</span><b id="deepestFrontier">Mossvein</b></div>
+          <div><span>Total gold</span><b id="totalGold">0</b></div>
+        </div>
+        <button id="resumeButton" class="primary-button" type="button">RETURN TO MINE</button>
+        <button id="resetButton" class="text-button" type="button">Reset prototype progress</button>
+      </section>
+    </div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
