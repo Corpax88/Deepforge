@@ -524,6 +524,38 @@ test('Starforge crafts and swaps three distinct endgame pickaxes',async({page},t
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.state.starforgeVariant).toBe('prospector');
   expect(snapshot.state.starforgeUnlocked).toEqual({crusher:true,swift:true,prospector:true});
+  await expect(page.locator('#objectiveText')).toHaveText('Deepforge mastered - every Starforge form forged');
+  await expect(page.locator('#unlockLabel')).toHaveText('DEEPFORGE MASTERED - 3/3 STARFORGE FORMS');
+});
+
+test('all four regions expose a distinct biome identity without changing the world flow',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__deepforgeTest.unlockAllAreas());
+  await page.evaluate(()=>window.__deepforgeTest.unlockStarfall());
+  const regions=[
+    [500,'mossvein','MOSSVEIN QUARRY'],[1500,'moonglass','MOONGLASS CAVERN'],
+    [2600,'emberdeep','EMBERDEEP FOUNDRY'],[3800,'starfall','STARFALL DEPTHS']
+  ];
+  for(const [x,id,name] of regions){
+    await page.evaluate(position=>window.__deepforgeTest.setPosition(position,650),x);
+    await page.waitForTimeout(35);
+    expect(await page.evaluate(()=>window.__deepforgeTest.snapshot().biome)).toBe(id);
+    await expect(page.locator('#game')).toHaveAttribute('data-biome',id);
+    await expect(page.locator('#areaName')).toHaveText(name);
+  }
+});
+
+test('rapid physical pickups aggregate feedback while preserving every resource',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    window.__deepforgeTest.spawnGroundDrops('copper',5,330,690);
+    window.__deepforgeTest.collectGroundDrops();
+  });
+  await page.waitForTimeout(20);
+  const snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.cargo.copper).toBe(5);
+  expect(snapshot.groundDrops).toHaveLength(0);
+  expect(snapshot.feedback.floaters.filter(text=>text==='+5 COPPER')).toHaveLength(1);
 });
 
 test('Ember Mastery remains readable on an iPhone viewport',async({page},testInfo)=>{

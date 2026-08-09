@@ -10,6 +10,7 @@
   const areaName=document.getElementById('areaName');
   const areaBanner=document.getElementById('areaBanner');
   const areaBannerName=document.getElementById('areaBannerName');
+  const objective=document.getElementById('objective');
   const objectiveText=document.getElementById('objectiveText');
   const focusMeter=document.getElementById('focusMeter');
   const focusCount=document.getElementById('focusCount');
@@ -34,6 +35,18 @@
   const resetButton=document.getElementById('resetButton');
 
   const WORLD={width:4480,height:1280,gateX:1110,emberGateX:2240,starfallGateX:3360,gateY:650,gateHalfGap:118};
+  const BIOMES=[
+    {id:'mossvein',name:'MOSSVEIN QUARRY',start:0,end:WORLD.gateX,floor:'#273228',accent:'#78b36c',detail:'#a8c48e'},
+    {id:'moonglass',name:'MOONGLASS CAVERN',start:WORLD.gateX,end:WORLD.emberGateX,floor:'#14282b',accent:'#65dedb',detail:'#b294ef'},
+    {id:'emberdeep',name:'EMBERDEEP FOUNDRY',start:WORLD.emberGateX,end:WORLD.starfallGateX,floor:'#261817',accent:'#ff7543',detail:'#ffbd68'},
+    {id:'starfall',name:'STARFALL DEPTHS',start:WORLD.starfallGateX,end:WORLD.width,floor:'#17172a',accent:'#b8c3ff',detail:'#eee4ff'}
+  ];
+  const MATERIAL_FEEDBACK={
+    stone:{shape:'chip',gravity:390,spread:1},copper:{shape:'spark',gravity:350,spread:1.05},gold:{shape:'spark',gravity:310,spread:1.12},
+    moonglass:{shape:'shard',gravity:245,spread:1.08},starshard:{shape:'shard',gravity:175,spread:1.18},
+    emberstone:{shape:'ember',gravity:285,spread:1.12},sunslag:{shape:'ember',gravity:245,spread:1.22},
+    astralite:{shape:'star',gravity:115,spread:1.18},crownstone:{shape:'star',gravity:70,spread:1.28}
+  };
   const SAVE_KEY='deepforgePrototypeV1';
   const GATE_COST=120;
   const EMBER_GATE_COST=360;
@@ -111,6 +124,7 @@
   let particles=[],floaters=[],rings=[],groundDrops=[];
   let saleMotes=[];
   let activeContext=null,uiDirty=true,lastSavedSnapshot='',lastRegion=-1,nextDropId=1;
+  const pickupBatch={items:Object.create(null),count:0,quiet:0,x:0,y:0,bestType:null};
 
   const input={keys:new Set(),moveX:0,moveY:0,joystickPointer:null,minePointers:new Set(),mineHeld:false};
   const camera={x:0,y:0};
@@ -176,6 +190,7 @@
     Object.keys(fresh).forEach(key=>state[key]=fresh[key]);
     for(const rock of rocks){rock.hp=rock.maxHp;rock.shell=rock.maxShell;rock.broken=false;rock.respawn=0;rock.hit=0;rock.glintActive=0;rock.glintTimer=1.4+(rock.id%5)*.45;rock.bonusYield=0}
     resetVeins();groundDrops.length=0;nextDropId=1;
+    pickupBatch.items=Object.create(null);pickupBatch.count=0;pickupBatch.quiet=0;pickupBatch.bestType=null;
     player.x=330;player.y=690;player.swing=null;player.swingCooldown=0;
     miningFocus.streak=0;miningFocus.timer=0;saleMotes.length=0;goldTween=null;displayedGold=0;
     activeContext=null;menuShade.hidden=true;uiDirty=true;saveState(true);showToast('A fresh vein awaits.');
@@ -207,6 +222,9 @@
   function currentShellPower(){const base=state.pickaxeLevel===PICKAXES.length-1?currentMastery().shellPower:.72,variant=currentStarforge();return variant?base*variant.shellMultiplier:base}
   function currentBonusYieldChance(){const base=state.pickaxeLevel<4?0:state.pickaxeLevel===PICKAXES.length-1?currentMastery().bonusYield:.22,variant=currentStarforge();return Math.min(.92,base+(variant?variant.yieldBonus:0))}
   function currentPrecisionDelay(){return state.pickaxeLevel===PICKAXES.length-1?currentMastery().precisionDelay:1}
+  function regionIndexAt(x){return x>=WORLD.starfallGateX?3:x>=WORLD.emberGateX?2:x>=WORLD.gateX?1:0}
+  function currentBiome(){return BIOMES[regionIndexAt(player.x)]}
+  function starforgeMastered(){return Object.values(state.starforgeUnlocked).every(Boolean)}
   function nextMastery(){return EMBER_MASTERY[state.emberMastery+1]||null}
   function masteryReady(){const next=nextMastery();return !!next&&state.mined.sunslag>=next.sunslag&&state.gold>=next.gold}
   function hitsRequired(type,power){return Math.ceil(ROCK_TYPES[type].hp/power)}
@@ -284,7 +302,7 @@
 
   function showAreaBanner(name){
     areaBannerName.textContent=name||'MOONGLASS CAVERN';
-    areaBanner.dataset.area=name==='STARFALL DEPTHS'?'starfall':name==='EMBERDEEP FOUNDRY'?'ember':'moonglass';
+    areaBanner.dataset.area=name==='STARFALL DEPTHS'?'starfall':name==='EMBERDEEP FOUNDRY'?'ember':name==='MOSSVEIN QUARRY'?'mossvein':'moonglass';
     areaBanner.classList.add('show');clearTimeout(bannerTimer);
     bannerTimer=setTimeout(()=>areaBanner.classList.remove('show'),2200);
   }
@@ -356,7 +374,7 @@
     const yieldAmount=1+rock.bonusYield+(Math.random()<currentBonusYieldChance()?1:0);
     state.mined[rock.type]+=yieldAmount;spawnGroundDrop(rock.type,yieldAmount,rock.x,rock.y);
     sound('break',rock.type);spawnBreak(rock.x,rock.y,rock.type);rock.bonusYield=0;
-    floaters.push({x:rock.x,y:rock.y-22,text:'DROP x'+yieldAmount,color:ROCK_TYPES[rock.type].edge,age:0,life:.9,size:13});
+    floaters.push({x:rock.x,y:rock.y-22,text:ROCK_TYPES[rock.type].label.toUpperCase(),color:ROCK_TYPES[rock.type].edge,age:0,life:.82,size:12});
     if(vein)registerVeinBreak(vein,rock);
     uiDirty=true;saveState();
   }
@@ -373,7 +391,7 @@
     vein.status='completed';vein.timer=0;vein.displaySecond=-1;state.veinsCompleted[vein.id]++;
     const rewards=[];
     for(const [type,amount] of Object.entries(vein.bonus)){
-      state.mined[type]+=amount;rewards.push('DROP x'+amount+' '+ROCK_TYPES[type].label);
+      state.mined[type]+=amount;rewards.push(amount+' '+ROCK_TYPES[type].label);
     }
     const center=veinCenter(vein);
     let rewardIndex=0;for(const [type,amount] of Object.entries(vein.bonus))spawnGroundDrop(type,amount,center.x+(rewardIndex++-.5)*22,center.y-5);
@@ -402,16 +420,16 @@
   }
 
   function spawnImpact(x,y,type,damage,precision){
-    const data=ROCK_TYPES[type];
+    const data=ROCK_TYPES[type],feedback=MATERIAL_FEEDBACK[type]||MATERIAL_FEEDBACK.stone;
     const count=precision?11:6;
-    for(let i=0;i<count;i++)particles.push({x,y,vx:(Math.random()-.5)*(precision?225:160),vy:-45-Math.random()*(precision?175:125),age:0,life:.35+Math.random()*.22,size:2+Math.random()*(precision?5:4),color:i%2?data.edge:data.accent,gravity:310});
+    for(let i=0;i<count;i++)particles.push({x,y,vx:(Math.random()-.5)*(precision?225:160)*feedback.spread,vy:-45-Math.random()*(precision?175:125),age:0,life:.35+Math.random()*.22,size:2+Math.random()*(precision?5:4),color:i%2?data.edge:data.accent,gravity:feedback.gravity,shape:feedback.shape});
     floaters.push({x,y:y-14,text:String(damage),color:'#fff2b3',age:0,life:.62,size:13});
     rings.push({x,y,age:0,life:precision?.38:.24,radius:precision?17:12,color:data.edge});
   }
 
   function spawnBreak(x,y,type){
-    const data=ROCK_TYPES[type];
-    for(let i=0;i<15;i++)particles.push({x,y,vx:(Math.random()-.5)*250,vy:-70-Math.random()*190,age:0,life:.55+Math.random()*.35,size:3+Math.random()*6,color:i%3?data.color:data.edge,gravity:340});
+    const data=ROCK_TYPES[type],feedback=MATERIAL_FEEDBACK[type]||MATERIAL_FEEDBACK.stone;
+    for(let i=0;i<15;i++)particles.push({x,y,vx:(Math.random()-.5)*250*feedback.spread,vy:-70-Math.random()*190,age:0,life:.55+Math.random()*.35,size:3+Math.random()*6,color:i%3?data.color:data.edge,gravity:feedback.gravity,shape:feedback.shape});
     rings.push({x,y,age:0,life:.45,radius:18,color:data.edge});
   }
 
@@ -431,9 +449,19 @@
 
   function collectGroundDrop(drop){
     state.cargo[drop.type]+=drop.amount;
-    floaters.push({x:drop.x,y:drop.y-22,text:'+'+drop.amount+' '+ROCK_TYPES[drop.type].label,color:ROCK_TYPES[drop.type].edge,age:0,life:1.05,size:14});
-    rings.push({x:drop.x,y:drop.y,age:0,life:.25,radius:8,color:ROCK_TYPES[drop.type].edge});
-    sound('pickup',drop.type);uiDirty=true;
+    pickupBatch.items[drop.type]=(pickupBatch.items[drop.type]||0)+drop.amount;pickupBatch.count+=drop.amount;pickupBatch.quiet=0;
+    pickupBatch.x=drop.x;pickupBatch.y=drop.y;
+    if(!pickupBatch.bestType||ROCK_TYPES[drop.type].value>ROCK_TYPES[pickupBatch.bestType].value)pickupBatch.bestType=drop.type;
+    uiDirty=true;
+  }
+
+  function flushPickupBatch(){
+    if(!pickupBatch.count)return;
+    const entries=Object.entries(pickupBatch.items),best=pickupBatch.bestType||entries[0][0],label=entries.length===1?'+'+pickupBatch.count+' '+ROCK_TYPES[best].label.toUpperCase():'+'+pickupBatch.count+' RESOURCES';
+    floaters.push({x:pickupBatch.x,y:pickupBatch.y-24,text:label,color:ROCK_TYPES[best].edge,age:0,life:1.05,size:pickupBatch.count>=4?16:14});
+    rings.push({x:pickupBatch.x,y:pickupBatch.y,age:0,life:.28,radius:9+Math.min(8,pickupBatch.count),color:ROCK_TYPES[best].edge});
+    sound('pickup',best);
+    pickupBatch.items=Object.create(null);pickupBatch.count=0;pickupBatch.quiet=0;pickupBatch.bestType=null;
   }
 
   function updateGroundDrops(dt){
@@ -447,6 +475,8 @@
       }
       if(distance(player.x,player.y,drop.x,drop.y)<=GROUND_DROP_PICKUP_RADIUS){collectGroundDrop(drop);groundDrops.splice(index,1);collected=true}
     }
+    if(collected)flushPickupBatch();
+    else if(pickupBatch.count){pickupBatch.quiet+=dt;if(pickupBatch.quiet>=.075)flushPickupBatch()}
     if(collected)saveState();
   }
 
@@ -478,10 +508,18 @@
     }
     if(!canForgeStarVariant(id)){showToast('Need '+Object.entries(variant.cost).map(([type,amount])=>amount+' '+ROCK_TYPES[type].label).join(' + ')+'.');sound('empty');return}
     for(const [type,amount] of Object.entries(variant.cost))state.cargo[type]-=amount;
-    state.starforgeUnlocked[id]=true;state.starforgeVariant=id;
+    const masteredBefore=starforgeMastered();state.starforgeUnlocked[id]=true;state.starforgeVariant=id;
     sound('upgrade');rings.push({x:STATIONS.starforge.x,y:STATIONS.starforge.y,age:0,life:.9,radius:26,color:variant.color});
-    floaters.push({x:player.x,y:player.y-52,text:variant.name.toUpperCase(),color:variant.color,age:0,life:1.6,size:18});
-    showToast(variant.name+' forged. Return here to swap styles.');uiDirty=true;saveState();
+    for(let i=floaters.length-1;i>=0;i--)if(floaters[i].source==='starforge')floaters.splice(i,1);
+    if(!masteredBefore&&starforgeMastered()){
+      rings.push({x:STATIONS.starforge.x,y:STATIONS.starforge.y,age:0,life:1.45,radius:38,color:'#fff0ad'});
+      floaters.push({x:player.x,y:player.y+65,text:'DEEPFORGE MASTERED',color:'#fff2b5',age:0,life:2.1,size:21,source:'starforge'});
+      showToast('All three Starforge forms mastered.');
+    }else{
+      floaters.push({x:player.x,y:player.y+65,text:variant.name.toUpperCase(),color:variant.color,age:0,life:1.6,size:18,source:'starforge'});
+      showToast(variant.name+' forged. Return here to swap styles.');
+    }
+    uiDirty=true;saveState();
   }
 
   function sellCargo(){
@@ -598,8 +636,8 @@
     }
     updateVeins(dt);updateGroundDrops(dt);
     updateEffects(dt);updateGoldCount(dt);updateCamera(false);
-    const region=player.x>WORLD.starfallGateX?3:player.x>WORLD.emberGateX?2:player.x>WORLD.gateX?1:0;
-    if(region!==lastRegion){lastRegion=region;uiDirty=true}
+    const region=regionIndexAt(player.x);
+    if(region!==lastRegion){lastRegion=region;game.dataset.biome=BIOMES[region].id;uiDirty=true}
     const nextContext=contextAtPlayer();
     if(nextContext!==activeContext){activeContext=nextContext;uiDirty=true}
     if(!state.discoveredSecond&&player.x>WORLD.gateX+100){state.discoveredSecond=true;showAreaBanner('MOONGLASS CAVERN');sound('unlock');uiDirty=true;saveState()}
@@ -642,26 +680,29 @@
     game.dataset.pickaxeTier=String(state.pickaxeLevel);
     game.dataset.masteryRank=String(state.emberMastery);
     speedValue.textContent=(PICKAXES[1].cooldown/currentCooldown()).toFixed(1)+'x';
-    areaName.textContent=player.x>WORLD.starfallGateX?'STARFALL DEPTHS':player.x>WORLD.emberGateX?'EMBERDEEP FOUNDRY':player.x>WORLD.gateX?'MOONGLASS CAVERN':'MOSSVEIN QUARRY';
+    const biome=currentBiome();areaName.textContent=biome.name;game.dataset.biome=biome.id;
     let progress=1,label='DEEPFORGE MASTERED';
-    if(!state.areaUnlocked){progress=Math.min(1,Math.min(state.gold/GATE_COST,state.pickaxeLevel/3));label='MOONGLASS CAVERN'}
+    if(starforgeMastered()){progress=1;label='DEEPFORGE MASTERED - 3/3 STARFORGE FORMS'}
+    else if(!state.areaUnlocked){progress=Math.min(1,Math.min(state.gold/GATE_COST,state.pickaxeLevel/3));label='MOONGLASS CAVERN'}
     else if(!state.emberdeepUnlocked){progress=Math.min(1,Math.min(state.gold/EMBER_GATE_COST,state.pickaxeLevel/4));label='EMBERDEEP FOUNDRY'}
     else if(state.pickaxeLevel<PICKAXES.length-1){progress=Math.min(1,state.gold/PICKAXES[PICKAXES.length-1].cost,state.mined.emberstone/EMBER_PICKAXE_ORE_REQUIRED);label='EMBER PICKAXE '+Math.min(EMBER_PICKAXE_ORE_REQUIRED,state.mined.emberstone)+'/'+EMBER_PICKAXE_ORE_REQUIRED}
     else if(nextMastery()){
       const next=nextMastery();progress=Math.min(1,state.gold/next.gold,state.mined.sunslag/next.sunslag);label='EMBER MASTERY '+state.emberMastery+'/5 - SUNSLAG '+Math.min(next.sunslag,state.mined.sunslag)+'/'+next.sunslag;
     }else if(!state.fourthUnlocked){progress=0;label='OPEN STARFALL DEPTHS'}
     else if(!state.starforgeVariant){progress=Math.min(1,state.cargo.astralite/5,state.cargo.crownstone/1);label='STARFORGE - ASTRALITE '+Math.min(5,state.cargo.astralite)+'/5 - CROWNSTONE '+Math.min(1,state.cargo.crownstone)+'/1'}
-    else label=currentStarforge().name.toUpperCase()+' ACTIVE';
+    else{progress=Object.values(state.starforgeUnlocked).filter(Boolean).length/3;label='STARFORGE FORMS '+Object.values(state.starforgeUnlocked).filter(Boolean).length+'/3'}
     unlockFill.style.width=(progress*100)+'%';unlockLabel.textContent=label;
     const activeVein=veins.find(vein=>vein.status==='active');
-    if(activeVein)objectiveText.textContent=activeVein.label+' '+activeVein.brokenRockIds.size+'/'+activeVein.positions.length+' - '+Math.ceil(activeVein.timer)+'s';
+    objective.hidden=starforgeMastered();
+    if(starforgeMastered())objectiveText.textContent='Deepforge mastered - every Starforge form forged';
+    else if(activeVein)objectiveText.textContent=activeVein.label+' '+activeVein.brokenRockIds.size+'/'+activeVein.positions.length+' - '+Math.ceil(activeVein.timer)+'s';
     else if(state.emberMastery===5&&!state.fourthUnlocked)objectiveText.textContent='Open the Starfall Master Seal';
     else if(state.fourthUnlocked&&!state.discoveredFourth)objectiveText.textContent='Enter Starfall Depths';
     else if(state.discoveredFourth&&state.mined.astralite===0)objectiveText.textContent='Discover Astralite';
     else if(state.discoveredFourth&&state.veinsCompleted.starfall_lattice===0)objectiveText.textContent='Clear the Starfall Lattice';
     else if(state.discoveredFourth&&state.mined.crownstone===0)objectiveText.textContent='Find a Crownstone vein';
     else if(state.discoveredFourth&&!state.starforgeVariant)objectiveText.textContent='Forge a Starfall Pickaxe';
-    else if(state.discoveredFourth)objectiveText.textContent=currentStarforge().name+' - master your new style';
+    else if(state.discoveredFourth&&state.starforgeVariant)objectiveText.textContent='Forge all three Starforge styles';
     else if(Object.values(state.mined).every(value=>value===0))objectiveText.textContent='Hold MINE near a rock';
     else if(state.totalGold===0)objectiveText.textContent='Sell your haul at the assay cart';
     else if(state.pickaxeLevel===1)objectiveText.textContent='Forge an Iron Pickaxe';
@@ -746,13 +787,14 @@
     document.getElementById('veinsCleared').textContent=Object.values(state.veinsCompleted).reduce((total,value)=>total+value,0);
     document.getElementById('masteryRank').textContent=state.emberMastery+' / 5';
     document.getElementById('deepestFrontier').textContent=state.discoveredFourth?'Starfall':state.discoveredThird?'Emberdeep':state.discoveredSecond?'Moonglass':'Mossvein';
+    document.getElementById('starforgeForms').textContent=Object.values(state.starforgeUnlocked).filter(Boolean).length+' / 3';
     document.getElementById('totalGold').textContent=state.totalGold;
   }
 
   function draw(){
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
     ctx.save();ctx.scale(viewZoom,viewZoom);
-    drawGround();drawDecorations();drawStations();drawGate();drawVeins();drawRocks();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);drawWorldLabels();
+    drawGround();drawBiomeStructure();drawDecorations();drawStations();drawGate();drawVeins();drawRocks();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);drawWorldLabels();
     ctx.restore();
   }
 
@@ -772,6 +814,32 @@
     ctx.fillStyle='rgba(75,174,177,.08)';ctx.fillRect(cavernStart,0,emberStart-cavernStart,viewHeight);
     ctx.fillStyle='rgba(222,76,35,.07)';ctx.fillRect(emberStart,0,starfallStart-emberStart,viewHeight);
     ctx.fillStyle='rgba(154,164,255,.075)';ctx.fillRect(starfallStart,0,viewWidth-starfallStart,viewHeight);
+  }
+
+  function drawBiomeStructure(){
+    ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+    const quarryPath=[[80,760],[360,705],[690,760],[1010,660]].map(point=>worldToScreen(point[0],point[1]));
+    ctx.strokeStyle='rgba(125,103,64,.2)';ctx.lineWidth=94;ctx.beginPath();quarryPath.forEach((point,index)=>index?ctx.lineTo(point.x,point.y):ctx.moveTo(point.x,point.y));ctx.stroke();
+    ctx.strokeStyle='rgba(204,183,123,.09)';ctx.lineWidth=3;ctx.setLineDash([15,20]);ctx.stroke();ctx.setLineDash([]);
+
+    const moonCenter=worldToScreen(1650,670),moonGlow=ctx.createRadialGradient(moonCenter.x,moonCenter.y,20,moonCenter.x,moonCenter.y,360);
+    moonGlow.addColorStop(0,'rgba(87,224,221,.12)');moonGlow.addColorStop(.58,'rgba(74,132,146,.055)');moonGlow.addColorStop(1,'rgba(44,82,90,0)');ctx.fillStyle=moonGlow;ctx.fillRect(moonCenter.x-370,moonCenter.y-370,740,740);
+    ctx.strokeStyle='rgba(138,231,229,.15)';ctx.lineWidth=3;for(const radius of [190,285]){ctx.beginPath();ctx.arc(moonCenter.x,moonCenter.y,radius,Math.PI*.1,Math.PI*.9);ctx.stroke()}
+
+    const emberVents=[[2450,220],[2850,610],[3190,1060]];
+    for(let index=0;index<emberVents.length;index++){
+      const vent=worldToScreen(emberVents[index][0],emberVents[index][1]),pulse=.5+.5*Math.sin(time*2.3+index);
+      const heat=ctx.createRadialGradient(vent.x,vent.y,3,vent.x,vent.y,74+pulse*16);heat.addColorStop(0,'rgba(255,187,90,.18)');heat.addColorStop(.35,'rgba(255,92,43,.08)');heat.addColorStop(1,'rgba(255,66,28,0)');ctx.fillStyle=heat;ctx.fillRect(vent.x-95,vent.y-95,190,190);
+      ctx.strokeStyle='rgba(255,121,65,'+(.16+pulse*.08)+')';ctx.lineWidth=2;ctx.beginPath();ctx.arc(vent.x,vent.y,24+pulse*5,0,Math.PI*2);ctx.stroke();
+    }
+
+    const starCenter=worldToScreen(3900,650);ctx.strokeStyle='rgba(202,208,255,.13)';ctx.lineWidth=2;
+    for(const radius of [175,315]){ctx.beginPath();ctx.arc(starCenter.x,starCenter.y,radius,0,Math.PI*2);ctx.stroke()}
+    for(let index=0;index<14;index++){
+      const wx=3420+(index*193)%940,wy=105+(index*271)%1040,p=worldToScreen(wx,wy),twinkle=.28+.22*Math.sin(time*1.8+index);
+      ctx.fillStyle='rgba(237,232,255,'+twinkle+')';ctx.beginPath();ctx.arc(p.x,p.y,index%5===0?2.4:1.35,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
   }
 
   function drawDecorations(){
@@ -1012,7 +1080,15 @@
       for(const ring of rings){const p=worldToScreen(ring.x,ring.y),t=ring.age/ring.life;ctx.save();ctx.globalAlpha=1-t;ctx.strokeStyle=ring.color;ctx.lineWidth=3*(1-t)+1;ctx.beginPath();ctx.arc(p.x,p.y,ring.radius+t*55,0,Math.PI*2);ctx.stroke();ctx.restore()}
       return;
     }
-    for(const particle of particles){const p=worldToScreen(particle.x,particle.y),t=particle.age/particle.life;ctx.save();ctx.globalAlpha=1-t;ctx.fillStyle=particle.color;ctx.translate(p.x,p.y);ctx.rotate(Math.atan2(particle.vy,particle.vx));ctx.fillRect(-particle.size*.5,-particle.size*.5,particle.size*1.7,particle.size);ctx.restore()}
+    for(const particle of particles){
+      const p=worldToScreen(particle.x,particle.y),t=particle.age/particle.life;ctx.save();ctx.globalAlpha=1-t;ctx.fillStyle=particle.color;ctx.strokeStyle=particle.color;ctx.translate(p.x,p.y);ctx.rotate(Math.atan2(particle.vy,particle.vx));
+      if(particle.shape==='shard'){ctx.beginPath();ctx.moveTo(particle.size*1.7,0);ctx.lineTo(-particle.size*.55,-particle.size*.5);ctx.lineTo(-particle.size*.2,particle.size*.62);ctx.closePath();ctx.fill()}
+      else if(particle.shape==='spark'){ctx.shadowBlur=4;ctx.shadowColor=particle.color;ctx.fillRect(-particle.size*.35,-particle.size*.25,particle.size*2.1,particle.size*.5)}
+      else if(particle.shape==='ember'){ctx.shadowBlur=6;ctx.shadowColor=particle.color;ctx.beginPath();ctx.arc(0,0,particle.size*.55,0,Math.PI*2);ctx.fill()}
+      else if(particle.shape==='star'){ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-particle.size,0);ctx.lineTo(particle.size,0);ctx.moveTo(0,-particle.size);ctx.lineTo(0,particle.size);ctx.stroke()}
+      else ctx.fillRect(-particle.size*.5,-particle.size*.5,particle.size*1.7,particle.size);
+      ctx.restore();
+    }
     for(const mote of saleMotes){
       if(mote.age<0)continue;const t=easeInOut(mote.age/mote.life),wx=mote.sx+(mote.tx-mote.sx)*t,wy=mote.sy+(mote.ty-mote.sy)*t-Math.sin(t*Math.PI)*32,p=worldToScreen(wx,wy);
       ctx.save();ctx.globalAlpha=Math.sin(Math.min(1,t)*Math.PI)*.75+.2;ctx.fillStyle=mote.color;ctx.shadowBlur=7;ctx.shadowColor=mote.color;ctx.beginPath();ctx.arc(p.x,p.y,mote.size,0,Math.PI*2);ctx.fill();ctx.restore();
@@ -1093,7 +1169,7 @@
   window.addEventListener('resize',resize,{passive:true});
 
   window.__deepforgeTest={
-    snapshot:()=>JSON.parse(JSON.stringify({state,effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower())},player:{x:player.x,y:player.y},focus:miningFocus,rocks:rocks.map(rock=>({id:rock.id,type:rock.type,veinId:rock.veinId,hp:rock.hp,shell:rock.shell,broken:rock.broken})),veins:veins.map(vein=>({id:vein.id,status:vein.status,timer:vein.timer,broken:vein.brokenRockIds.size,total:vein.positions.length})),groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled})),activeContext})),
+    snapshot:()=>JSON.parse(JSON.stringify({state,effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower())},player:{x:player.x,y:player.y},biome:currentBiome().id,focus:miningFocus,rocks:rocks.map(rock=>({id:rock.id,type:rock.type,veinId:rock.veinId,hp:rock.hp,shell:rock.shell,broken:rock.broken})),veins:veins.map(vein=>({id:vein.id,status:vein.status,timer:vein.timer,broken:vein.brokenRockIds.size,total:vein.positions.length})),groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count},activeContext})),
     reset:resetProgress,
     setPosition:(x,y)=>{player.x=clamp(Number(x),52,WORLD.width-52);player.y=clamp(Number(y),70,WORLD.height-58);updateCamera(true);uiDirty=true},
     setTimeScale:value=>{timeScale=clamp(Number(value)||1,.25,12)},
