@@ -35,16 +35,41 @@
   const resetButton=document.getElementById('resetButton');
 
   const WORLD={width:4480,height:1280,gateX:1110,emberGateX:2240,starfallGateX:3360,gateY:650,gateHalfGap:118};
-  const MOSS_MINE={width:1920,height:1280,entrance:{x:145,y:640},surfaceEntrance:{x:165,y:690,radius:112}};
-  const MOSS_MINE_SOLIDS=[
-    {x:0,y:0,w:1920,h:145},{x:0,y:1135,w:1920,h:145},
-    {x:585,y:145,w:125,h:345},{x:585,y:790,w:125,h:345},
-    {x:1190,y:145,w:125,h:345},{x:1190,y:790,w:125,h:345}
-  ];
-  const MOSS_MINE_BARRIERS=[
-    {id:'outer_rubble',x:620,y:490,w:76,h:300,requiresPickaxe:1,label:'Loose Rubble'},
-    {id:'iron_seam',x:1225,y:490,w:76,h:300,requiresPickaxe:2,label:'Ironbound Collapse'}
-  ];
+  const MINE_DEFINITIONS={
+    mossMine:{
+      id:'mossMine',name:'MOSSVEIN MINE',surfaceName:'MOSSVEIN QUARRY',width:1920,height:1280,entrance:{x:145,y:640},surfaceEntrance:{x:165,y:690,radius:112},
+      unlock:()=>true,accent:'#d2a65b',detail:'#e9cf8c',floor:'#20241d',wall:'#2c3027',wallEdge:'#4f533f',style:'moss',finalGoal:'Mine the Gilded Heart',
+      solids:[{x:0,y:0,w:1920,h:145},{x:0,y:1135,w:1920,h:145},{x:585,y:145,w:125,h:345},{x:585,y:790,w:125,h:345},{x:1190,y:145,w:125,h:345},{x:1190,y:790,w:125,h:345}],
+      barriers:[{id:'outer_rubble',x:620,y:490,w:76,h:300,requiresPickaxe:1,label:'Loose Rubble',objective:'Break through the loose rubble'},{id:'iron_seam',x:1225,y:490,w:76,h:300,requiresPickaxe:2,label:'Ironbound Collapse'}],
+      rocks:[['stone',285,350],['stone',430,530],['stone',260,890],['copper',465,940],['stone',655,590,'outer_rubble'],['stone',655,640,'outer_rubble'],['stone',655,690,'outer_rubble'],['stone',835,335],['copper',930,495],['stone',1040,760],['copper',845,950],['copper',1085,1020],['stone',1260,590,'iron_seam'],['stone',1260,640,'iron_seam'],['stone',1260,690,'iron_seam'],['copper',1450,350],['copper',1650,470],['copper',1435,885],['gold',1680,820],['gold',1535,1010]],
+      labels:[['OLD WORKINGS',360,205,'#b8ad82'],['COPPER CHAMBER',945,205,'#dc9c65'],['GILDED HEART',1570,205,'#ffe18a']]
+    },
+    moonMine:{
+      id:'moonMine',name:'MOONGLASS LABYRINTH',surfaceName:'MOONGLASS CAVERN',width:1680,height:1440,entrance:{x:150,y:1180},surfaceEntrance:{x:1225,y:720,radius:112},
+      unlock:state=>state.areaUnlocked,accent:'#71e3df',detail:'#c8a7ff',floor:'#10272a',wall:'#18363b',wallEdge:'#4c8d91',style:'moon',finalGoal:'Reach the Starshard Sanctum',
+      solids:[{x:0,y:0,w:1680,h:135},{x:0,y:1305,w:1680,h:135},{x:480,y:135,w:110,h:435},{x:480,y:825,w:110,h:480},{x:1000,y:135,w:110,h:230},{x:1000,y:650,w:110,h:655},{x:590,y:1010,w:260,h:85}],
+      barriers:[{id:'moon_prism_gate',x:497,y:570,w:76,h:255,requiresPickaxe:3,label:'Prismatic Fault'},{id:'moon_star_lock',x:1017,y:365,w:76,h:285,requiresPickaxe:4,label:'Starbound Geode'}],
+      rocks:[['copper',270,1050],['moonglass',335,820],['moonglass',280,420],['moonglass',535,645,'moon_prism_gate'],['moonglass',535,695,'moon_prism_gate'],['moonglass',535,745,'moon_prism_gate'],['moonglass',760,1160],['moonglass',760,760],['moonglass',830,430],['starshard',910,245],['moonglass',1055,455,'moon_star_lock'],['moonglass',1055,505,'moon_star_lock'],['moonglass',1055,555,'moon_star_lock'],['moonglass',1270,310],['moonglass',1420,560],['moonglass',1275,890],['starshard',1445,1120],['starshard',1270,1230]],
+      labels:[['LOWER CRYSTALS',300,1260,'#78d9d7'],['REFRACTION HALL',790,700,'#c8a7ff'],['STARSHARD SANCTUM',1335,205,'#efe0ff']]
+    },
+    emberMine:{
+      id:'emberMine',name:'EMBERDEEP WORKS',surfaceName:'EMBERDEEP FOUNDRY',width:1880,height:1280,entrance:{x:145,y:1030},surfaceEntrance:{x:2340,y:650,radius:112},
+      unlock:state=>state.emberdeepUnlocked,accent:'#ff7543',detail:'#ffc06f',floor:'#251817',wall:'#39201c',wallEdge:'#8f4b32',style:'ember',finalGoal:'Claim the Sunslag Crucible',
+      solids:[{x:0,y:0,w:1880,h:145},{x:0,y:1135,w:1880,h:145},{x:500,y:145,w:110,h:390},{x:500,y:720,w:110,h:415},{x:1210,y:145,w:110,h:215},{x:1210,y:545,w:110,h:590},{x:770,y:360,w:250,h:190},{x:770,y:820,w:250,h:190}],
+      barriers:[{id:'ember_bulkhead',x:517,y:535,w:76,h:185,requiresPickaxe:4,label:'Cinder Bulkhead'},{id:'ember_crucible_lock',x:1227,y:360,w:76,h:185,requiresPickaxe:5,label:'Crucible Seal'}],
+      rocks:[['moonglass',250,930],['emberstone',310,690],['emberstone',300,350],['emberstone',555,575,'ember_bulkhead'],['emberstone',555,625,'ember_bulkhead'],['emberstone',555,675,'ember_bulkhead'],['emberstone',700,1050],['emberstone',720,680],['emberstone',910,680],['emberstone',1100,960],['emberstone',1265,400,'ember_crucible_lock'],['emberstone',1265,452,'ember_crucible_lock'],['emberstone',1265,505,'ember_crucible_lock'],['emberstone',1445,270],['emberstone',1615,470],['emberstone',1475,800],['sunslag',1660,980],['sunslag',1480,1060]],
+      labels:[['COOLING TUNNELS',290,1090,'#caa77d'],['FURNACE MAZE',900,700,'#ff8a52'],['SUNSLAG CRUCIBLE',1540,205,'#ffd27d']]
+    },
+    starMine:{
+      id:'starMine',name:'STARFALL HOLLOW',surfaceName:'STARFALL DEPTHS',width:2200,height:1500,entrance:{x:160,y:750},surfaceEntrance:{x:3450,y:690,radius:112},
+      unlock:state=>state.fourthUnlocked,accent:'#b8c3ff',detail:'#f0ddff',floor:'#121329',wall:'#0a0b19',wallEdge:'#5a5f96',style:'star',finalGoal:'Reach the Crownstone Observatory',
+      solids:[{x:0,y:0,w:2200,h:135},{x:0,y:1365,w:2200,h:135},{x:700,y:135,w:400,h:490},{x:700,y:825,w:400,h:540},{x:1450,y:135,w:400,h:215},{x:1450,y:570,w:400,h:795},{x:1110,y:1030,w:220,h:335}],
+      barriers:[{id:'star_bridge_lock',x:862,y:625,w:76,h:200,requiresPickaxe:5,label:'Astral Bridge Lock'},{id:'star_crown_lock',x:1612,y:350,w:76,h:220,requiresPickaxe:5,label:'Crownstone Ward'}],
+      rocks:[['emberstone',300,480],['astralite',360,750],['astralite',315,1050],['astralite',900,675,'star_bridge_lock'],['astralite',900,725,'star_bridge_lock'],['astralite',900,775,'star_bridge_lock'],['astralite',1180,420],['astralite',1260,760],['astralite',1190,1180],['crownstone',1360,250],['astralite',1650,410,'star_crown_lock'],['astralite',1650,460,'star_crown_lock'],['astralite',1650,510,'star_crown_lock'],['astralite',1950,280],['astralite',2020,650],['astralite',1940,1030],['crownstone',2025,1250],['crownstone',1910,1180]],
+      labels:[['FALLEN APPROACH',350,205,'#aeb8ee'],['ASTRAL CROSSING',1260,710,'#c9d2ff'],['CROWNSTONE OBSERVATORY',1940,205,'#f1d7ff']]
+    }
+  };
+  const MINE_SCENES=Object.keys(MINE_DEFINITIONS);
   const BIOMES=[
     {id:'mossvein',name:'MOSSVEIN QUARRY',start:0,end:WORLD.gateX,floor:'#273228',accent:'#78b36c',detail:'#a8c48e'},
     {id:'moonglass',name:'MOONGLASS CAVERN',start:WORLD.gateX,end:WORLD.emberGateX,floor:'#14282b',accent:'#65dedb',detail:'#b294ef'},
@@ -132,13 +157,6 @@
     ['astralite',3475,900],['astralite',3780,1040],['astralite',4090,820],['astralite',4380,1040],
     ['moonglass',3630,735],['emberstone',4300,690],['crownstone',4140,1110]
   ];
-  const MOSS_MINE_ROCK_LAYOUT=[
-    ['stone',285,350],['stone',430,530],['stone',260,890],['copper',465,940],
- ['stone',655,590,'outer_rubble'],['stone',655,640,'outer_rubble'],['stone',655,690,'outer_rubble'],
-    ['stone',835,335],['copper',930,495],['stone',1040,760],['copper',845,950],['copper',1085,1020],
- ['stone',1260,590,'iron_seam'],['stone',1260,640,'iron_seam'],['stone',1260,690,'iron_seam'],
-    ['copper',1450,350],['copper',1650,470],['copper',1435,885],['gold',1680,820],['gold',1535,1010]
-  ];
   const VEIN_DEFINITIONS=[
     {id:'copper_run',label:'COPPER RUN',type:'copper',timeLimit:16,respawn:28,color:'#e2a36e',bonus:{copper:3},positions:[[875,1085],[945,1025],[1010,1100]]},
     {id:'moonglass_bloom',label:'MOONGLASS BLOOM',type:'moonglass',timeLimit:18,respawn:32,color:'#9ef2ed',bonus:{moonglass:2,starshard:1},positions:[[1600,430],[1665,500],[1735,555]]},
@@ -167,11 +185,16 @@
     shell:ROCK_TYPES[entry[0]].shell||0,maxShell:ROCK_TYPES[entry[0]].shell||0,
     scene:'surface',veinId:entry[3]||null,barrierId:null,requiredPickaxe:1,respawn:0,hit:0,broken:false,seed:(index*47)%97,glintTimer:1.5+(index%5)*.48,glintActive:0,bonusYield:0
   }));
-  const mineRocks=MOSS_MINE_ROCK_LAYOUT.map((entry,index)=>({
-    id:1000+index,type:entry[0],x:entry[1],y:entry[2],hp:ROCK_TYPES[entry[0]].hp,maxHp:ROCK_TYPES[entry[0]].hp,
-    shell:0,maxShell:0,scene:'mossMine',veinId:null,barrierId:entry[3]||null,
-    requiredPickaxe:entry[3]==='iron_seam'?2:1,respawn:0,hit:0,broken:false,seed:(index*53)%97,glintTimer:1.5+(index%5)*.48,glintActive:0,bonusYield:0
-  }));
+  let mineRockIndex=0;
+  const mineRocks=MINE_SCENES.flatMap(scene=>{
+    const mine=MINE_DEFINITIONS[scene];
+    return mine.rocks.map(entry=>{
+      const barrier=entry[3]?mine.barriers.find(item=>item.id===entry[3]):null,index=mineRockIndex++;
+      return{id:1000+index,type:entry[0],x:entry[1],y:entry[2],hp:ROCK_TYPES[entry[0]].hp,maxHp:ROCK_TYPES[entry[0]].hp,
+        shell:0,maxShell:0,scene,veinId:null,barrierId:entry[3]||null,requiredPickaxe:barrier?barrier.requiresPickaxe:1,
+        respawn:0,hit:0,broken:false,seed:(index*53)%97,glintTimer:1.5+(index%5)*.48,glintActive:0,bonusYield:0};
+    });
+  });
   const rocks=surfaceRocks.concat(mineRocks);
   for(const rock of mineRocks)if(rock.barrierId&&state.clearedMineBarriers[rock.barrierId]){rock.broken=true;rock.respawn=Infinity}
   const veins=VEIN_DEFINITIONS.map(definition=>({...definition,status:'idle',timer:0,displaySecond:-1,brokenRockIds:new Set()}));
@@ -190,7 +213,7 @@
       veinsCompleted:{copper_run:0,moonglass_bloom:0,ember_fault:0,starfall_lattice:0},
       starforgeVariant:null,starforgeUnlocked:{crusher:false,swift:false,prospector:false},
       openedChests:{},pendingChestLoot:{},
-      clearedMineBarriers:{},mineDiscovered:false,
+      clearedMineBarriers:{},mineDiscovered:false,discoveredMines:{mossMine:false,moonMine:false,emberMine:false,starMine:false},
       location:{scene:'surface',x:330,y:690,surfaceX:330,surfaceY:690},
       totalGold:0,totalSwings:0,precisionHits:0
     };
@@ -225,10 +248,15 @@
           if(!Object.keys(base.pendingChestLoot[chest.id]).length)delete base.pendingChestLoot[chest.id];
         }
       }
-      for(const barrier of MOSS_MINE_BARRIERS)base.clearedMineBarriers[barrier.id]=!!(raw.clearedMineBarriers&&raw.clearedMineBarriers[barrier.id]);
-      base.mineDiscovered=!!raw.mineDiscovered;
-      if(raw.location&&raw.location.scene==='mossMine'){
-        base.location.scene='mossMine';base.location.x=clamp(Number(raw.location.x)||MOSS_MINE.entrance.x,52,MOSS_MINE.width-52);base.location.y=clamp(Number(raw.location.y)||MOSS_MINE.entrance.y,70,MOSS_MINE.height-58);
+      for(const scene of MINE_SCENES){
+        const mine=MINE_DEFINITIONS[scene];
+        base.discoveredMines[scene]=!!(raw.discoveredMines&&raw.discoveredMines[scene])||(scene==='mossMine'&&!!raw.mineDiscovered);
+        for(const barrier of mine.barriers)base.clearedMineBarriers[barrier.id]=!!(raw.clearedMineBarriers&&raw.clearedMineBarriers[barrier.id]);
+      }
+      base.mineDiscovered=base.discoveredMines.mossMine;
+      if(raw.location&&MINE_SCENES.includes(raw.location.scene)){
+        const mine=MINE_DEFINITIONS[raw.location.scene];
+        base.location.scene=mine.unlock(base)?raw.location.scene:'surface';base.location.x=clamp(Number(raw.location.x)||mine.entrance.x,52,mine.width-52);base.location.y=clamp(Number(raw.location.y)||mine.entrance.y,70,mine.height-58);
       }
       base.location.surfaceX=clamp(Number(raw.location&&raw.location.surfaceX)||330,52,WORLD.width-52);
       base.location.surfaceY=clamp(Number(raw.location&&raw.location.surfaceY)||690,70,WORLD.height-58);
@@ -272,6 +300,7 @@
   }
 
   function clamp(value,min,max){return Math.max(min,Math.min(max,value))}
+  function titleCase(value){return String(value).toLowerCase().replace(/\b\w/g,letter=>letter.toUpperCase())}
   function distance(x1,y1,x2,y2){return Math.hypot(x2-x1,y2-y1)}
   function easeOut(t){return 1-Math.pow(1-clamp(t,0,1),3)}
   function easeInOut(t){t=clamp(t,0,1);return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
@@ -286,10 +315,11 @@
   function currentShellPower(){const base=state.pickaxeLevel===PICKAXES.length-1?currentMastery().shellPower:.72,variant=currentStarforge();return variant?base*variant.shellMultiplier:base}
   function currentBonusYieldChance(){const base=state.pickaxeLevel<4?0:state.pickaxeLevel===PICKAXES.length-1?currentMastery().bonusYield:.22,variant=currentStarforge();return Math.min(.92,base+(variant?variant.yieldBonus:0))}
   function currentPrecisionDelay(){return state.pickaxeLevel===PICKAXES.length-1?currentMastery().precisionDelay:1}
-  function currentWorld(){return currentScene==='mossMine'?MOSS_MINE:WORLD}
-  function currentRocks(){return currentScene==='mossMine'?mineRocks:surfaceRocks}
+  function currentMine(){return MINE_DEFINITIONS[currentScene]||null}
+  function currentWorld(){return currentMine()||WORLD}
+  function currentRocks(){return currentScene==='surface'?surfaceRocks:mineRocks.filter(rock=>rock.scene===currentScene)}
   function regionIndexAt(x){return x>=WORLD.starfallGateX?3:x>=WORLD.emberGateX?2:x>=WORLD.gateX?1:0}
-  function currentBiome(){return currentScene==='mossMine'?{id:'mossMine',name:'MOSSVEIN MINE',accent:'#d2a65b',detail:'#e9cf8c'}:BIOMES[regionIndexAt(player.x)]}
+  function currentBiome(){const mine=currentMine();return mine?{id:mine.id,name:mine.name,accent:mine.accent,detail:mine.detail}:BIOMES[regionIndexAt(player.x)]}
   function starforgeMastered(){return Object.values(state.starforgeUnlocked).every(Boolean)}
   function nextMastery(){return EMBER_MASTERY[state.emberMastery+1]||null}
   function masteryReady(){const next=nextMastery();return !!next&&state.mined.sunslag>=next.sunslag&&state.gold>=next.gold}
@@ -324,9 +354,9 @@
   }
   function resetVeins(){for(const vein of veins){vein.status='idle';vein.timer=0;vein.displaySecond=-1;vein.brokenRockIds.clear()}}
 
-  function mineBarrierById(id){return MOSS_MINE_BARRIERS.find(barrier=>barrier.id===id)||null}
+  function mineBarrierById(id){for(const scene of MINE_SCENES){const barrier=MINE_DEFINITIONS[scene].barriers.find(item=>item.id===id);if(barrier)return barrier}return null}
   function mineBarrierCleared(id){return !!state.clearedMineBarriers[id]}
-  function activeMineSolids(){return MOSS_MINE_SOLIDS.concat(MOSS_MINE_BARRIERS.filter(barrier=>!mineBarrierCleared(barrier.id)))}
+  function activeMineSolids(){const mine=currentMine();return mine?mine.solids.concat(mine.barriers.filter(barrier=>!mineBarrierCleared(barrier.id))):[]}
 
   function unlockAudio(){
     if(audioUnlocked){if(audioContext&&audioContext.state==='suspended')audioContext.resume();return}
@@ -590,24 +620,30 @@
   function transitionScene(scene){
     releaseTouchControls();player.swing=null;player.swingCooldown=0;miningFocus.streak=0;miningFocus.timer=0;
     particles.length=0;floaters.length=0;rings.length=0;saleMotes.length=0;activeContext=null;
-    if(scene==='mossMine'){
-      state.location.surfaceX=player.x;state.location.surfaceY=player.y;currentScene='mossMine';
-      player.x=MOSS_MINE.entrance.x+85;player.y=MOSS_MINE.entrance.y;state.mineDiscovered=true;
-      showAreaBanner('MOSSVEIN MINE');showToast('The mountain closes behind you.');
+    if(MINE_SCENES.includes(scene)){
+      const mine=MINE_DEFINITIONS[scene];if(!mine.unlock(state))return;
+      state.location.surfaceX=player.x;state.location.surfaceY=player.y;currentScene=scene;
+      player.x=mine.entrance.x+85;player.y=mine.entrance.y;state.discoveredMines[scene]=true;state.mineDiscovered=state.discoveredMines.mossMine;
+      showAreaBanner(mine.name);showToast(scene==='starMine'?'The stars vanish above you.':'The mountain closes behind you.');
     }else{
+      const previousMine=currentMine();
       currentScene='surface';player.x=state.location.surfaceX;player.y=state.location.surfaceY;
-      showAreaBanner('MOSSVEIN QUARRY');showToast('Back beneath the open sky.');
+      showAreaBanner(previousMine?previousMine.surfaceName:currentBiome().name);showToast('Back beneath the open sky.');
     }
     lastRegion=-1;updateCamera(true);uiDirty=true;sound('unlock');saveState(true);
   }
 
   function contextAtPlayer(){
-    if(currentScene==='mossMine'){
-      if(distance(player.x,player.y,MOSS_MINE.entrance.x,MOSS_MINE.entrance.y)<=118)return'mineExit';
+    const mine=currentMine();
+    if(mine){
+      if(distance(player.x,player.y,mine.entrance.x,mine.entrance.y)<=118)return'mineExit';
       return null;
     }
     const chest=nearbyChest();if(chest)return'chest:'+chest.id;
-    if(distance(player.x,player.y,MOSS_MINE.surfaceEntrance.x,MOSS_MINE.surfaceEntrance.y)<=MOSS_MINE.surfaceEntrance.radius)return'mineEntrance';
+    for(const scene of MINE_SCENES){
+      const candidate=MINE_DEFINITIONS[scene],entrance=candidate.surfaceEntrance;
+      if(candidate.unlock(state)&&distance(player.x,player.y,entrance.x,entrance.y)<=entrance.radius)return'mineEntrance:'+scene;
+    }
     if(distance(player.x,player.y,STATIONS.sell.x,STATIONS.sell.y)<=STATIONS.sell.radius)return'sell';
     if(distance(player.x,player.y,STATIONS.forge.x,STATIONS.forge.y)<=STATIONS.forge.radius)return'forge';
     if(!state.areaUnlocked&&distance(player.x,player.y,STATIONS.gate.x,STATIONS.gate.y)<=STATIONS.gate.radius)return'gate';
@@ -619,7 +655,7 @@
 
   function performContext(){
     unlockAudio();
-    if(activeContext==='mineEntrance')transitionScene('mossMine');
+    if(activeContext&&activeContext.startsWith('mineEntrance:'))transitionScene(activeContext.slice(13));
     else if(activeContext==='mineExit')transitionScene('surface');
     else if(activeContext&&activeContext.startsWith('chest:'))openChest(chestById(activeContext.slice(6)));
     else if(activeContext==='sell')sellCargo();
@@ -735,7 +771,7 @@
   }
 
   function collidesWithMine(x,y){
-    if(currentScene!=='mossMine')return false;
+    if(!currentMine())return false;
     for(const solid of activeMineSolids()){
       const nearestX=clamp(x,solid.x,solid.x+solid.w),nearestY=clamp(y,solid.y,solid.y+solid.h);
       if(distance(x,y,nearestX,nearestY)<player.radius)return true;
@@ -793,7 +829,7 @@
     }
     if(currentScene==='surface')updateVeins(dt);updateGroundDrops(dt);
     updateEffects(dt);updateGoldCount(dt);updateCamera(false);
-    const region=currentScene==='mossMine'?-1:regionIndexAt(player.x);
+    const region=currentScene==='surface'?regionIndexAt(player.x):-1;
     if(region!==lastRegion){lastRegion=region;game.dataset.biome=currentBiome().id;uiDirty=true}
     const nextContext=contextAtPlayer();
     if(nextContext!==activeContext){activeContext=nextContext;uiDirty=true}
@@ -841,8 +877,8 @@
     speedValue.textContent=(PICKAXES[1].cooldown/currentCooldown()).toFixed(1)+'x';
     const biome=currentBiome();areaName.textContent=biome.name;game.dataset.biome=biome.id;
     let progress=1,label='DEEPFORGE MASTERED';
-    if(currentScene==='mossMine'){
-      const cleared=MOSS_MINE_BARRIERS.filter(barrier=>mineBarrierCleared(barrier.id)).length;progress=cleared/MOSS_MINE_BARRIERS.length;label='MOSSVEIN MINE - PASSAGES '+cleared+'/'+MOSS_MINE_BARRIERS.length;
+    if(currentMine()){
+      const mine=currentMine(),cleared=mine.barriers.filter(barrier=>mineBarrierCleared(barrier.id)).length;progress=cleared/mine.barriers.length;label=mine.name+' - PASSAGES '+cleared+'/'+mine.barriers.length;
     }
     else if(starforgeMastered()){progress=1;label='DEEPFORGE MASTERED - 3/3 STARFORGE FORMS'}
     else if(!state.areaUnlocked){progress=Math.min(1,Math.min(state.gold/GATE_COST,state.pickaxeLevel/3));label='MOONGLASS CAVERN'}
@@ -856,11 +892,11 @@
     unlockFill.style.width=(progress*100)+'%';unlockLabel.textContent=label;
     const activeVein=veins.find(vein=>vein.status==='active');
     objective.hidden=starforgeMastered();
-    if(currentScene==='mossMine'){
-      if(!mineBarrierCleared('outer_rubble'))objectiveText.textContent='Break through the loose rubble';
-      else if(!mineBarrierCleared('iron_seam')&&state.pickaxeLevel<2)objectiveText.textContent='Return with an Iron Pickaxe';
-      else if(!mineBarrierCleared('iron_seam'))objectiveText.textContent='Break the Ironbound Collapse';
-      else objectiveText.textContent='Mine the Gilded Heart';
+    if(currentMine()){
+      const mine=currentMine(),barrier=mine.barriers.find(item=>!mineBarrierCleared(item.id));
+      if(barrier&&state.pickaxeLevel<barrier.requiresPickaxe)objectiveText.textContent='Return with a '+PICKAXES[barrier.requiresPickaxe].name;
+      else if(barrier)objectiveText.textContent=barrier.objective||'Break the '+barrier.label;
+      else objectiveText.textContent=mine.finalGoal;
     }
     else if(starforgeMastered())objectiveText.textContent='Deepforge mastered - every Starforge form forged';
     else if(activeVein)objectiveText.textContent=activeVein.label+' '+activeVein.brokenRockIds.size+'/'+activeVein.positions.length+' - '+Math.ceil(activeVein.timer)+'s';
@@ -903,13 +939,14 @@
     contextPanel.hidden=!activeContext;
     contextPanel.classList.toggle('starforge-open',activeContext==='starforge');
     contextPanel.classList.toggle('chest-context',!!activeContext&&activeContext.startsWith('chest:'));
-    contextPanel.classList.toggle('mine-context',activeContext==='mineEntrance'||activeContext==='mineExit');
+    contextPanel.classList.toggle('mine-context',activeContext==='mineExit'||!!activeContext&&activeContext.startsWith('mineEntrance:'));
     contextButton.hidden=activeContext==='starforge';starforgeChoices.hidden=activeContext!=='starforge';
     if(!activeContext)return;
-    if(activeContext==='mineEntrance'){
-      contextEyebrow.textContent='DUNGEON ENTRANCE';contextTitle.textContent='Mossvein Mine';contextDetail.textContent='Explore old tunnels, clear collapses and uncover a deep resource chamber.';contextButton.textContent='ENTER';contextButton.disabled=false;
+    if(activeContext.startsWith('mineEntrance:')){
+      const mine=MINE_DEFINITIONS[activeContext.slice(13)];
+      contextEyebrow.textContent='DUNGEON ENTRANCE';contextTitle.textContent=titleCase(mine.name);contextDetail.textContent='Explore a unique mine layout, clear permanent passages and uncover richer resources.';contextButton.textContent='ENTER';contextButton.disabled=false;
     }else if(activeContext==='mineExit'){
-      contextEyebrow.textContent='MINE EXIT';contextTitle.textContent='Return to Mossvein Quarry';contextDetail.textContent='Your cargo and cleared passages are preserved.';contextButton.textContent='LEAVE';contextButton.disabled=false;
+      const mine=currentMine();contextEyebrow.textContent='MINE EXIT';contextTitle.textContent='Return to '+titleCase(mine.surfaceName);contextDetail.textContent='Your cargo and cleared passages are preserved.';contextButton.textContent='LEAVE';contextButton.disabled=false;
     }else if(activeContext.startsWith('chest:')){
       const chest=chestById(activeContext.slice(6)),ready=chest&&chestRequirementMet(chest);
       if(!chest)return;
@@ -969,61 +1006,79 @@
     document.getElementById('deepestFrontier').textContent=state.discoveredFourth?'Starfall':state.discoveredThird?'Emberdeep':state.discoveredSecond?'Moonglass':'Mossvein';
     document.getElementById('starforgeForms').textContent=Object.values(state.starforgeUnlocked).filter(Boolean).length+' / 3';
     document.getElementById('chestsOpened').textContent=Object.values(state.openedChests).filter(Boolean).length+' / '+chests.length;
-    document.getElementById('minePassages').textContent=Object.values(state.clearedMineBarriers).filter(Boolean).length+' / '+MOSS_MINE_BARRIERS.length;
+    const totalMineBarriers=MINE_SCENES.reduce((total,scene)=>total+MINE_DEFINITIONS[scene].barriers.length,0);
+    document.getElementById('minePassages').textContent=Object.values(state.clearedMineBarriers).filter(Boolean).length+' / '+totalMineBarriers;
     document.getElementById('totalGold').textContent=state.totalGold;
   }
 
   function draw(){
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
     ctx.save();ctx.scale(viewZoom,viewZoom);
-    if(currentScene==='mossMine'){
-      drawMineGround();drawMineWalls();drawMineEntrance(false);drawRocks();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);drawWorldLabels();
+    if(currentMine()){
+      drawMineGround();drawMineWalls();drawMineEntrance(false,currentMine());drawRocks();drawWorldLabels();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
     }else{
-      drawGround();drawBiomeStructure();drawDecorations();drawStations();drawMineEntrance(true);drawGate();drawVeins();drawRocks();drawChests();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);drawWorldLabels();
+      drawGround();drawBiomeStructure();drawDecorations();drawStations();drawSurfaceMineEntrances();drawGate();drawVeins();drawRocks();drawChests();drawWorldLabels();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
     }
     ctx.restore();
   }
 
   function drawMineGround(){
-    ctx.fillStyle='#171a15';ctx.fillRect(0,0,viewWidth,viewHeight);
+    const mine=currentMine();ctx.fillStyle=mine.floor;ctx.fillRect(0,0,viewWidth,viewHeight);
     const origin=worldToScreen(0,0);
-    ctx.save();ctx.translate(origin.x,origin.y);ctx.fillStyle='#20241d';ctx.fillRect(0,0,MOSS_MINE.width,MOSS_MINE.height);
-    const glow=ctx.createRadialGradient(1550,650,40,1550,650,560);glow.addColorStop(0,'rgba(166,118,45,.17)');glow.addColorStop(1,'rgba(17,20,16,0)');ctx.fillStyle=glow;ctx.fillRect(900,0,1020,1280);
-    ctx.strokeStyle='rgba(198,174,112,.055)';ctx.lineWidth=1;
-    for(let x=0;x<=MOSS_MINE.width;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,MOSS_MINE.height);ctx.stroke()}
-    for(let y=0;y<=MOSS_MINE.height;y+=80){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(MOSS_MINE.width,y);ctx.stroke()}
-    ctx.strokeStyle='#4a3e29';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(120,650);ctx.lineTo(1800,650);ctx.stroke();
-    ctx.strokeStyle='#a07c43';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(120,641);ctx.lineTo(1800,641);ctx.moveTo(120,659);ctx.lineTo(1800,659);ctx.stroke();
-    ctx.strokeStyle='#55452d';ctx.lineWidth=5;for(let x=140;x<1810;x+=54){ctx.beginPath();ctx.moveTo(x,628);ctx.lineTo(x,672);ctx.stroke()}
+    ctx.save();ctx.translate(origin.x,origin.y);ctx.fillStyle=mine.floor;ctx.fillRect(0,0,mine.width,mine.height);
+    const glowX=mine.width*.78,glowY=mine.height*.5,glow=ctx.createRadialGradient(glowX,glowY,40,glowX,glowY,Math.max(mine.width,mine.height)*.38);
+    glow.addColorStop(0,mine.style==='ember'?'rgba(255,91,34,.18)':mine.style==='moon'?'rgba(92,226,225,.14)':mine.style==='star'?'rgba(163,145,255,.15)':'rgba(166,118,45,.17)');glow.addColorStop(1,'rgba(10,12,14,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,mine.width,mine.height);
+    ctx.strokeStyle=mine.style==='ember'?'rgba(255,127,69,.055)':mine.style==='star'?'rgba(190,195,255,.05)':mine.style==='moon'?'rgba(115,224,220,.055)':'rgba(198,174,112,.055)';ctx.lineWidth=1;
+    for(let x=0;x<=mine.width;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,mine.height);ctx.stroke()}
+    for(let y=0;y<=mine.height;y+=80){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(mine.width,y);ctx.stroke()}
+    if(mine.style==='moss'){
+      ctx.strokeStyle='#4a3e29';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(120,650);ctx.lineTo(1800,650);ctx.stroke();ctx.strokeStyle='#a07c43';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(120,641);ctx.lineTo(1800,641);ctx.moveTo(120,659);ctx.lineTo(1800,659);ctx.stroke();ctx.strokeStyle='#55452d';ctx.lineWidth=5;for(let x=140;x<1810;x+=54){ctx.beginPath();ctx.moveTo(x,628);ctx.lineTo(x,672);ctx.stroke()}
+    }else if(mine.style==='moon'){
+      drawMineRoute([[150,1180],[350,1180],[535,700],[790,700],[1055,500],[1320,350],[1530,350]],'#224e52','#6bc6c3');
+      ctx.fillStyle='rgba(107,229,224,.22)';for(let i=0;i<20;i++){const x=90+(i*277)%1500,y=170+(i*193)%1080;ctx.beginPath();ctx.moveTo(x,y-18);ctx.lineTo(x+11,y+8);ctx.lineTo(x-8,y+15);ctx.closePath();ctx.fill()}
+    }else if(mine.style==='ember'){
+      drawMineRoute([[145,1030],[360,1030],[555,625],[710,625],[1080,680],[1265,450],[1560,450],[1710,980]],'#54261d','#d75b32');
+      ctx.strokeStyle='rgba(255,91,35,.55)';ctx.lineWidth=5;for(let x=170;x<mine.width;x+=310){ctx.beginPath();ctx.moveTo(x,145);ctx.lineTo(x+90,mine.height-145);ctx.stroke()}
+    }else{
+      drawMineRoute([[160,750],[510,750],[900,725],[1260,725],[1650,460],[2020,460]],'#242650','#777fc1');
+      ctx.fillStyle='rgba(224,226,255,.6)';for(let i=0;i<55;i++){const x=(i*173)%mine.width,y=(i*271)%mine.height,r=i%9===0?2:1;ctx.fillRect(x,y,r,r)}
+    }
     ctx.restore();
   }
 
+  function drawMineRoute(points,edge,center){
+    ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=edge;ctx.lineWidth=72;ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.stroke();
+    ctx.strokeStyle=center;ctx.globalAlpha=.38;ctx.lineWidth=3;ctx.stroke();ctx.globalAlpha=1;
+  }
+
   function drawMineWalls(){
-    for(const wall of MOSS_MINE_SOLIDS){
+    const mine=currentMine();
+    for(const wall of mine.solids){
       const p=worldToScreen(wall.x,wall.y);if(p.x>viewWidth+60||p.y>viewHeight+60||p.x+wall.w< -60||p.y+wall.h< -60)continue;
-      ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='#11140f';ctx.fillRect(0,0,wall.w,wall.h);
-      ctx.fillStyle='#2c3027';ctx.strokeStyle='#4f533f';ctx.lineWidth=2;
-      for(let x=12;x<wall.w;x+=48)for(let y=12;y<wall.h;y+=44){const jitter=((x+y)*.13)%7;ctx.beginPath();ctx.moveTo(x-10,y+12);ctx.lineTo(x+jitter,y-8);ctx.lineTo(x+25,y-3);ctx.lineTo(x+32,y+17);ctx.lineTo(x+8,y+24);ctx.closePath();ctx.fill();ctx.stroke()}
+      ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle=mine.style==='star'?'#050610':'#0e1110';ctx.fillRect(0,0,wall.w,wall.h);ctx.fillStyle=mine.wall;ctx.strokeStyle=mine.wallEdge;ctx.lineWidth=2;
+      for(let x=12;x<wall.w;x+=48)for(let y=12;y<wall.h;y+=44){const jitter=((x+y)*.13)%7;ctx.beginPath();ctx.moveTo(x-10,y+12);ctx.lineTo(x+jitter,y-8);ctx.lineTo(x+25,y-3);ctx.lineTo(x+32,y+17);ctx.lineTo(x+8,y+24);ctx.closePath();ctx.fill();ctx.stroke();if(mine.style==='ember'){ctx.fillStyle='#d86635';ctx.beginPath();ctx.arc(x+8,y+7,2,0,Math.PI*2);ctx.fill();ctx.fillStyle=mine.wall}else if(mine.style==='moon'){ctx.strokeStyle='rgba(113,227,223,.45)';ctx.beginPath();ctx.moveTo(x+2,y+18);ctx.lineTo(x+18,y-2);ctx.stroke();ctx.strokeStyle=mine.wallEdge}else if(mine.style==='star'&&((x+y)%3<1)){ctx.fillStyle='#cdd2ff';ctx.fillRect(x+5,y+4,1.5,1.5);ctx.fillStyle=mine.wall}}
       ctx.restore();
     }
-    for(const barrier of MOSS_MINE_BARRIERS){
+    for(const barrier of mine.barriers){
       if(mineBarrierCleared(barrier.id))continue;
       const p=worldToScreen(barrier.x,barrier.y),locked=state.pickaxeLevel<barrier.requiresPickaxe;
       ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(10,12,9,.68)';ctx.fillRect(0,0,barrier.w,barrier.h);
-      ctx.strokeStyle=locked?'#98784a':'#c3a15e';ctx.globalAlpha=.55;ctx.lineWidth=3;ctx.setLineDash([9,7]);ctx.strokeRect(5,5,barrier.w-10,barrier.h-10);ctx.setLineDash([]);ctx.globalAlpha=1;
+      ctx.strokeStyle=locked?'#98784a':mine.accent;ctx.globalAlpha=.55;ctx.lineWidth=3;ctx.setLineDash([9,7]);ctx.strokeRect(5,5,barrier.w-10,barrier.h-10);ctx.setLineDash([]);ctx.globalAlpha=1;
       ctx.fillStyle='rgba(7,9,7,.88)';ctx.fillRect(-34,-32,barrier.w+68,24);ctx.strokeStyle='#7e673b';ctx.lineWidth=1;ctx.strokeRect(-34,-32,barrier.w+68,24);
-      ctx.fillStyle=locked?'#cfb985':'#f0d58d';ctx.textAlign='center';ctx.font='900 9px Georgia';ctx.fillText(locked?PICKAXES[barrier.requiresPickaxe].name.toUpperCase()+' REQUIRED':'BREAK THE RUBBLE',barrier.w*.5,-16);ctx.restore();
+      ctx.fillStyle=locked?'#cfb985':'#f0d58d';ctx.textAlign='center';ctx.font='900 9px Georgia';ctx.fillText(locked?PICKAXES[barrier.requiresPickaxe].name.toUpperCase()+' REQUIRED':'BREAK: '+barrier.label.toUpperCase(),barrier.w*.5,-16);ctx.restore();
     }
   }
 
-  function drawMineEntrance(surface){
-    const entrance=surface?MOSS_MINE.surfaceEntrance:MOSS_MINE.entrance,p=worldToScreen(entrance.x,entrance.y),selected=activeContext===(surface?'mineEntrance':'mineExit');
+  function drawSurfaceMineEntrances(){for(const scene of MINE_SCENES){const mine=MINE_DEFINITIONS[scene];if(mine.unlock(state))drawMineEntrance(true,mine)}}
+
+  function drawMineEntrance(surface,mine){
+    const entrance=surface?mine.surfaceEntrance:mine.entrance,p=worldToScreen(entrance.x,entrance.y),selected=activeContext===(surface?'mineEntrance:'+mine.id:'mineExit');
     if(p.x<-100||p.y<-120||p.x>viewWidth+100||p.y>viewHeight+120)return;
     ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.38)';ctx.beginPath();ctx.ellipse(0,42,66,20,0,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#34372d';ctx.strokeStyle='#80734f';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-58,39);ctx.lineTo(-49,-22);ctx.quadraticCurveTo(0,-86,49,-22);ctx.lineTo(58,39);ctx.closePath();ctx.fill();ctx.stroke();
     const darkness=ctx.createRadialGradient(0,6,5,0,6,48);darkness.addColorStop(0,'#030403');darkness.addColorStop(1,'#151711');ctx.fillStyle=darkness;ctx.beginPath();ctx.moveTo(-39,36);ctx.lineTo(-33,-15);ctx.quadraticCurveTo(0,-58,33,-15);ctx.lineTo(39,36);ctx.closePath();ctx.fill();
     ctx.strokeStyle='#9c7136';ctx.lineWidth=5;for(const x of [-34,34]){ctx.beginPath();ctx.moveTo(x,35);ctx.lineTo(x,-14);ctx.stroke()}ctx.beginPath();ctx.arc(0,-9,34,Math.PI,Math.PI*2);ctx.stroke();
-    ctx.fillStyle='#dbc180';ctx.textAlign='center';ctx.font='900 10px Georgia';ctx.fillText(surface?'MOSSVEIN MINE':'RETURN TO QUARRY',0,61);
+    ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 10px Georgia';ctx.fillText(surface?mine.name:'RETURN TO '+mine.surfaceName.replace('MOSSVEIN ','').replace('MOONGLASS ','').replace('EMBERDEEP ','').replace('STARFALL ',''),0,61);
     if(selected){ctx.strokeStyle='#f0d58d';ctx.globalAlpha=.75;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,4,72+Math.sin(time*4)*2,0,Math.PI*2);ctx.stroke()}
     ctx.restore();
   }
@@ -1357,10 +1412,9 @@
   }
 
   function drawWorldLabels(){
-    const labels=currentScene==='mossMine'?
-      [['OLD WORKINGS',360,205,'#b8ad82'],['COPPER CHAMBER',945,205,'#dc9c65'],['GILDED HEART',1570,205,'#ffe18a']]:
-      [['ASSAY CART',STATIONS.sell.x,STATIONS.sell.y-75,'#e9cb82'],['FORGE',STATIONS.forge.x,STATIONS.forge.y-75,'#f2a35d']];
-    if(currentScene==='mossMine'){
+    const mine=currentMine();
+    const labels=mine?mine.labels.slice():[['ASSAY CART',STATIONS.sell.x,STATIONS.sell.y-75,'#e9cb82'],['FORGE',STATIONS.forge.x,STATIONS.forge.y-75,'#f2a35d']];
+    if(mine){
       ctx.save();ctx.textAlign='center';ctx.font='900 10px Georgia';
       for(const label of labels){const p=worldToScreen(label[1],label[2]);if(p.x<0||p.x>viewWidth||p.y<0||p.y>viewHeight)continue;ctx.fillStyle='rgba(5,8,5,.72)';ctx.fillRect(p.x-58,p.y-11,116,20);ctx.fillStyle=label[3];ctx.fillText(label[0],p.x,p.y+3)}ctx.restore();return;
     }
@@ -1435,7 +1489,7 @@
   window.addEventListener('resize',resize,{passive:true});
 
   window.__deepforgeTest={
-    snapshot:()=>JSON.parse(JSON.stringify({state,scene:currentScene,effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower())},player:{x:player.x,y:player.y},biome:currentBiome().id,focus:miningFocus,rocks:rocks.map(rock=>({id:rock.id,type:rock.type,scene:rock.scene,barrierId:rock.barrierId,requiredPickaxe:rock.requiredPickaxe,veinId:rock.veinId,hp:rock.hp,shell:rock.shell,broken:rock.broken})),veins:veins.map(vein=>({id:vein.id,status:vein.status,timer:vein.timer,broken:vein.brokenRockIds.size,total:vein.positions.length})),chests:chests.map(chest=>({id:chest.id,name:chest.name,x:chest.x,y:chest.y,ready:chestRequirementMet(chest),opened:!!state.openedChests[chest.id]})),groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,sourceChest:drop.sourceChest})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count},activeContext})),
+    snapshot:()=>JSON.parse(JSON.stringify({state,scene:currentScene,effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower())},player:{x:player.x,y:player.y},biome:currentBiome().id,mine:currentMine()?{id:currentMine().id,name:currentMine().name,width:currentMine().width,height:currentMine().height,style:currentMine().style,solidCount:currentMine().solids.length,barrierIds:currentMine().barriers.map(barrier=>barrier.id),labels:currentMine().labels.map(label=>label[0])}:null,focus:miningFocus,rocks:rocks.map(rock=>({id:rock.id,type:rock.type,scene:rock.scene,barrierId:rock.barrierId,requiredPickaxe:rock.requiredPickaxe,veinId:rock.veinId,hp:rock.hp,shell:rock.shell,broken:rock.broken})),veins:veins.map(vein=>({id:vein.id,status:vein.status,timer:vein.timer,broken:vein.brokenRockIds.size,total:vein.positions.length})),chests:chests.map(chest=>({id:chest.id,name:chest.name,x:chest.x,y:chest.y,ready:chestRequirementMet(chest),opened:!!state.openedChests[chest.id]})),groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,sourceChest:drop.sourceChest})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count},activeContext})),
     reset:resetProgress,
     setPosition:(x,y)=>{const world=currentWorld();player.x=clamp(Number(x),52,world.width-52);player.y=clamp(Number(y),70,world.height-58);updateCamera(true);uiDirty=true},
     setTimeScale:value=>{timeScale=clamp(Number(value)||1,.25,12)},
@@ -1452,7 +1506,7 @@
     collectGroundDrops:()=>{for(const drop of groundDrops)if(drop.scene===currentScene){drop.x=player.x;drop.y=player.y;drop.z=0;drop.settled=true}updateGroundDrops(.001);uiDirty=true},
     expireGroundDrops:()=>{for(const drop of groundDrops)drop.age=GROUND_DROP_LIFETIME;updateGroundDrops(.001)},
     forgeStarVariant:id=>forgeStarVariant(id),
-    enterMine:()=>transitionScene('mossMine'),
+    enterMine:(scene='mossMine')=>transitionScene(scene),
     exitMine:()=>transitionScene('surface'),
     openChest:id=>openChest(chestById(id)),
     interact:performContext,

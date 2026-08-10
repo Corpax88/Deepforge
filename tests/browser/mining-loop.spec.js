@@ -742,3 +742,89 @@ test('Mossvein Mine remains readable on an iPhone viewport',async({page},testInf
   expect(layout.panel.right).toBeLessThanOrEqual(layout.width);
   expect(layout.panel.bottom).toBeLessThanOrEqual(layout.height);
 });
+
+test('every unlocked surface biome leads to its own mine layout',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    window.__deepforgeTest.unlockAllAreas();
+    window.__deepforgeTest.unlockStarfall();
+    window.__deepforgeTest.setPickaxeLevel(5);
+  });
+
+  const cases=[
+    {scene:'moonMine',surface:[1225,720],title:'Moonglass Labyrinth',resource:'moonglass',style:'moon'},
+    {scene:'emberMine',surface:[2340,650],title:'Emberdeep Works',resource:'emberstone',style:'ember'},
+    {scene:'starMine',surface:[3450,690],title:'Starfall Hollow',resource:'astralite',style:'star'}
+  ];
+  const signatures=new Set();
+
+  for(const mine of cases){
+    await page.evaluate(([x,y])=>window.__deepforgeTest.setPosition(x,y),mine.surface);
+    await expect(page.locator('#contextTitle')).toHaveText(mine.title);
+    await page.locator('#contextButton').click();
+    await expect(page.locator('#areaName')).toHaveText(mine.title.toUpperCase());
+
+    const snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+    expect(snapshot.scene).toBe(mine.scene);
+    expect(snapshot.mine.style).toBe(mine.style);
+    expect(snapshot.mine.barrierIds).toHaveLength(2);
+    expect(snapshot.rocks.some(rock=>rock.scene===mine.scene&&rock.type===mine.resource)).toBe(true);
+    signatures.add([snapshot.mine.width,snapshot.mine.height,snapshot.mine.solidCount,snapshot.mine.labels.join('|')].join(':'));
+
+    await page.evaluate(()=>window.__deepforgeTest.exitMine());
+    expect((await page.evaluate(()=>window.__deepforgeTest.snapshot())).scene).toBe('surface');
+  }
+
+  expect(signatures.size).toBe(cases.length);
+});
+
+test('all mine layouts remain readable and distinct across viewports',async({page},testInfo)=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    window.__deepforgeTest.unlockAllAreas();
+    window.__deepforgeTest.unlockStarfall();
+    window.__deepforgeTest.setPickaxeLevel(5);
+  });
+
+  const cases=[
+    {scene:'moonMine',position:[790,700]},
+    {scene:'emberMine',position:[1080,680]},
+    {scene:'starMine',position:[1260,725]}
+  ];
+  for(const mine of cases){
+    await page.evaluate(scene=>window.__deepforgeTest.enterMine(scene),mine.scene);
+    await page.evaluate(([x,y])=>window.__deepforgeTest.setPosition(x,y),mine.position);
+    const layout=await page.evaluate(()=>({width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,canvas:document.getElementById('gameCanvas').getBoundingClientRect().toJSON()}));
+    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width);
+    expect(layout.canvas.width).toBeGreaterThan(0);
+    expect(layout.canvas.height).toBeGreaterThan(0);
+    await page.screenshot({path:testInfo.outputPath(mine.scene+'-layout.png'),fullPage:true});
+    await page.evaluate(()=>window.__deepforgeTest.exitMine());
+  }
+});
+
+test('every new mine passage can be cleared with the intended pickaxe',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    window.__deepforgeTest.unlockAllAreas();
+    window.__deepforgeTest.unlockStarfall();
+    window.__deepforgeTest.setPickaxeLevel(5);
+  });
+  const cases=[
+    {scene:'moonMine',mineTime:900,barriers:[['moon_prism_gate',435,695],['moon_star_lock',955,505]]},
+    {scene:'emberMine',mineTime:1200,barriers:[['ember_bulkhead',455,625],['ember_crucible_lock',1165,452]]},
+    {scene:'starMine',mineTime:3000,barriers:[['star_bridge_lock',800,725],['star_crown_lock',1550,460]]}
+  ];
+
+  for(const mine of cases){
+    await page.evaluate(scene=>window.__deepforgeTest.enterMine(scene),mine.scene);
+    for(const [barrier,x,y] of mine.barriers){
+      await page.evaluate(([px,py])=>window.__deepforgeTest.setPosition(px,py),[x,y]);
+      await page.keyboard.down('Space');
+      await page.waitForTimeout(mine.mineTime);
+      await page.keyboard.up('Space');
+      expect((await page.evaluate(()=>window.__deepforgeTest.snapshot())).state.clearedMineBarriers[barrier]).toBe(true);
+    }
+    await page.evaluate(()=>window.__deepforgeTest.exitMine());
+  }
+});
