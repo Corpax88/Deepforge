@@ -2,12 +2,13 @@
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
-`mine -> pick up ore -> clear bonus veins -> sell -> upgrade -> unlock new areas -> master the Ember Pickaxe -> open Starfall Depths -> choose a Starforge specialization`
+`dig terrain -> open a tunnel -> reveal hidden ore -> collect it -> sell -> upgrade -> dig deeper`
 
 ## Controls
 
 - Desktop: `WASD` / arrow keys to move, hold `Space` to mine, `E` to interact.
 - Mobile: left joystick to move, hold the `MINE` button to swing.
+- Your latest movement direction aims the pickaxe, so push toward a mine wall while holding mine to carve a tunnel.
 - Walk near the Assay Cart, Forge, or sealed gate to reveal their action.
 
 ## Run locally
@@ -23,6 +24,8 @@ Open `http://127.0.0.1:4180` on the same computer.
 ## Prototype scope
 
 - One continuous world with four visually distinct areas.
+- Every mine uses compact destructible terrain grids: aim with movement, hold mine to carve persistent tunnels, and uncover resources hidden inside the mountain.
+- Terrain is stored in typed arrays and only visible cells are drawn, avoiding one heavy object per rock tile on mobile.
 - Stone, copper, Moonglass, armored Emberstone, Astralite, and four valuable rare veins.
 - Five pickaxe tiers with stronger damage and faster swings.
 - Emberstone shells that can be ground down normally or cracked quickly with precision strikes.

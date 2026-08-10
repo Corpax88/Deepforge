@@ -852,3 +852,46 @@ test('every new mine passage can be cleared with the intended pickaxe',async({pa
     await page.evaluate(()=>window.__deepforgeTest.exitMine());
   }
 });
+
+test('mine terrain can be excavated into a persistent player-made tunnel',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    window.__deepforgeTest.enterMine('mossMine');
+    window.__deepforgeTest.setAim(1,0);
+  });
+  const before=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(before.mine.terrain.cellCount).toBeGreaterThan(1000);
+  expect(before.mine.terrain.target).not.toBeNull();
+
+  await page.keyboard.down('Space');
+  await page.waitForTimeout(420);
+  await page.keyboard.up('Space');
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.mine.terrain.dugCells).toBeGreaterThan(0);
+  expect(snapshot.state.mined.stone).toBeGreaterThan(0);
+
+  const dug=snapshot.mine.terrain.dugCells;
+  await page.evaluate(()=>window.__deepforgeTest.save());
+  await page.reload();
+  await page.waitForFunction(()=>window.__deepforgeTest);
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.scene).toBe('mossMine');
+  expect(snapshot.mine.terrain.dugCells).toBe(dug);
+});
+
+test('resources stay hidden until tunneling exposes their terrain cell',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    window.__deepforgeTest.enterMine('mossMine');
+    window.__deepforgeTest.setPosition(315,936);
+    window.__deepforgeTest.setAim(1,0);
+  });
+  let copper=await page.evaluate(()=>window.__deepforgeTest.snapshot().rocks.find(rock=>rock.scene==='mossMine'&&rock.type==='copper'&&rock.x===465));
+  expect(copper.exposed).toBe(false);
+
+  await page.keyboard.down('Space');
+  await page.waitForTimeout(1100);
+  await page.keyboard.up('Space');
+  copper=await page.evaluate(()=>window.__deepforgeTest.snapshot().rocks.find(rock=>rock.scene==='mossMine'&&rock.type==='copper'&&rock.x===465));
+  expect(copper.exposed).toBe(true);
+});

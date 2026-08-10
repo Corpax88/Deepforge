@@ -98,6 +98,8 @@
     {rank:5,power:128,cooldown:.155,gold:3600,sunslag:15,label:'Deepforge Master',shellPower:1.5,bonusYield:.55,precisionDelay:.75}
   ];
   const MINING_RANGE=116;
+  const MINE_TILE_SIZE=48;
+  const MINE_TERRAIN_HP=8;
   const PLAYER_SPEED=340;
   const ROCK_TYPES={
     stone:{label:'Stone',hp:10,value:2,color:'#88928a',edge:'#cbd0ca',accent:'#68736c',respawn:6},
@@ -169,12 +171,12 @@
   let audioContext=null,audioUnlocked=false,impactNoiseBuffer=null;
   let particles=[],floaters=[],rings=[],groundDrops=[];
   let saleMotes=[];
-  let activeContext=null,uiDirty=true,lastSavedSnapshot='',lastRegion=-1,nextDropId=1;
+  let activeContext=null,uiDirty=true,lastSavedSnapshot='',lastRegion=-1,nextDropId=1,terrainSaveDelay=0;
   const pickupBatch={items:Object.create(null),count:0,quiet:0,x:0,y:0,bestType:null};
 
   const input={keys:new Set(),moveX:0,moveY:0,joystickPointer:null,minePointers:new Set(),mineHeld:false};
   const camera={x:0,y:0};
-  const player={x:330,y:690,radius:23,facing:1,walk:0,swing:null,swingCooldown:0,hitRockId:null};
+  const player={x:330,y:690,radius:23,facing:1,aimX:1,aimY:0,walk:0,swing:null,swingCooldown:0,hitRockId:null,hitTerrainIndex:-1};
   const miningFocus={streak:0,timer:0};
   const state=loadState();
   let currentScene=state.location.scene;
@@ -197,6 +199,7 @@
   });
   const rocks=surfaceRocks.concat(mineRocks);
   for(const rock of mineRocks)if(rock.barrierId&&state.clearedMineBarriers[rock.barrierId]){rock.broken=true;rock.respawn=Infinity}
+  const mineTerrain=Object.fromEntries(MINE_SCENES.map(scene=>[scene,createMineTerrain(scene)]));
   const veins=VEIN_DEFINITIONS.map(definition=>({...definition,status:'idle',timer:0,displaySecond:-1,brokenRockIds:new Set()}));
   const chests=CHEST_DEFINITIONS.map(definition=>({...definition}));
   for(const [chestId,rewards] of Object.entries(state.pendingChestLoot)){
@@ -213,7 +216,7 @@
       veinsCompleted:{copper_run:0,moonglass_bloom:0,ember_fault:0,starfall_lattice:0},
       starforgeVariant:null,starforgeUnlocked:{crusher:false,swift:false,prospector:false},
       openedChests:{},pendingChestLoot:{},
-      clearedMineBarriers:{},mineDiscovered:false,discoveredMines:{mossMine:false,moonMine:false,emberMine:false,starMine:false},
+      clearedMineBarriers:{},terrainDug:{mossMine:[],moonMine:[],emberMine:[],starMine:[]},mineDiscovered:false,discoveredMines:{mossMine:false,moonMine:false,emberMine:false,starMine:false},
       location:{scene:'surface',x:330,y:690,surfaceX:330,surfaceY:690},
       totalGold:0,totalSwings:0,precisionHits:0
     };
@@ -252,6 +255,8 @@
         const mine=MINE_DEFINITIONS[scene];
         base.discoveredMines[scene]=!!(raw.discoveredMines&&raw.discoveredMines[scene])||(scene==='mossMine'&&!!raw.mineDiscovered);
         for(const barrier of mine.barriers)base.clearedMineBarriers[barrier.id]=!!(raw.clearedMineBarriers&&raw.clearedMineBarriers[barrier.id]);
+        const dug=raw.terrainDug&&raw.terrainDug[scene];
+        if(Array.isArray(dug))base.terrainDug[scene]=[...new Set(dug.map(Number).filter(Number.isInteger).filter(index=>index>=0&&index<10000))];
       }
       base.mineDiscovered=base.discoveredMines.mossMine;
       if(raw.location&&MINE_SCENES.includes(raw.location.scene)){
@@ -281,6 +286,7 @@
     const fresh=defaultState();
     Object.keys(fresh).forEach(key=>state[key]=fresh[key]);
     for(const rock of rocks){rock.hp=rock.maxHp;rock.shell=rock.maxShell;rock.broken=false;rock.respawn=0;rock.hit=0;rock.glintActive=0;rock.glintTimer=1.4+(rock.id%5)*.45;rock.bonusYield=0}
+    rebuildMineTerrain();
     resetVeins();groundDrops.length=0;nextDropId=1;
     pickupBatch.items=Object.create(null);pickupBatch.count=0;pickupBatch.quiet=0;pickupBatch.bestType=null;
     currentScene='surface';player.x=330;player.y=690;player.swing=null;player.swingCooldown=0;
@@ -357,6 +363,70 @@
   function mineBarrierById(id){for(const scene of MINE_SCENES){const barrier=MINE_DEFINITIONS[scene].barriers.find(item=>item.id===id);if(barrier)return barrier}return null}
   function mineBarrierCleared(id){return !!state.clearedMineBarriers[id]}
   function activeMineSolids(){const mine=currentMine();return mine?mine.solids.concat(mine.barriers.filter(barrier=>!mineBarrierCleared(barrier.id))):[]}
+
+  function createMineTerrain(scene){
+    const mine=MINE_DEFINITIONS[scene],cols=Math.ceil(mine.width/MINE_TILE_SIZE),rows=Math.ceil(mine.height/MINE_TILE_SIZE);
+    const terrain={scene,cols,rows,types:new Uint8Array(cols*rows),hp:new Uint8Array(cols*rows)};
+    terrain.types.fill(1);terrain.hp.fill(MINE_TERRAIN_HP);
+    const clearCell=(col,row)=>{if(col>=0&&row>=0&&col<cols&&row<rows){const index=row*cols+col;terrain.types[index]=0;terrain.hp[index]=0}};
+    const clearCircle=(x,y,radius)=>{
+      const minCol=Math.max(0,Math.floor((x-radius)/MINE_TILE_SIZE)),maxCol=Math.min(cols-1,Math.floor((x+radius)/MINE_TILE_SIZE));
+      const minRow=Math.max(0,Math.floor((y-radius)/MINE_TILE_SIZE)),maxRow=Math.min(rows-1,Math.floor((y+radius)/MINE_TILE_SIZE));
+      for(let row=minRow;row<=maxRow;row++)for(let col=minCol;col<=maxCol;col++){
+        const cx=(col+.5)*MINE_TILE_SIZE,cy=(row+.5)*MINE_TILE_SIZE;if(distance(cx,cy,x,y)<=radius)clearCell(col,row);
+      }
+    };
+    const clearRect=(x,y,w,h)=>{
+      const minCol=Math.max(0,Math.floor(x/MINE_TILE_SIZE)),maxCol=Math.min(cols-1,Math.floor((x+w)/MINE_TILE_SIZE));
+      const minRow=Math.max(0,Math.floor(y/MINE_TILE_SIZE)),maxRow=Math.min(rows-1,Math.floor((y+h)/MINE_TILE_SIZE));
+      for(let row=minRow;row<=maxRow;row++)for(let col=minCol;col<=maxCol;col++)clearCell(col,row);
+    };
+    clearCircle(mine.entrance.x+54,mine.entrance.y,142);
+    for(const wall of mine.solids)clearRect(wall.x,wall.y,wall.w,wall.h);
+    for(const barrier of mine.barriers)clearRect(barrier.x-125,barrier.y-62,barrier.w+250,barrier.h+124);
+    for(const index of state.terrainDug[scene]||[])if(index<terrain.types.length){terrain.types[index]=0;terrain.hp[index]=0}
+    return terrain;
+  }
+
+  function rebuildMineTerrain(){for(const scene of MINE_SCENES)mineTerrain[scene]=createMineTerrain(scene)}
+  function currentTerrain(){return mineTerrain[currentScene]||null}
+  function terrainCellAt(terrain,x,y){
+    if(!terrain)return null;
+    const col=Math.floor(x/MINE_TILE_SIZE),row=Math.floor(y/MINE_TILE_SIZE);
+    if(col<0||row<0||col>=terrain.cols||row>=terrain.rows)return null;
+    const index=row*terrain.cols+col;return{index,col,row,x:(col+.5)*MINE_TILE_SIZE,y:(row+.5)*MINE_TILE_SIZE,type:terrain.types[index],hp:terrain.hp[index]};
+  }
+  function rockIsExposed(rock){
+    if(rock.scene==='surface'||rock.barrierId)return true;
+    const terrain=mineTerrain[rock.scene],cell=terrainCellAt(terrain,rock.x,rock.y);return !cell||cell.type===0;
+  }
+  function nearestTerrainCell(range){
+    const terrain=currentTerrain();if(!terrain)return null;
+    const searchRange=range+MINE_TILE_SIZE*.65;
+    const minCol=Math.max(0,Math.floor((player.x-searchRange)/MINE_TILE_SIZE)),maxCol=Math.min(terrain.cols-1,Math.floor((player.x+searchRange)/MINE_TILE_SIZE));
+    const minRow=Math.max(0,Math.floor((player.y-searchRange)/MINE_TILE_SIZE)),maxRow=Math.min(terrain.rows-1,Math.floor((player.y+searchRange)/MINE_TILE_SIZE));
+    const aimLength=Math.hypot(player.aimX,player.aimY)||1,aimX=player.aimX/aimLength,aimY=player.aimY/aimLength;
+    let best=null,bestScore=Infinity;
+    for(let row=minRow;row<=maxRow;row++)for(let col=minCol;col<=maxCol;col++){
+      const index=row*terrain.cols+col;if(!terrain.types[index])continue;
+      const x=(col+.5)*MINE_TILE_SIZE,y=(row+.5)*MINE_TILE_SIZE,dx=x-player.x,dy=y-player.y,d=Math.hypot(dx,dy);
+      if(d>searchRange||d<player.radius*.55)continue;
+      const alignment=(dx*aimX+dy*aimY)/Math.max(1,d);if(alignment<.9)continue;
+      const score=d+(1-alignment)*115;if(score<bestScore){bestScore=score;best={index,col,row,x,y,type:terrain.types[index],hp:terrain.hp[index]}}
+    }
+    return best;
+  }
+  function terrainCollidesCircle(x,y){
+    const terrain=currentTerrain();if(!terrain)return false;
+    const minCol=Math.max(0,Math.floor((x-player.radius)/MINE_TILE_SIZE)),maxCol=Math.min(terrain.cols-1,Math.floor((x+player.radius)/MINE_TILE_SIZE));
+    const minRow=Math.max(0,Math.floor((y-player.radius)/MINE_TILE_SIZE)),maxRow=Math.min(terrain.rows-1,Math.floor((y+player.radius)/MINE_TILE_SIZE));
+    for(let row=minRow;row<=maxRow;row++)for(let col=minCol;col<=maxCol;col++){
+      const index=row*terrain.cols+col;if(!terrain.types[index])continue;
+      const left=col*MINE_TILE_SIZE,top=row*MINE_TILE_SIZE,nearestX=clamp(x,left,left+MINE_TILE_SIZE),nearestY=clamp(y,top,top+MINE_TILE_SIZE);
+      if(distance(x,y,nearestX,nearestY)<player.radius)return true;
+    }
+    return false;
+  }
 
   function unlockAudio(){
     if(audioUnlocked){if(audioContext&&audioContext.state==='suspended')audioContext.resume();return}
@@ -437,7 +507,7 @@
   function nearestRock(range){
     let best=null,bestDistance=Infinity;
     for(const rock of currentRocks()){
-      if(rock.broken)continue;
+      if(rock.broken||!rockIsExposed(rock))continue;
       const d=distance(player.x,player.y,rock.x,rock.y);
       if(d<bestDistance&&d<=range){bestDistance=d;best=rock}
     }
@@ -446,8 +516,13 @@
 
   function startSwing(manualPress){
     if(player.swing||player.swingCooldown>0)return false;
-    const rock=nearestRock(MINING_RANGE);
-    if(!rock){sound('empty');if(!input.mineHeld)showToast('Move closer to a rock.');player.swingCooldown=.16;return false}
+    const rock=nearestRock(MINING_RANGE),terrainTarget=rock?null:nearestTerrainCell(MINING_RANGE);
+    if(!rock&&!terrainTarget){sound('empty');if(!input.mineHeld)showToast(currentMine()?'Face the mountain to dig.':'Move closer to a rock.');player.swingCooldown=.16;return false}
+    if(terrainTarget){
+      player.facing=terrainTarget.x>=player.x?1:-1;player.hitRockId=null;player.hitTerrainIndex=terrainTarget.index;
+      player.swing={elapsed:0,duration:currentCooldown(),hit:false,precision:false,target:'terrain'};
+      state.totalSwings++;uiDirty=true;return true;
+    }
     const precision=!!manualPress&&rock.glintActive>0;
     if(precision){
       rock.glintActive=0;rock.glintTimer=(2.3+Math.random()*1.7)*currentPrecisionDelay();rock.bonusYield=1;
@@ -457,8 +532,8 @@
     }else if(manualPress&&miningFocus.streak){
       miningFocus.streak=0;miningFocus.timer=0;uiDirty=true;
     }
-    player.facing=rock.x>=player.x?1:-1;player.hitRockId=rock.id;
-    player.swing={elapsed:0,duration:currentCooldown(),hit:false,precision};
+    player.facing=rock.x>=player.x?1:-1;player.hitRockId=rock.id;player.hitTerrainIndex=-1;
+    player.swing={elapsed:0,duration:currentCooldown(),hit:false,precision,target:'rock'};
     state.totalSwings++;uiDirty=true;return true;
   }
 
@@ -488,6 +563,25 @@
     sound(precision?'precision':'hit',rock.type);spawnImpact(rock.x,rock.y,rock.type,feedbackDamage,precision);
     if(precision){state.precisionHits++;floaters.push({x:rock.x,y:rock.y-37,text:'PRECISION!',color:'#fff2a6',age:0,life:.9,size:14})}
     if(rock.shell<=0&&rock.hp<=0)breakRock(rock);
+  }
+
+  function hitTerrain(index){
+    const terrain=currentTerrain();if(!terrain||index<0||index>=terrain.types.length||!terrain.types[index])return;
+    const col=index%terrain.cols,row=Math.floor(index/terrain.cols),x=(col+.5)*MINE_TILE_SIZE,y=(row+.5)*MINE_TILE_SIZE;
+    const hiddenBefore=mineRocks.filter(rock=>rock.scene===currentScene&&!rock.barrierId&&!rock.broken&&!rockIsExposed(rock));
+    terrain.hp[index]=Math.max(0,terrain.hp[index]-currentPower());
+    spawnImpact(x,y,'stone',currentPower(),false);sound('hit','stone');
+    if(terrain.hp[index]>0)return;
+    terrain.types[index]=0;
+    state.terrainDug[currentScene].push(index);
+    state.mined.stone++;spawnGroundDrop('stone',1,x,y);spawnBreak(x,y,'stone');sound('break','stone');
+    floaters.push({x,y:y-22,text:'TUNNEL OPEN',color:'#d8c49a',age:0,life:.72,size:11});
+    const revealed=hiddenBefore.filter(rock=>rockIsExposed(rock));
+    if(revealed.length){
+      const rock=revealed[0],data=ROCK_TYPES[rock.type];rings.push({x:rock.x,y:rock.y,age:0,life:.72,radius:24,color:data.edge});
+      floaters.push({x:rock.x,y:rock.y-48,text:data.label.toUpperCase()+' REVEALED',color:data.edge,age:0,life:1.35,size:15});showToast('You uncovered '+data.label+'.');sound('unlock');
+    }
+    terrainSaveDelay=.4;uiDirty=true;
   }
 
   function breakRock(rock){
@@ -772,6 +866,7 @@
 
   function collidesWithMine(x,y){
     if(!currentMine())return false;
+    if(terrainCollidesCircle(x,y))return true;
     for(const solid of activeMineSolids()){
       const nearestX=clamp(x,solid.x,solid.x+solid.w),nearestY=clamp(y,solid.y,solid.y+solid.h);
       if(distance(x,y,nearestX,nearestY)<player.radius)return true;
@@ -784,6 +879,7 @@
     time+=dt;
     const move=updateInputVector();
     if(Math.abs(move.x)+Math.abs(move.y)>.02){
+      const aimLength=Math.hypot(move.x,move.y);if(aimLength>.05){player.aimX=move.x/aimLength;player.aimY=move.y/aimLength}
       let nx=player.x+move.x*PLAYER_SPEED*dt,ny=player.y+move.y*PLAYER_SPEED*dt;
       const world=currentWorld();nx=clamp(nx,52,world.width-52);ny=clamp(ny,70,world.height-58);
       if(currentScene==='surface'){
@@ -807,7 +903,9 @@
       player.swing.elapsed+=dt;
       const hitAt=player.swing.duration*.36;
       if(!player.swing.hit&&player.swing.elapsed>=hitAt){
-        player.swing.hit=true;hitRock(rocks.find(rock=>rock.id===player.hitRockId),player.swing.precision);
+        player.swing.hit=true;
+        if(player.swing.target==='terrain')hitTerrain(player.hitTerrainIndex);
+        else hitRock(rocks.find(rock=>rock.id===player.hitRockId),player.swing.precision);
       }
       if(player.swing.elapsed>=player.swing.duration){player.swing=null;player.swingCooldown=.02}
     }
@@ -828,6 +926,7 @@
       }
     }
     if(currentScene==='surface')updateVeins(dt);updateGroundDrops(dt);
+    if(terrainSaveDelay>0){terrainSaveDelay=Math.max(0,terrainSaveDelay-dt);if(terrainSaveDelay===0)saveState()}
     updateEffects(dt);updateGoldCount(dt);updateCamera(false);
     const region=currentScene==='surface'?regionIndexAt(player.x):-1;
     if(region!==lastRegion){lastRegion=region;game.dataset.biome=currentBiome().id;uiDirty=true}
@@ -893,10 +992,13 @@
     const activeVein=veins.find(vein=>vein.status==='active');
     objective.hidden=starforgeMastered();
     if(currentMine()){
-      const mine=currentMine(),barrier=mine.barriers.find(item=>!mineBarrierCleared(item.id));
-      if(barrier&&state.pickaxeLevel<barrier.requiresPickaxe)objectiveText.textContent='Return with a '+PICKAXES[barrier.requiresPickaxe].name;
-      else if(barrier)objectiveText.textContent=barrier.objective||'Break the '+barrier.label;
-      else objectiveText.textContent=mine.finalGoal;
+      const mine=currentMine(),barrier=mine.barriers.find(item=>!mineBarrierCleared(item.id)),nearBarrier=barrier&&distance(player.x,player.y,barrier.x+barrier.w*.5,barrier.y+barrier.h*.5)<190;
+      const revealed=mineRocks.find(rock=>rock.scene===currentScene&&!rock.barrierId&&!rock.broken&&rockIsExposed(rock));
+      if(nearBarrier&&state.pickaxeLevel<barrier.requiresPickaxe)objectiveText.textContent='Return with a '+PICKAXES[barrier.requiresPickaxe].name;
+      else if(nearBarrier)objectiveText.textContent=barrier.objective||'Break the '+barrier.label;
+      else if(revealed)objectiveText.textContent='Mine the exposed '+ROCK_TYPES[revealed.type].label;
+      else if(state.terrainDug[currentScene].length===0)objectiveText.textContent='Mine into the mountain';
+      else objectiveText.textContent='Dig deeper - what is behind the wall?';
     }
     else if(starforgeMastered())objectiveText.textContent='Deepforge mastered - every Starforge form forged';
     else if(activeVein)objectiveText.textContent=activeVein.label+' '+activeVein.brokenRockIds.size+'/'+activeVein.positions.length+' - '+Math.ceil(activeVein.timer)+'s';
@@ -1015,7 +1117,7 @@
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
     ctx.save();ctx.scale(viewZoom,viewZoom);
     if(currentMine()){
-      drawMineGround();drawMineWalls();drawMineEntrance(false,currentMine());drawRocks();drawWorldLabels();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
+      drawMineGround();drawMineTerrain();drawMineWalls();drawMineEntrance(false,currentMine());drawRocks();drawWorldLabels();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
     }else{
       drawGround();drawBiomeStructure();drawDecorations();drawStations();drawSurfaceMineEntrances();drawGate();drawVeins();drawRocks();drawChests();drawWorldLabels();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
     }
@@ -1049,6 +1151,22 @@
   function drawMineRoute(points,edge,center){
     ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=edge;ctx.lineWidth=72;ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.stroke();
     ctx.strokeStyle=center;ctx.globalAlpha=.38;ctx.lineWidth=3;ctx.stroke();ctx.globalAlpha=1;
+  }
+
+  function drawMineTerrain(){
+    const mine=currentMine(),terrain=currentTerrain();if(!mine||!terrain)return;
+    const startCol=Math.max(0,Math.floor(camera.x/MINE_TILE_SIZE)-1),endCol=Math.min(terrain.cols-1,Math.ceil((camera.x+viewWidth)/MINE_TILE_SIZE)+1);
+    const startRow=Math.max(0,Math.floor(camera.y/MINE_TILE_SIZE)-1),endRow=Math.min(terrain.rows-1,Math.ceil((camera.y+viewHeight)/MINE_TILE_SIZE)+1);
+    const target=nearestTerrainCell(MINING_RANGE);
+    for(let row=startRow;row<=endRow;row++)for(let col=startCol;col<=endCol;col++){
+      const index=row*terrain.cols+col;if(!terrain.types[index])continue;
+      const x=col*MINE_TILE_SIZE-camera.x,y=row*MINE_TILE_SIZE-camera.y,seed=(index*37+row*11)%29,damage=1-terrain.hp[index]/MINE_TERRAIN_HP;
+      ctx.fillStyle=mine.wall;ctx.fillRect(x-.5,y-.5,MINE_TILE_SIZE+1,MINE_TILE_SIZE+1);
+      ctx.strokeStyle=mine.wallEdge;ctx.globalAlpha=.28;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+4,y+13+seed%8);ctx.lineTo(x+18+seed%12,y+4);ctx.lineTo(x+MINE_TILE_SIZE-3,y+17+seed%11);ctx.lineTo(x+MINE_TILE_SIZE-9,y+MINE_TILE_SIZE-4);ctx.lineTo(x+9,y+MINE_TILE_SIZE-7);ctx.closePath();ctx.stroke();
+      if(damage>0){ctx.globalAlpha=.45+.4*damage;ctx.strokeStyle='#171713';ctx.lineWidth=1+damage*2;ctx.beginPath();ctx.moveTo(x+MINE_TILE_SIZE*.48,y+5);ctx.lineTo(x+MINE_TILE_SIZE*.36,y+21);ctx.lineTo(x+MINE_TILE_SIZE*.58,y+30);ctx.lineTo(x+MINE_TILE_SIZE*.45,y+MINE_TILE_SIZE-4);ctx.stroke()}
+      if(target&&target.index===index){ctx.globalAlpha=.72;ctx.strokeStyle=mine.detail;ctx.lineWidth=3;ctx.strokeRect(x+3,y+3,MINE_TILE_SIZE-6,MINE_TILE_SIZE-6)}
+      ctx.globalAlpha=1;
+    }
   }
 
   function drawMineWalls(){
@@ -1313,7 +1431,7 @@
   function drawRocks(){
     const target=nearestRock(MINING_RANGE);
     for(const rock of currentRocks()){
-      if(rock.broken)continue;
+      if(rock.broken||!rockIsExposed(rock))continue;
       const p=worldToScreen(rock.x,rock.y);if(p.x<-70||p.y<-70||p.x>viewWidth+70||p.y>viewHeight+70)continue;
       const data=ROCK_TYPES[rock.type],pulse=target&&target.id===rock.id?1+Math.sin(time*6)*.025:1;
       ctx.save();ctx.translate(p.x,p.y);ctx.scale(pulse,pulse);
@@ -1479,8 +1597,8 @@
   });
   window.addEventListener('keyup',event=>{input.keys.delete(event.code);if(event.code==='Space'){input.mineHeld=false;mineButton.classList.remove('active')}});
   window.addEventListener('blur',()=>{input.keys.clear();releaseTouchControls()});
-  window.addEventListener('pagehide',releaseTouchControls);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseTouchControls()});
+  window.addEventListener('pagehide',()=>{releaseTouchControls();saveState(true)});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseTouchControls();saveState(true)}});
   contextButton.addEventListener('click',performContext);
   starforgeChoices.addEventListener('click',event=>{const button=event.target.closest('[data-starforge]');if(button&&!button.disabled){unlockAudio();forgeStarVariant(button.dataset.starforge)}});
   menuButton.addEventListener('click',()=>{unlockAudio();menuShade.hidden=false;updateLedger()});resumeButton.addEventListener('click',()=>menuShade.hidden=true);
@@ -1489,11 +1607,15 @@
   window.addEventListener('resize',resize,{passive:true});
 
   window.__deepforgeTest={
-    snapshot:()=>JSON.parse(JSON.stringify({state,scene:currentScene,effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower())},player:{x:player.x,y:player.y},biome:currentBiome().id,mine:currentMine()?{id:currentMine().id,name:currentMine().name,width:currentMine().width,height:currentMine().height,style:currentMine().style,solids:currentMine().solids,solidCount:currentMine().solids.length,barrierIds:currentMine().barriers.map(barrier=>barrier.id),labels:currentMine().labels.map(label=>label[0])}:null,focus:miningFocus,rocks:rocks.map(rock=>({id:rock.id,type:rock.type,x:rock.x,y:rock.y,scene:rock.scene,barrierId:rock.barrierId,requiredPickaxe:rock.requiredPickaxe,veinId:rock.veinId,hp:rock.hp,shell:rock.shell,broken:rock.broken})),veins:veins.map(vein=>({id:vein.id,status:vein.status,timer:vein.timer,broken:vein.brokenRockIds.size,total:vein.positions.length})),chests:chests.map(chest=>({id:chest.id,name:chest.name,x:chest.x,y:chest.y,ready:chestRequirementMet(chest),opened:!!state.openedChests[chest.id]})),groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,sourceChest:drop.sourceChest})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count},activeContext})),
+    snapshot:()=>JSON.parse(JSON.stringify({state,scene:currentScene,effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower())},player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},biome:currentBiome().id,mine:currentMine()?{id:currentMine().id,name:currentMine().name,width:currentMine().width,height:currentMine().height,style:currentMine().style,solids:currentMine().solids,solidCount:currentMine().solids.length,barrierIds:currentMine().barriers.map(barrier=>barrier.id),labels:currentMine().labels.map(label=>label[0]),terrain:{tileSize:MINE_TILE_SIZE,cellCount:currentTerrain().types.length,solidCells:currentTerrain().types.reduce((sum,type)=>sum+(type?1:0),0),dugCells:state.terrainDug[currentScene].length,target:nearestTerrainCell(MINING_RANGE)}}:null,focus:miningFocus,rocks:rocks.map(rock=>({id:rock.id,type:rock.type,x:rock.x,y:rock.y,scene:rock.scene,barrierId:rock.barrierId,requiredPickaxe:rock.requiredPickaxe,veinId:rock.veinId,hp:rock.hp,shell:rock.shell,broken:rock.broken,exposed:rockIsExposed(rock)})),veins:veins.map(vein=>({id:vein.id,status:vein.status,timer:vein.timer,broken:vein.brokenRockIds.size,total:vein.positions.length})),chests:chests.map(chest=>({id:chest.id,name:chest.name,x:chest.x,y:chest.y,ready:chestRequirementMet(chest),opened:!!state.openedChests[chest.id]})),groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,sourceChest:drop.sourceChest})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count},activeContext})),
     reset:resetProgress,
     setPosition:(x,y)=>{const world=currentWorld();player.x=clamp(Number(x),52,world.width-52);player.y=clamp(Number(y),70,world.height-58);updateCamera(true);uiDirty=true},
+    setAim:(x,y)=>{const length=Math.hypot(Number(x)||0,Number(y)||0);if(length){player.aimX=Number(x)/length;player.aimY=Number(y)/length;player.facing=player.aimX<0?-1:1}},
+    mineOnce:()=>{if(player.swingCooldown>0)update(player.swingCooldown+.001);if(startSwing(true)){update(currentCooldown());update(.021);return true}return false},
+    step:seconds=>update(clamp(Number(seconds)||0,0,2)),
     setTimeScale:value=>{timeScale=clamp(Number(value)||1,.25,12)},
     restoreRocks:()=>{for(const rock of rocks){rock.broken=!!(rock.barrierId&&state.clearedMineBarriers[rock.barrierId]);rock.hp=rock.maxHp;rock.shell=rock.maxShell;rock.respawn=rock.broken?Infinity:0;rock.glintActive=0;rock.bonusYield=0}resetVeins();uiDirty=true},
+    restoreTerrain:()=>{for(const scene of MINE_SCENES)state.terrainDug[scene]=[];rebuildMineTerrain();uiDirty=true},
     primePrecision:()=>{const rock=nearestRock(MINING_RANGE);if(rock){rock.glintActive=.72;return rock.id}return null},
     grantCargo:(type,amount)=>{if(Object.prototype.hasOwnProperty.call(state.cargo,type)){state.cargo[type]+=Math.max(0,Number(amount)||0);uiDirty=true}},
     grantMined:(type,amount)=>{if(Object.prototype.hasOwnProperty.call(state.mined,type)){state.mined[type]+=Math.max(0,Number(amount)||0);uiDirty=true}},
