@@ -584,3 +584,161 @@ test('Ember Mastery remains readable on an iPhone viewport',async({page},testInf
   expect(layout.footer.right).toBeLessThanOrEqual(layout.width);
   await page.screenshot({path:testInfo.outputPath('ember-mastery-iphone.png'),fullPage:true});
 });
+
+test('pickaxe-gated treasure chest opens into physical loot and persists',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__deepforgeTest.setPosition(885,205));
+  await expect(page.locator('#contextTitle')).toHaveText('Ironbound Chest');
+  await expect(page.locator('#contextDetail')).toContainText('Requires Iron Pickaxe');
+  await expect(page.locator('#contextButton')).toHaveText('LOCKED');
+  await expect(page.locator('#contextButton')).toBeDisabled();
+
+  await page.evaluate(()=>window.__deepforgeTest.setPickaxeLevel(2));
+  await expect(page.locator('#contextButton')).toHaveText('OPEN');
+  await expect(page.locator('#contextButton')).toBeEnabled();
+  await page.locator('#contextButton').click();
+
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.openedChests.moss_ironbound).toBe(true);
+  expect(snapshot.groundDrops.filter(drop=>drop.sourceChest==='moss_ironbound')).toHaveLength(6);
+  expect(snapshot.state.pendingChestLoot.moss_ironbound).toEqual({copper:5,gold:1});
+
+  await page.evaluate(()=>window.__deepforgeTest.save());
+  await page.reload();
+  await page.waitForFunction(()=>window.__deepforgeTest);
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.openedChests.moss_ironbound).toBe(true);
+  expect(snapshot.groundDrops.filter(drop=>drop.sourceChest==='moss_ironbound')).toHaveLength(6);
+
+  await page.evaluate(()=>window.__deepforgeTest.collectGroundDrops());
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.cargo.copper).toBe(5);
+  expect(snapshot.state.cargo.gold).toBe(1);
+  expect(snapshot.state.pendingChestLoot.moss_ironbound).toBeUndefined();
+});
+
+test('deeper chest tiers require their matching progression milestone',async({page})=>{
+  await freshGame(page);
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.chests.find(chest=>chest.id==='moon_reliquary').ready).toBe(false);
+  expect(snapshot.chests.find(chest=>chest.id==='ember_vault').ready).toBe(false);
+  expect(snapshot.chests.find(chest=>chest.id==='star_coffer').ready).toBe(false);
+
+  await page.evaluate(()=>window.__deepforgeTest.setPickaxeLevel(4));
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.chests.find(chest=>chest.id==='moon_reliquary').ready).toBe(true);
+  expect(snapshot.chests.find(chest=>chest.id==='ember_vault').ready).toBe(false);
+
+  await page.evaluate(()=>window.__deepforgeTest.setPickaxeLevel(5));
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.chests.find(chest=>chest.id==='ember_vault').ready).toBe(true);
+  expect(snapshot.chests.find(chest=>chest.id==='star_coffer').ready).toBe(false);
+
+  await page.evaluate(()=>{
+    window.__deepforgeTest.grantCargo('astralite',6);
+    window.__deepforgeTest.grantCargo('crownstone',1);
+    window.__deepforgeTest.forgeStarVariant('crusher');
+  });
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.chests.find(chest=>chest.id==='star_coffer').ready).toBe(true);
+});
+
+test('treasure chest interaction remains readable on iPhone',async({page},testInfo)=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__deepforgeTest.setPosition(600,1110));
+  await expect(page.locator('#contextTitle')).toHaveText("Miner's Supply Chest");
+  const layout=await page.evaluate(()=>(
+    {
+      width:document.documentElement.clientWidth,
+      scrollWidth:document.documentElement.scrollWidth,
+      panel:document.getElementById('contextPanel').getBoundingClientRect().toJSON(),
+      button:document.getElementById('contextButton').getBoundingClientRect().toJSON()
+    }
+  ));
+  expect(layout.scrollWidth).toBe(layout.width);
+  expect(layout.panel.left).toBeGreaterThanOrEqual(0);
+  expect(layout.panel.right).toBeLessThanOrEqual(layout.width);
+  expect(layout.button.right).toBeLessThanOrEqual(layout.width);
+  await page.screenshot({path:testInfo.outputPath('treasure-chest-iphone.png'),fullPage:true});
+});
+
+test('Mossvein Mine supports entry, gated passages, persistence, and exit',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__deepforgeTest.setPosition(165,690));
+  await expect(page.locator('#contextTitle')).toHaveText('Mossvein Mine');
+  await page.locator('#contextButton').click();
+
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.scene).toBe('mossMine');
+  expect(snapshot.biome).toBe('mossMine');
+  expect(snapshot.state.mineDiscovered).toBe(true);
+
+  await page.evaluate(()=>{
+    window.__deepforgeTest.setTimeScale(1);
+    window.__deepforgeTest.setPosition(570,640);
+  });
+  await page.keyboard.down('ArrowRight');
+  await page.waitForTimeout(650);
+  await page.keyboard.up('ArrowRight');
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.player.x).toBeLessThan(610);
+
+  await page.evaluate(()=>{
+    window.__deepforgeTest.setTimeScale(12);
+    window.__deepforgeTest.setPosition(555,640);
+  });
+  await page.keyboard.down('Space');
+  await page.waitForTimeout(1200);
+  await page.keyboard.up('Space');
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.clearedMineBarriers.outer_rubble).toBe(true);
+
+  await page.evaluate(()=>window.__deepforgeTest.setPosition(1160,640));
+  const ironBefore=await page.evaluate(()=>window.__deepforgeTest.snapshot().rocks.filter(rock=>rock.barrierId==='iron_seam').map(rock=>rock.hp));
+  await page.keyboard.down('Space');
+  await page.waitForTimeout(300);
+  await page.keyboard.up('Space');
+  const ironLocked=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(ironLocked.rocks.filter(rock=>rock.barrierId==='iron_seam').map(rock=>rock.hp)).toEqual(ironBefore);
+
+  await page.evaluate(()=>window.__deepforgeTest.setPickaxeLevel(2));
+  await page.keyboard.down('Space');
+  await page.waitForTimeout(1000);
+  await page.keyboard.up('Space');
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.clearedMineBarriers.iron_seam).toBe(true);
+
+  await page.evaluate(()=>{window.__deepforgeTest.setPosition(1535,1010);window.__deepforgeTest.save()});
+  await page.reload();
+  await page.waitForFunction(()=>window.__deepforgeTest);
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.scene).toBe('mossMine');
+  expect(snapshot.state.clearedMineBarriers.outer_rubble).toBe(true);
+  expect(snapshot.state.clearedMineBarriers.iron_seam).toBe(true);
+
+  await page.evaluate(()=>window.__deepforgeTest.setPosition(145,640));
+  await expect(page.locator('#contextTitle')).toHaveText('Return to Mossvein Quarry');
+  await page.locator('#contextButton').click();
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.scene).toBe('surface');
+  expect(snapshot.biome).toBe('mossvein');
+});
+
+test('Mossvein Mine remains readable on an iPhone viewport',async({page},testInfo)=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__deepforgeTest.enterMine());
+  await page.evaluate(()=>window.__deepforgeTest.setPosition(555,640));
+  await expect(page.locator('#areaName')).toHaveText('MOSSVEIN MINE');
+  await expect(page.locator('#objectiveText')).toHaveText('Break through the loose rubble');
+  await page.screenshot({path:testInfo.outputPath('mossvein-mine-mobile.png'),fullPage:true});
+  await page.evaluate(()=>window.__deepforgeTest.setPosition(145,640));
+  await expect(page.locator('#contextTitle')).toHaveText('Return to Mossvein Quarry');
+  const layout=await page.evaluate(()=>{
+    const panel=document.querySelector('#contextPanel').getBoundingClientRect();
+    return{scrollWidth:document.documentElement.scrollWidth,width:innerWidth,panel:{left:panel.left,right:panel.right,bottom:panel.bottom},height:innerHeight};
+  });
+  expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width);
+  expect(layout.panel.left).toBeGreaterThanOrEqual(0);
+  expect(layout.panel.right).toBeLessThanOrEqual(layout.width);
+  expect(layout.panel.bottom).toBeLessThanOrEqual(layout.height);
+});
