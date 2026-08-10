@@ -879,6 +879,25 @@ test('mine terrain can be excavated into a persistent player-made tunnel',async(
   expect(snapshot.mine.terrain.dugCells).toBe(dug);
 });
 
+test('held movement targets the first blocking terrain cell instead of skipping deeper',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    window.__deepforgeTest.enterMine('mossMine');
+    window.__deepforgeTest.setPosition(180,503);
+    window.__deepforgeTest.setAim(.899,-.438);
+  });
+
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  const firstTarget=snapshot.mine.terrain.target;
+  expect(firstTarget).not.toBeNull();
+  expect(firstTarget.index).toBe(364);
+
+  await page.evaluate(()=>window.__deepforgeTest.mineOnce());
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.mine.terrain.target.index).toBe(firstTarget.index);
+  expect(snapshot.mine.terrain.target.hp).toBeLessThan(firstTarget.hp);
+});
+
 test('resources stay hidden until tunneling exposes their terrain cell',async({page})=>{
   await freshGame(page);
   await page.evaluate(()=>{

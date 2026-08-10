@@ -402,19 +402,26 @@
   }
   function nearestTerrainCell(range){
     const terrain=currentTerrain();if(!terrain)return null;
-    const searchRange=range+MINE_TILE_SIZE*.65;
-    const minCol=Math.max(0,Math.floor((player.x-searchRange)/MINE_TILE_SIZE)),maxCol=Math.min(terrain.cols-1,Math.floor((player.x+searchRange)/MINE_TILE_SIZE));
-    const minRow=Math.max(0,Math.floor((player.y-searchRange)/MINE_TILE_SIZE)),maxRow=Math.min(terrain.rows-1,Math.floor((player.y+searchRange)/MINE_TILE_SIZE));
     const aimLength=Math.hypot(player.aimX,player.aimY)||1,aimX=player.aimX/aimLength,aimY=player.aimY/aimLength;
-    let best=null,bestScore=Infinity;
-    for(let row=minRow;row<=maxRow;row++)for(let col=minCol;col<=maxCol;col++){
-      const index=row*terrain.cols+col;if(!terrain.types[index])continue;
-      const x=(col+.5)*MINE_TILE_SIZE,y=(row+.5)*MINE_TILE_SIZE,dx=x-player.x,dy=y-player.y,d=Math.hypot(dx,dy);
-      if(d>searchRange||d<player.radius*.55)continue;
-      const alignment=(dx*aimX+dy*aimY)/Math.max(1,d);if(alignment<.9)continue;
-      const score=d+(1-alignment)*115;if(score<bestScore){bestScore=score;best={index,col,row,x,y,type:terrain.types[index],hp:terrain.hp[index]}}
+    const maxTravel=range+MINE_TILE_SIZE*.65-player.radius,step=MINE_TILE_SIZE/12;
+    for(let travel=0;travel<=maxTravel;travel+=step){
+      const probeX=player.x+aimX*travel,probeY=player.y+aimY*travel;
+      const minCol=Math.max(0,Math.floor((probeX-player.radius)/MINE_TILE_SIZE)),maxCol=Math.min(terrain.cols-1,Math.floor((probeX+player.radius)/MINE_TILE_SIZE));
+      const minRow=Math.max(0,Math.floor((probeY-player.radius)/MINE_TILE_SIZE)),maxRow=Math.min(terrain.rows-1,Math.floor((probeY+player.radius)/MINE_TILE_SIZE));
+      let best=null,bestLateral=Infinity,bestForward=Infinity;
+      for(let row=minRow;row<=maxRow;row++)for(let col=minCol;col<=maxCol;col++){
+        const index=row*terrain.cols+col;if(!terrain.types[index])continue;
+        const left=col*MINE_TILE_SIZE,top=row*MINE_TILE_SIZE,nearestX=clamp(probeX,left,left+MINE_TILE_SIZE),nearestY=clamp(probeY,top,top+MINE_TILE_SIZE);
+        if(distance(probeX,probeY,nearestX,nearestY)>=player.radius)continue;
+        const x=(col+.5)*MINE_TILE_SIZE,y=(row+.5)*MINE_TILE_SIZE,dx=x-player.x,dy=y-player.y;
+        const forward=dx*aimX+dy*aimY,lateral=Math.abs(dx*-aimY+dy*aimX);
+        if(lateral<bestLateral-.01||Math.abs(lateral-bestLateral)<.01&&forward<bestForward){
+          bestLateral=lateral;bestForward=forward;best={index,col,row,x,y,type:terrain.types[index],hp:terrain.hp[index]};
+        }
+      }
+      if(best)return best;
     }
-    return best;
+    return null;
   }
   function terrainCollidesCircle(x,y){
     const terrain=currentTerrain();if(!terrain)return false;
