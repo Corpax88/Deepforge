@@ -803,6 +803,30 @@ test('all mine layouts remain readable and distinct across viewports',async({pag
   }
 });
 
+test('mine nodes never respawn inside permanent walls',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    window.__deepforgeTest.unlockAllAreas();
+    window.__deepforgeTest.unlockStarfall();
+  });
+
+  for(const scene of ['mossMine','moonMine','emberMine','starMine']){
+    await page.evaluate(mineScene=>window.__deepforgeTest.enterMine(mineScene),scene);
+    const blockedNodes=await page.evaluate(()=>{
+      const snapshot=window.__deepforgeTest.snapshot();
+      return snapshot.rocks
+        .filter(rock=>rock.scene===snapshot.scene&&!rock.barrierId)
+        .filter(rock=>snapshot.mine.solids.some(solid=>
+          rock.x>=solid.x&&rock.x<=solid.x+solid.w&&
+          rock.y>=solid.y&&rock.y<=solid.y+solid.h
+        ))
+        .map(rock=>({id:rock.id,type:rock.type,x:rock.x,y:rock.y}));
+    });
+    expect(blockedNodes).toEqual([]);
+    await page.evaluate(()=>window.__deepforgeTest.exitMine());
+  }
+});
+
 test('every new mine passage can be cleared with the intended pickaxe',async({page})=>{
   await freshGame(page);
   await page.evaluate(()=>{
