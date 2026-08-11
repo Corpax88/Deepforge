@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.3.0 - Expanded Depths**
+Current build: **Deepforge v0.4.0 - Discovery Pass**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
@@ -28,6 +28,8 @@ Open `http://127.0.0.1:4180` on the same computer.
 - One continuous world with four visually distinct areas.
 - Every mine is now four to five times deeper: aim with movement, hold mine to carve persistent tunnels, and let the camera follow the descent.
 - Terrain is generated lazily in compact 16 x 16-cell typed-array chunks and only visible cells are drawn, avoiding one heavy object per rock tile on mobile.
+- Deterministic connected ore veins run through the deep terrain in clusters of 4-10 nodes instead of isolated random rocks.
+- Buried chambers remain visually concealed until the player breaks through their perimeter, then permanently reveal their name and rare find.
 - Stone, copper, Moonglass, armored Emberstone, Astralite, and four valuable rare veins.
 - Five pickaxe tiers with stronger damage and faster swings.
 - Emberstone shells that can be ground down normally or cracked quickly with precision strikes.

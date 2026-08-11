@@ -883,7 +883,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.3.0',name:'EXPANDED DEPTHS'});
+  expect(snapshot.build).toEqual({version:'0.4.0',name:'DISCOVERY PASS'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -898,9 +898,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.3.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.4.0');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.3.0 · EXPANDED DEPTHS');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.4.0 · DISCOVERY PASS');
 });
 
 test('held movement targets the first blocking terrain cell instead of skipping deeper',async({page})=>{
@@ -937,4 +937,51 @@ test('resources stay hidden until tunneling exposes their terrain cell',async({p
   await page.keyboard.up('Space');
   copper=await page.evaluate(()=>window.__deepforgeTest.snapshot().rocks.find(rock=>rock.scene==='mossMine'&&rock.type==='copper'&&rock.x===465));
   expect(copper.exposed).toBe(true);
+});
+
+test('Discovery Pass builds deep connected ore veins and rare finds in every mine',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    window.__deepforgeTest.unlockAllAreas();
+    window.__deepforgeTest.unlockStarfall();
+  });
+  for(const scene of ['mossMine','moonMine','emberMine','starMine']){
+    await page.evaluate(sceneId=>window.__deepforgeTest.enterMine(sceneId),scene);
+    const snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+    const veins=snapshot.mine.discovery.deposits.filter(deposit=>!deposit.rareFind);
+    const rareFinds=snapshot.mine.discovery.deposits.filter(deposit=>deposit.rareFind);
+    expect(snapshot.mine.discovery.caverns.length).toBeGreaterThanOrEqual(6);
+    expect(veins.length).toBeGreaterThanOrEqual(10);
+    expect(veins.every(deposit=>deposit.size>=4&&deposit.size<=10)).toBe(true);
+    expect(rareFinds).toHaveLength(2);
+    const generated=snapshot.rocks.filter(rock=>rock.scene===scene&&rock.depositId);
+    expect(generated.some(rock=>rock.y>1500)).toBe(true);
+    expect(generated.filter(rock=>rock.rareFind).every(rock=>!rock.exposed)).toBe(true);
+    await page.evaluate(()=>window.__deepforgeTest.exitMine());
+  }
+});
+
+test('breaking into a hidden chamber reveals its rare find and persists discovery',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  const rareFind=snapshot.rocks.find(rock=>rock.scene==='mossMine'&&rock.rareFind);
+  const cavern=snapshot.mine.discovery.caverns.find(item=>item.id===rareFind.cavernId);
+  expect(cavern.discovered).toBe(false);
+  expect(rareFind.exposed).toBe(false);
+
+  await page.evaluate(index=>{
+    window.__deepforgeTest.mineTerrainCell(index);
+    window.__deepforgeTest.mineTerrainCell(index);
+    window.__deepforgeTest.save();
+  },cavern.boundaryIndex);
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.mine.discovery.caverns.find(item=>item.id===cavern.id).discovered).toBe(true);
+  expect(snapshot.rocks.find(rock=>rock.id===rareFind.id).exposed).toBe(true);
+
+  await page.reload();
+  await page.waitForFunction(()=>window.__deepforgeTest);
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.discoveredCaverns[cavern.id]).toBe(true);
+  expect(snapshot.rocks.find(rock=>rock.id===rareFind.id).exposed).toBe(true);
 });

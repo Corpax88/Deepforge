@@ -34,7 +34,7 @@
   const resumeButton=document.getElementById('resumeButton');
   const resetButton=document.getElementById('resetButton');
 
-  const BUILD={version:'0.3.0',name:'EXPANDED DEPTHS'};
+  const BUILD={version:'0.4.0',name:'DISCOVERY PASS'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -117,6 +117,64 @@
     astralite:{label:'Astralite',hp:325,shell:72,value:260,color:'#303158',edge:'#b9c7ff',accent:'#17182f',respawn:18,armored:true,starfall:true},
     crownstone:{label:'Crownstone',hp:460,shell:110,value:620,color:'#49355f',edge:'#f4c5ff',accent:'#21172e',respawn:38,rare:true,armored:true,starfall:true}
   };
+  const MINE_DISCOVERY_PROFILES={
+    mossMine:{seed:13579,cavernCount:6,veinCount:11,main:'copper',secondary:'copper',rare:'gold',requiredPickaxe:1,names:['Forgotten Pocket','Rootbound Hollow','Old Prospector Room','Echo Chamber','Buried Camp','Gilded Hollow']},
+    moonMine:{seed:24680,cavernCount:7,veinCount:12,main:'moonglass',secondary:'copper',rare:'starshard',requiredPickaxe:3,names:['Prism Pocket','Silent Grotto','Glasswater Hollow','Moonlit Fault','Crystal Nest','Lost Survey','Starshard Grotto']},
+    emberMine:{seed:97531,cavernCount:8,veinCount:13,main:'emberstone',secondary:'moonglass',rare:'sunslag',requiredPickaxe:4,names:['Cinder Pocket','Ashen Vault','Collapsed Furnace','Heatwell Hollow','Old Smelter','Burning Grotto','Magma Scar','Crucible Pocket']},
+    starMine:{seed:86420,cavernCount:9,veinCount:14,main:'astralite',secondary:'emberstone',rare:'crownstone',requiredPickaxe:5,names:['Fallen Pocket','Silent Orbit','Astral Hollow','Void Grotto','Lost Observatory','Starlight Vault','Crown Scar','Celestial Nest','Last Light Chamber']}
+  };
+
+  function seededRandom(seed){
+    let value=seed>>>0;return()=>{value=(Math.imul(value,1664525)+1013904223)>>>0;return value/4294967296};
+  }
+
+  function generateMineDiscoveries(scene){
+    const mine=MINE_DEFINITIONS[scene],profile=MINE_DISCOVERY_PROFILES[scene],random=seededRandom(profile.seed);
+    const cols=Math.ceil(mine.width/MINE_TILE_SIZE),rows=Math.ceil(mine.height/MINE_TILE_SIZE),caverns=[],deposits=[],rocks=[];
+    const firstDeepRow=Math.ceil(1500/MINE_TILE_SIZE),lastDeepRow=rows-7,deepRows=lastDeepRow-firstDeepRow;
+    for(let index=0;index<profile.cavernCount;index++){
+      const band=(index+.5)/profile.cavernCount,row=Math.round(firstDeepRow+deepRows*band+(random()-.5)*4);
+      const col=4+Math.floor(random()*Math.max(1,cols-8)),rx=112+Math.floor(random()*65),ry=82+Math.floor(random()*52);
+      caverns.push({id:scene+'_cavern_'+(index+1),name:profile.names[index],x:(col+.5)*MINE_TILE_SIZE,y:(row+.5)*MINE_TILE_SIZE,rx,ry});
+    }
+    const insideCavern=(x,y,padding=0)=>caverns.some(cavern=>Math.pow((x-cavern.x)/(cavern.rx+padding),2)+Math.pow((y-cavern.y)/(cavern.ry+padding),2)<1);
+    const directions=[[1,0],[1,1],[0,1],[-1,1]],occupiedCells=new Set();
+    for(let depositIndex=0;depositIndex<profile.veinCount;depositIndex++){
+      const rare=(depositIndex+1)%5===0,type=rare?profile.rare:random()<.18?profile.secondary:profile.main;
+      let positions=[];
+      for(let attempt=0;attempt<48&&positions.length<4;attempt++){
+        const length=4+Math.floor(random()*7),direction=directions[Math.floor(random()*directions.length)];
+        const startCol=3+Math.floor(random()*Math.max(1,cols-7)),startRow=firstDeepRow+Math.floor(random()*Math.max(1,deepRows-8));
+        const candidate=[],used=new Set();
+        for(let step=0;step<length;step++){
+          const wobble=step>1&&step%3===0?(random()<.5?-1:1):0;
+          const col=Math.max(2,Math.min(cols-3,startCol+direction[0]*step+(direction[1]?wobble:0)));
+          const row=Math.max(firstDeepRow,Math.min(rows-3,startRow+direction[1]*step+(direction[0]?wobble:0)));
+          const key=col+','+row,x=(col+.5)*MINE_TILE_SIZE,y=(row+.5)*MINE_TILE_SIZE;
+          if(used.has(key)||occupiedCells.has(key)||insideCavern(x,y,72))continue;
+          used.add(key);candidate.push([x,y]);
+        }
+        if(candidate.length>=4)positions=candidate;
+      }
+      if(positions.length<4)continue;
+      const id=scene+'_vein_'+(depositIndex+1);
+      deposits.push({id,type,positions});
+      for(const position of positions){
+        occupiedCells.add(Math.floor(position[0]/MINE_TILE_SIZE)+','+Math.floor(position[1]/MINE_TILE_SIZE));
+        rocks.push({type,x:position[0],y:position[1],depositId:id,requiredPickaxe:profile.requiredPickaxe});
+      }
+    }
+    for(let index=0;index<caverns.length;index++){
+      if(index!==Math.floor(caverns.length*.45)&&index!==caverns.length-1)continue;
+      const cavern=caverns[index],id=cavern.id+'_rare_find';
+      const x=(Math.floor(cavern.x/MINE_TILE_SIZE)+.5)*MINE_TILE_SIZE,y=(Math.floor(cavern.y/MINE_TILE_SIZE)+.5)*MINE_TILE_SIZE;
+      deposits.push({id,type:profile.rare,positions:[[x,y]],rareFind:true,cavernId:cavern.id});
+      rocks.push({type:profile.rare,x,y,depositId:id,cavernId:cavern.id,rareFind:true,requiredPickaxe:profile.requiredPickaxe});
+    }
+    return{caverns,deposits,rocks};
+  }
+
+  const MINE_DISCOVERIES=Object.fromEntries(Object.keys(MINE_DISCOVERY_PROFILES).map(scene=>[scene,generateMineDiscoveries(scene)]));
   const PICKAXES=[
     null,
     {name:'Worn Pickaxe',power:4,cooldown:.72,cost:0},
@@ -195,10 +253,13 @@
   let mineRockIndex=0;
   const mineRocks=MINE_SCENES.flatMap(scene=>{
     const mine=MINE_DEFINITIONS[scene];
-    return mine.rocks.map(entry=>{
-      const barrier=entry[3]?mine.barriers.find(item=>item.id===entry[3]):null,index=mineRockIndex++;
-      return{id:1000+index,type:entry[0],x:entry[1],y:entry[2],hp:ROCK_TYPES[entry[0]].hp,maxHp:ROCK_TYPES[entry[0]].hp,
-        shell:0,maxShell:0,scene,veinId:null,barrierId:entry[3]||null,requiredPickaxe:barrier?barrier.requiresPickaxe:1,
+    const entries=mine.rocks.concat(MINE_DISCOVERIES[scene].rocks);
+    return entries.map(entry=>{
+      const generated=!Array.isArray(entry),type=generated?entry.type:entry[0],barrierId=generated?null:entry[3]||null;
+      const barrier=barrierId?mine.barriers.find(item=>item.id===barrierId):null,index=mineRockIndex++,data=ROCK_TYPES[type],shell=generated?(data.shell||0):0;
+      return{id:1000+index,type,x:generated?entry.x:entry[1],y:generated?entry.y:entry[2],hp:data.hp,maxHp:data.hp,
+        shell,maxShell:shell,scene,veinId:null,depositId:generated?entry.depositId:null,cavernId:generated?entry.cavernId||null:null,rareFind:generated&&!!entry.rareFind,
+        barrierId,requiredPickaxe:generated?entry.requiredPickaxe:barrier?barrier.requiresPickaxe:1,
         respawn:0,hit:0,broken:false,seed:(index*53)%97,glintTimer:1.5+(index%5)*.48,glintActive:0,bonusYield:0};
     });
   });
@@ -221,7 +282,7 @@
       veinsCompleted:{copper_run:0,moonglass_bloom:0,ember_fault:0,starfall_lattice:0},
       starforgeVariant:null,starforgeUnlocked:{crusher:false,swift:false,prospector:false},
       openedChests:{},pendingChestLoot:{},
-      clearedMineBarriers:{},terrainDug:{mossMine:[],moonMine:[],emberMine:[],starMine:[]},mineDiscovered:false,discoveredMines:{mossMine:false,moonMine:false,emberMine:false,starMine:false},
+      clearedMineBarriers:{},terrainDug:{mossMine:[],moonMine:[],emberMine:[],starMine:[]},discoveredCaverns:{},mineDiscovered:false,discoveredMines:{mossMine:false,moonMine:false,emberMine:false,starMine:false},
       location:{scene:'surface',x:330,y:690,surfaceX:330,surfaceY:690},
       totalGold:0,totalSwings:0,precisionHits:0
     };
@@ -260,6 +321,7 @@
         const mine=MINE_DEFINITIONS[scene];
         base.discoveredMines[scene]=!!(raw.discoveredMines&&raw.discoveredMines[scene])||(scene==='mossMine'&&!!raw.mineDiscovered);
         for(const barrier of mine.barriers)base.clearedMineBarriers[barrier.id]=!!(raw.clearedMineBarriers&&raw.clearedMineBarriers[barrier.id]);
+        for(const cavern of MINE_DISCOVERIES[scene].caverns)base.discoveredCaverns[cavern.id]=!!(raw.discoveredCaverns&&raw.discoveredCaverns[cavern.id]);
         const dug=raw.terrainDug&&raw.terrainDug[scene];
         const terrainCellCount=Math.ceil(mine.width/MINE_TILE_SIZE)*Math.ceil(mine.height/MINE_TILE_SIZE);
         if(Array.isArray(dug))base.terrainDug[scene]=[...new Set(dug.map(Number).filter(Number.isInteger).filter(index=>index>=0&&index<terrainCellCount))];
@@ -372,7 +434,7 @@
 
   function createMineTerrain(scene){
     const mine=MINE_DEFINITIONS[scene],cols=Math.ceil(mine.width/MINE_TILE_SIZE),rows=Math.ceil(mine.height/MINE_TILE_SIZE);
-    const terrain={scene,cols,rows,chunks:new Map(),cleared:new Set(),dug:new Set(state.terrainDug[scene]||[])};
+    const terrain={scene,cols,rows,chunks:new Map(),cleared:new Set(),dug:new Set(state.terrainDug[scene]||[]),caverns:[]};
     const clearCell=(col,row)=>{if(col>=0&&row>=0&&col<cols&&row<rows)terrain.cleared.add(row*cols+col)};
     const clearCircle=(x,y,radius)=>{
       const minCol=Math.max(0,Math.floor((x-radius)/MINE_TILE_SIZE)),maxCol=Math.min(cols-1,Math.floor((x+radius)/MINE_TILE_SIZE));
@@ -389,6 +451,28 @@
     clearCircle(mine.entrance.x+54,mine.entrance.y,142);
     for(const wall of mine.solids)clearRect(wall.x,wall.y,wall.w,wall.h);
     for(const barrier of mine.barriers)clearRect(barrier.x-125,barrier.y-62,barrier.w+250,barrier.h+124);
+    for(const definition of MINE_DISCOVERIES[scene].caverns){
+      const cavern={...definition,cells:[],cellSet:new Set(),boundary:new Set()};
+      const minCol=Math.max(0,Math.floor((cavern.x-cavern.rx)/MINE_TILE_SIZE)),maxCol=Math.min(cols-1,Math.floor((cavern.x+cavern.rx)/MINE_TILE_SIZE));
+      const minRow=Math.max(0,Math.floor((cavern.y-cavern.ry)/MINE_TILE_SIZE)),maxRow=Math.min(rows-1,Math.floor((cavern.y+cavern.ry)/MINE_TILE_SIZE));
+      for(let row=minRow;row<=maxRow;row++)for(let col=minCol;col<=maxCol;col++){
+        const x=(col+.5)*MINE_TILE_SIZE,y=(row+.5)*MINE_TILE_SIZE;
+        if(Math.pow((x-cavern.x)/cavern.rx,2)+Math.pow((y-cavern.y)/cavern.ry,2)>1)continue;
+        const index=row*cols+col;cavern.cells.push(index);cavern.cellSet.add(index);clearCell(col,row);
+      }
+      terrain.caverns.push(cavern);
+    }
+    for(const cavern of terrain.caverns){
+      for(const index of cavern.cells){
+        const col=index%cols,row=Math.floor(index/cols);
+        for(const [dc,dr] of [[-1,0],[1,0],[0,-1],[0,1]]){
+          const nextCol=col+dc,nextRow=row+dr;if(nextCol<0||nextRow<0||nextCol>=cols||nextRow>=rows)continue;
+          const nextIndex=nextRow*cols+nextCol;if(!cavern.cellSet.has(nextIndex)&&!terrain.cleared.has(nextIndex))cavern.boundary.add(nextIndex);
+        }
+      }
+      if([...cavern.boundary].some(index=>terrain.dug.has(index)))state.discoveredCaverns[cavern.id]=true;
+      delete cavern.cellSet;
+    }
     return terrain;
   }
 
@@ -426,8 +510,15 @@
     if(col<0||row<0||col>=terrain.cols||row>=terrain.rows)return null;
     const index=row*terrain.cols+col;return{index,col,row,x:(col+.5)*MINE_TILE_SIZE,y:(row+.5)*MINE_TILE_SIZE,type:terrainTypeAt(terrain,col,row),hp:terrainHpAt(terrain,col,row)};
   }
+  function cavernIsDiscovered(id){return !!state.discoveredCaverns[id]}
+  function discoverCavernFromCell(terrain,index){
+    if(!terrain)return null;
+    const cavern=terrain.caverns.find(item=>!cavernIsDiscovered(item.id)&&item.boundary.has(index));if(!cavern)return null;
+    state.discoveredCaverns[cavern.id]=true;uiDirty=true;return cavern;
+  }
   function rockIsExposed(rock){
     if(rock.scene==='surface'||rock.barrierId)return true;
+    if(rock.cavernId&&!cavernIsDiscovered(rock.cavernId))return false;
     const terrain=mineTerrain[rock.scene],cell=terrainCellAt(terrain,rock.x,rock.y);return !cell||cell.type===0;
   }
   function nearestTerrainCell(range){
@@ -614,10 +705,20 @@
     state.terrainDug[currentScene].push(index);
     state.mined.stone++;spawnGroundDrop('stone',1,x,y);spawnBreak(x,y,'stone');sound('break','stone');
     floaters.push({x,y:y-22,text:'TUNNEL OPEN',color:'#d8c49a',age:0,life:.72,size:11});
+    const cavern=discoverCavernFromCell(terrain,index);
+    if(cavern){
+      rings.push({x,y,age:0,life:.95,radius:32,color:currentMine().detail});
+      floaters.push({x,y:y-48,text:'HIDDEN CHAMBER',color:currentMine().detail,age:0,life:1.5,size:17});
+    }
     const revealed=hiddenBefore.filter(rock=>rockIsExposed(rock));
     if(revealed.length){
-      const rock=revealed[0],data=ROCK_TYPES[rock.type];rings.push({x:rock.x,y:rock.y,age:0,life:.72,radius:24,color:data.edge});
-      floaters.push({x:rock.x,y:rock.y-48,text:data.label.toUpperCase()+' REVEALED',color:data.edge,age:0,life:1.35,size:15});showToast('You uncovered '+data.label+'.');sound('unlock');
+      const rock=revealed[0],data=ROCK_TYPES[rock.type],label=rock.rareFind?'RARE '+data.label.toUpperCase():rock.depositId?data.label.toUpperCase()+' VEIN':data.label.toUpperCase()+' REVEALED';
+      rings.push({x:rock.x,y:rock.y,age:0,life:.72,radius:24,color:data.edge});
+      floaters.push({x:rock.x,y:rock.y-48,text:label,color:data.edge,age:0,life:1.35,size:15});
+    }
+    if(cavern||revealed.length){
+      const rock=revealed[0],detail=rock?(rock.rareFind?' Rare '+ROCK_TYPES[rock.type].label+' waits inside.':' You struck a '+ROCK_TYPES[rock.type].label+' vein.'):' It was buried in the rock.';
+      showToast((cavern?cavern.name+' discovered.':'New deposit uncovered.')+detail);sound('unlock');
     }
     terrainSaveDelay=.4;uiDirty=true;
   }
@@ -1183,12 +1284,28 @@
       drawMineRoute([[160,750],[510,750],[900,725],[1260,725],[1650,460],[2020,460]],'#242650','#777fc1');
       ctx.fillStyle='rgba(224,226,255,.6)';for(let i=0;i<55;i++){const x=(i*173)%mine.width,y=(i*271)%mine.height,r=i%9===0?2:1;ctx.fillRect(x,y,r,r)}
     }
+    for(const cavern of currentTerrain().caverns){
+      if(!cavernIsDiscovered(cavern.id))continue;
+      const screenX=origin.x+cavern.x,screenY=origin.y+cavern.y;if(screenX+cavern.rx<-50||screenY+cavern.ry<-50||screenX-cavern.rx>viewWidth+50||screenY-cavern.ry>viewHeight+50)continue;
+      ctx.save();ctx.translate(cavern.x,cavern.y);ctx.fillStyle='rgba(4,7,7,.42)';ctx.strokeStyle=mine.detail;ctx.globalAlpha=.82;ctx.lineWidth=3;
+      ctx.beginPath();ctx.ellipse(0,0,cavern.rx,cavern.ry,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.globalAlpha=1;
+      ctx.fillStyle='rgba(5,8,7,.78)';ctx.fillRect(-68,-11,136,22);ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 9px Georgia';ctx.fillText(cavern.name.toUpperCase(),0,3);ctx.restore();
+    }
     ctx.restore();
   }
 
   function drawMineRoute(points,edge,center){
     ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=edge;ctx.lineWidth=72;ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.stroke();
     ctx.strokeStyle=center;ctx.globalAlpha=.38;ctx.lineWidth=3;ctx.stroke();ctx.globalAlpha=1;
+  }
+
+  function drawMineTerrainCell(mine,index,col,row,damage,targeted){
+    const x=col*MINE_TILE_SIZE-camera.x,y=row*MINE_TILE_SIZE-camera.y,seed=(index*37+row*11)%29;
+    ctx.fillStyle=mine.wall;ctx.fillRect(x-.5,y-.5,MINE_TILE_SIZE+1,MINE_TILE_SIZE+1);
+    ctx.strokeStyle=mine.wallEdge;ctx.globalAlpha=.28;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+4,y+13+seed%8);ctx.lineTo(x+18+seed%12,y+4);ctx.lineTo(x+MINE_TILE_SIZE-3,y+17+seed%11);ctx.lineTo(x+MINE_TILE_SIZE-9,y+MINE_TILE_SIZE-4);ctx.lineTo(x+9,y+MINE_TILE_SIZE-7);ctx.closePath();ctx.stroke();
+    if(damage>0){ctx.globalAlpha=.45+.4*damage;ctx.strokeStyle='#171713';ctx.lineWidth=1+damage*2;ctx.beginPath();ctx.moveTo(x+MINE_TILE_SIZE*.48,y+5);ctx.lineTo(x+MINE_TILE_SIZE*.36,y+21);ctx.lineTo(x+MINE_TILE_SIZE*.58,y+30);ctx.lineTo(x+MINE_TILE_SIZE*.45,y+MINE_TILE_SIZE-4);ctx.stroke()}
+    if(targeted){ctx.globalAlpha=.72;ctx.strokeStyle=mine.detail;ctx.lineWidth=3;ctx.strokeRect(x+3,y+3,MINE_TILE_SIZE-6,MINE_TILE_SIZE-6)}
+    ctx.globalAlpha=1;
   }
 
   function drawMineTerrain(){
@@ -1198,12 +1315,14 @@
     const target=nearestTerrainCell(MINING_RANGE);
     for(let row=startRow;row<=endRow;row++)for(let col=startCol;col<=endCol;col++){
       const index=row*terrain.cols+col,type=terrainTypeAt(terrain,col,row);if(!type)continue;
-      const x=col*MINE_TILE_SIZE-camera.x,y=row*MINE_TILE_SIZE-camera.y,seed=(index*37+row*11)%29,damage=1-terrainHpAt(terrain,col,row)/MINE_TERRAIN_HP;
-      ctx.fillStyle=mine.wall;ctx.fillRect(x-.5,y-.5,MINE_TILE_SIZE+1,MINE_TILE_SIZE+1);
-      ctx.strokeStyle=mine.wallEdge;ctx.globalAlpha=.28;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+4,y+13+seed%8);ctx.lineTo(x+18+seed%12,y+4);ctx.lineTo(x+MINE_TILE_SIZE-3,y+17+seed%11);ctx.lineTo(x+MINE_TILE_SIZE-9,y+MINE_TILE_SIZE-4);ctx.lineTo(x+9,y+MINE_TILE_SIZE-7);ctx.closePath();ctx.stroke();
-      if(damage>0){ctx.globalAlpha=.45+.4*damage;ctx.strokeStyle='#171713';ctx.lineWidth=1+damage*2;ctx.beginPath();ctx.moveTo(x+MINE_TILE_SIZE*.48,y+5);ctx.lineTo(x+MINE_TILE_SIZE*.36,y+21);ctx.lineTo(x+MINE_TILE_SIZE*.58,y+30);ctx.lineTo(x+MINE_TILE_SIZE*.45,y+MINE_TILE_SIZE-4);ctx.stroke()}
-      if(target&&target.index===index){ctx.globalAlpha=.72;ctx.strokeStyle=mine.detail;ctx.lineWidth=3;ctx.strokeRect(x+3,y+3,MINE_TILE_SIZE-6,MINE_TILE_SIZE-6)}
-      ctx.globalAlpha=1;
+      drawMineTerrainCell(mine,index,col,row,1-terrainHpAt(terrain,col,row)/MINE_TERRAIN_HP,target&&target.index===index);
+    }
+    for(const cavern of terrain.caverns){
+      if(cavernIsDiscovered(cavern.id))continue;
+      for(const index of cavern.cells){
+        const col=index%terrain.cols,row=Math.floor(index/terrain.cols);if(col<startCol||col>endCol||row<startRow||row>endRow)continue;
+        drawMineTerrainCell(mine,index,col,row,0,false);
+      }
     }
   }
 
@@ -1645,7 +1764,21 @@
   window.addEventListener('resize',resize,{passive:true});
 
   window.__deepforgeTest={
-    snapshot:()=>JSON.parse(JSON.stringify({build:BUILD,state,scene:currentScene,effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower())},player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,mine:currentMine()?{id:currentMine().id,name:currentMine().name,width:currentMine().width,height:currentMine().height,style:currentMine().style,solids:currentMine().solids,solidCount:currentMine().solids.length,barrierIds:currentMine().barriers.map(barrier=>barrier.id),labels:currentMine().labels.map(label=>label[0]),terrain:{tileSize:MINE_TILE_SIZE,chunkCells:MINE_CHUNK_CELLS,totalChunks:Math.ceil(currentTerrain().cols/MINE_CHUNK_CELLS)*Math.ceil(currentTerrain().rows/MINE_CHUNK_CELLS),activeChunks:currentTerrain().chunks.size,cellCount:currentTerrain().cols*currentTerrain().rows,solidCells:terrainSolidCellCount(currentTerrain()),dugCells:state.terrainDug[currentScene].length,target:nearestTerrainCell(MINING_RANGE)}}:null,focus:miningFocus,rocks:rocks.map(rock=>({id:rock.id,type:rock.type,x:rock.x,y:rock.y,scene:rock.scene,barrierId:rock.barrierId,requiredPickaxe:rock.requiredPickaxe,veinId:rock.veinId,hp:rock.hp,shell:rock.shell,broken:rock.broken,exposed:rockIsExposed(rock)})),veins:veins.map(vein=>({id:vein.id,status:vein.status,timer:vein.timer,broken:vein.brokenRockIds.size,total:vein.positions.length})),chests:chests.map(chest=>({id:chest.id,name:chest.name,x:chest.x,y:chest.y,ready:chestRequirementMet(chest),opened:!!state.openedChests[chest.id]})),groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,sourceChest:drop.sourceChest})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count},activeContext})),
+    snapshot:()=>JSON.parse(JSON.stringify({
+      build:BUILD,state,scene:currentScene,
+      effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower())},
+      player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,
+      mine:currentMine()?{
+        id:currentMine().id,name:currentMine().name,width:currentMine().width,height:currentMine().height,style:currentMine().style,solids:currentMine().solids,solidCount:currentMine().solids.length,barrierIds:currentMine().barriers.map(barrier=>barrier.id),labels:currentMine().labels.map(label=>label[0]),
+        terrain:{tileSize:MINE_TILE_SIZE,chunkCells:MINE_CHUNK_CELLS,totalChunks:Math.ceil(currentTerrain().cols/MINE_CHUNK_CELLS)*Math.ceil(currentTerrain().rows/MINE_CHUNK_CELLS),activeChunks:currentTerrain().chunks.size,cellCount:currentTerrain().cols*currentTerrain().rows,solidCells:terrainSolidCellCount(currentTerrain()),dugCells:state.terrainDug[currentScene].length,target:nearestTerrainCell(MINING_RANGE)},
+        discovery:{caverns:currentTerrain().caverns.map(cavern=>({id:cavern.id,name:cavern.name,x:cavern.x,y:cavern.y,rx:cavern.rx,ry:cavern.ry,cellCount:cavern.cells.length,boundaryIndex:[...cavern.boundary][0],discovered:cavernIsDiscovered(cavern.id)})),deposits:MINE_DISCOVERIES[currentScene].deposits.map(deposit=>({id:deposit.id,type:deposit.type,size:deposit.positions.length,rareFind:!!deposit.rareFind,cavernId:deposit.cavernId||null}))}
+      }:null,
+      focus:miningFocus,
+      rocks:rocks.map(rock=>({id:rock.id,type:rock.type,x:rock.x,y:rock.y,scene:rock.scene,barrierId:rock.barrierId,requiredPickaxe:rock.requiredPickaxe,veinId:rock.veinId,depositId:rock.depositId,cavernId:rock.cavernId,rareFind:rock.rareFind,hp:rock.hp,shell:rock.shell,broken:rock.broken,exposed:rockIsExposed(rock)})),
+      veins:veins.map(vein=>({id:vein.id,status:vein.status,timer:vein.timer,broken:vein.brokenRockIds.size,total:vein.positions.length})),
+      chests:chests.map(chest=>({id:chest.id,name:chest.name,x:chest.x,y:chest.y,ready:chestRequirementMet(chest),opened:!!state.openedChests[chest.id]})),
+      groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,sourceChest:drop.sourceChest})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count},activeContext
+    })),
     reset:resetProgress,
     setPosition:(x,y)=>{const world=currentWorld();player.x=clamp(Number(x),52,world.width-52);player.y=clamp(Number(y),70,world.height-58);updateCamera(true);uiDirty=true},
     setAim:(x,y)=>{const length=Math.hypot(Number(x)||0,Number(y)||0);if(length){player.aimX=Number(x)/length;player.aimY=Number(y)/length;player.facing=player.aimX<0?-1:1}},
@@ -1653,7 +1786,8 @@
     step:seconds=>update(clamp(Number(seconds)||0,0,2)),
     setTimeScale:value=>{timeScale=clamp(Number(value)||1,.25,12)},
     restoreRocks:()=>{for(const rock of rocks){rock.broken=!!(rock.barrierId&&state.clearedMineBarriers[rock.barrierId]);rock.hp=rock.maxHp;rock.shell=rock.maxShell;rock.respawn=rock.broken?Infinity:0;rock.glintActive=0;rock.bonusYield=0}resetVeins();uiDirty=true},
-    restoreTerrain:()=>{for(const scene of MINE_SCENES)state.terrainDug[scene]=[];rebuildMineTerrain();uiDirty=true},
+    restoreTerrain:()=>{for(const scene of MINE_SCENES){state.terrainDug[scene]=[];for(const cavern of MINE_DISCOVERIES[scene].caverns)state.discoveredCaverns[cavern.id]=false}rebuildMineTerrain();uiDirty=true},
+    mineTerrainCell:index=>{hitTerrain(Number(index));return terrainTypeAt(currentTerrain(),Number(index)%currentTerrain().cols,Math.floor(Number(index)/currentTerrain().cols))},
     primePrecision:()=>{const rock=nearestRock(MINING_RANGE);if(rock){rock.glintActive=.72;return rock.id}return null},
     grantCargo:(type,amount)=>{if(Object.prototype.hasOwnProperty.call(state.cargo,type)){state.cargo[type]+=Math.max(0,Number(amount)||0);uiDirty=true}},
     grantMined:(type,amount)=>{if(Object.prototype.hasOwnProperty.call(state.mined,type)){state.mined[type]+=Math.max(0,Number(amount)||0);uiDirty=true}},
