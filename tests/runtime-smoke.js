@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.5.1');
-assert.equal(api.snapshot().build.name,'MINING COMFORT');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.5.1');
+assert.equal(api.snapshot().build.version,'0.6.0');
+assert.equal(api.snapshot().build.name,'POCKET REWARDS');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.6.0');
 
 api.enterMine('mossMine');
 api.setPosition(180,503);api.setAim(.899,-.438);
@@ -66,6 +66,26 @@ assert.ok(after.feedback.particleCount<=260);
 
 api.restoreTerrain();
 before=api.snapshot();
+const cacheCavern=before.mine.discovery.caverns.find(item=>item.reward.kind==='cache');
+assert.ok(before.mine.discovery.caverns.every(item=>['cache','crystal','motherlode','shrine'].includes(item.reward.kind)));
+const cargoBefore=Object.values(before.state.cargo).reduce((total,amount)=>total+amount,0);
+api.mineTerrainCell(cacheCavern.boundaryIndex);api.mineTerrainCell(cacheCavern.boundaryIndex);
+api.setPosition(cacheCavern.x,cacheCavern.y);api.claimPocketReward(cacheCavern.reward.id);api.save();
+after=api.snapshot();
+assert.equal(after.mine.discovery.caverns.find(item=>item.id===cacheCavern.id).reward.claimed,true);
+assert.equal(after.feedback.lastPocketReward.kind,'cache');
+assert.ok(Object.values(after.state.cargo).reduce((total,amount)=>total+amount,0)>cargoBefore||after.groundDrops.some(drop=>drop.sourcePocket===cacheCavern.reward.id));
+
+const motherlodeCavern=after.mine.discovery.caverns.find(item=>item.reward.kind==='motherlode');
+api.mineTerrainCell(motherlodeCavern.boundaryIndex);api.mineTerrainCell(motherlodeCavern.boundaryIndex);
+const motherlodeDeposit=api.snapshot().mine.discovery.deposits.find(item=>item.pocketRewardId===motherlodeCavern.reward.id);
+for(let index=0;index<motherlodeDeposit.size;index++)api.breakDepositRock(motherlodeDeposit.id,index);
+after=api.snapshot();
+assert.equal(after.state.claimedPocketRewards[motherlodeCavern.reward.id],true);
+assert.equal(after.feedback.lastPocketReward.kind,'motherlode');
+assert.ok(after.rocks.filter(rock=>rock.pocketRewardId===motherlodeCavern.reward.id).every(rock=>rock.broken));
+
+before=api.snapshot();
 const rareFind=before.rocks.find(rock=>rock.scene==='mossMine'&&rock.rareFind);
 const cavern=before.mine.discovery.caverns.find(item=>item.id===rareFind.cavernId);
 api.mineTerrainCell(cavern.boundaryIndex);api.mineTerrainCell(cavern.boundaryIndex);api.save();
@@ -80,4 +100,5 @@ runtime=createRuntime();
 after=runtime.api.snapshot();
 assert.equal(after.scene,'mossMine');
 assert.equal(after.state.discoveredCaverns[cavern.id],true);
-console.log('Runtime smoke passed: targeting, feedback, discovery, particle cap, and save reload.');
+assert.equal(after.state.claimedPocketRewards[cacheCavern.reward.id],true);
+console.log('Runtime smoke passed: targeting, feedback, pocket rewards, particle cap, and save reload.');

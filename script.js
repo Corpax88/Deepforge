@@ -34,7 +34,7 @@
   const resumeButton=document.getElementById('resumeButton');
   const resetButton=document.getElementById('resetButton');
 
-  const BUILD={version:'0.5.1',name:'MINING COMFORT'};
+  const BUILD={version:'0.6.0',name:'POCKET REWARDS'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -124,6 +124,7 @@
     emberMine:{seed:97531,cavernCount:8,veinCount:13,main:'emberstone',secondary:'moonglass',rare:'sunslag',requiredPickaxe:4,names:['Cinder Pocket','Ashen Vault','Collapsed Furnace','Heatwell Hollow','Old Smelter','Burning Grotto','Magma Scar','Crucible Pocket']},
     starMine:{seed:86420,cavernCount:9,veinCount:14,main:'astralite',secondary:'emberstone',rare:'crownstone',requiredPickaxe:5,names:['Fallen Pocket','Silent Orbit','Astral Hollow','Void Grotto','Lost Observatory','Starlight Vault','Crown Scar','Celestial Nest','Last Light Chamber']}
   };
+  const POCKET_REWARD_KINDS=['cache','crystal','motherlode','shrine'];
 
   function seededRandom(seed){
     let value=seed>>>0;return()=>{value=(Math.imul(value,1664525)+1013904223)>>>0;return value/4294967296};
@@ -136,7 +137,13 @@
     for(let index=0;index<profile.cavernCount;index++){
       const band=(index+.5)/profile.cavernCount,row=Math.round(firstDeepRow+deepRows*band+(random()-.5)*4);
       const col=4+Math.floor(random()*Math.max(1,cols-8)),rx=112+Math.floor(random()*65),ry=82+Math.floor(random()*52);
-      caverns.push({id:scene+'_cavern_'+(index+1),name:profile.names[index],x:(col+.5)*MINE_TILE_SIZE,y:(row+.5)*MINE_TILE_SIZE,rx,ry});
+      const kind=POCKET_REWARD_KINDS[(index+MINE_SCENES.indexOf(scene))%POCKET_REWARD_KINDS.length],rewardId=scene+'_pocket_reward_'+(index+1);
+      const reward={id:rewardId,kind,type:kind==='crystal'?profile.rare:profile.main,label:kind==='cache'?'BURIED CACHE':kind==='crystal'?'CRYSTAL CLUSTER':kind==='motherlode'?'MOTHERLODE':'RESTORATIVE SHRINE'};
+      if(kind==='cache'){
+        reward.rewards={};reward.rewards[profile.main]=3+MINE_SCENES.indexOf(scene);
+        reward.rewards[profile.secondary]=(reward.rewards[profile.secondary]||0)+2;
+      }
+      caverns.push({id:scene+'_cavern_'+(index+1),name:profile.names[index],x:(col+.5)*MINE_TILE_SIZE,y:(row+.5)*MINE_TILE_SIZE,rx,ry,reward});
     }
     const insideCavern=(x,y,padding=0)=>caverns.some(cavern=>Math.pow((x-cavern.x)/(cavern.rx+padding),2)+Math.pow((y-cavern.y)/(cavern.ry+padding),2)<1);
     const directions=[[1,0],[1,1],[0,1],[-1,1]],occupiedCells=new Set();
@@ -166,8 +173,16 @@
       }
     }
     for(let index=0;index<caverns.length;index++){
+      const cavern=caverns[index],reward=cavern.reward;
+      if(reward.kind==='crystal'||reward.kind==='motherlode'){
+        const offsets=reward.kind==='crystal'?[[-50,12],[0,-28],[50,12]]:[[-58,-12],[-30,28],[0,-24],[30,28],[58,-12]];
+        const positions=offsets.map(([offsetX,offsetY])=>[(Math.floor((cavern.x+offsetX)/MINE_TILE_SIZE)+.5)*MINE_TILE_SIZE,(Math.floor((cavern.y+offsetY)/MINE_TILE_SIZE)+.5)*MINE_TILE_SIZE]);
+        const id=reward.id+'_deposit';
+        deposits.push({id,type:reward.type,positions,cavernId:cavern.id,pocketRewardId:reward.id,pocketReward:true});
+        for(const position of positions)rocks.push({type:reward.type,x:position[0],y:position[1],depositId:id,cavernId:cavern.id,pocketRewardId:reward.id,pocketReward:true,requiredPickaxe:profile.requiredPickaxe});
+      }
       if(index!==Math.floor(caverns.length*.45)&&index!==caverns.length-1)continue;
-      const cavern=caverns[index],id=cavern.id+'_rare_find';
+      const id=cavern.id+'_rare_find';
       const x=(Math.floor(cavern.x/MINE_TILE_SIZE)+.5)*MINE_TILE_SIZE,y=(Math.floor(cavern.y/MINE_TILE_SIZE)+.5)*MINE_TILE_SIZE;
       deposits.push({id,type:profile.rare,positions:[[x,y]],rareFind:true,cavernId:cavern.id});
       rocks.push({type:profile.rare,x,y,depositId:id,cavernId:cavern.id,rareFind:true,requiredPickaxe:profile.requiredPickaxe});
@@ -236,7 +251,7 @@
   let particles=[],floaters=[],rings=[],groundDrops=[];
   let saleMotes=[];
   let activeContext=null,uiDirty=true,lastSavedSnapshot='',lastRegion=-1,nextDropId=1,terrainSaveDelay=0;
-  const miningFeedback={shake:0,shakeTime:0,flash:0,flashColor:'#ffffff',hitStop:0,terrainHitIndex:-1,terrainHitTime:0,lastDiscovery:null,lastDepositBeat:null};
+  const miningFeedback={shake:0,shakeTime:0,flash:0,flashColor:'#ffffff',hitStop:0,terrainHitIndex:-1,terrainHitTime:0,lastDiscovery:null,lastDepositBeat:null,lastPocketReward:null};
   let lastHapticAt=-1;
   const pickupBatch={items:Object.create(null),count:0,quiet:0,x:0,y:0,bestType:null};
 
@@ -261,13 +276,14 @@
       const generated=!Array.isArray(entry),type=generated?entry.type:entry[0],barrierId=generated?null:entry[3]||null;
       const barrier=barrierId?mine.barriers.find(item=>item.id===barrierId):null,index=mineRockIndex++,data=ROCK_TYPES[type],shell=generated?(data.shell||0):0;
       return{id:1000+index,type,x:generated?entry.x:entry[1],y:generated?entry.y:entry[2],hp:data.hp,maxHp:data.hp,
-        shell,maxShell:shell,scene,veinId:null,depositId:generated?entry.depositId:null,cavernId:generated?entry.cavernId||null:null,rareFind:generated&&!!entry.rareFind,
+        shell,maxShell:shell,scene,veinId:null,depositId:generated?entry.depositId:null,cavernId:generated?entry.cavernId||null:null,rareFind:generated&&!!entry.rareFind,pocketRewardId:generated?entry.pocketRewardId||null:null,
         barrierId,requiredPickaxe:generated?entry.requiredPickaxe:barrier?barrier.requiresPickaxe:1,
         respawn:0,hit:0,broken:false,seed:(index*53)%97,glintTimer:1.5+(index%5)*.48,glintActive:0,bonusYield:0};
     });
   });
   const rocks=surfaceRocks.concat(mineRocks);
   for(const rock of mineRocks)if(rock.barrierId&&state.clearedMineBarriers[rock.barrierId]){rock.broken=true;rock.respawn=Infinity}
+  for(const rock of mineRocks)if(rock.pocketRewardId&&state.claimedPocketRewards[rock.pocketRewardId]){rock.broken=true;rock.respawn=Infinity}
   const mineTerrain=Object.fromEntries(MINE_SCENES.map(scene=>[scene,createMineTerrain(scene)]));
   const veins=VEIN_DEFINITIONS.map(definition=>({...definition,status:'idle',timer:0,displaySecond:-1,brokenRockIds:new Set()}));
   const chests=CHEST_DEFINITIONS.map(definition=>({...definition}));
@@ -275,6 +291,10 @@
     const chest=chestById(chestId);if(!chest)continue;
     let rewardIndex=0;
     for(const [type,amount] of Object.entries(rewards))spawnGroundDrop(type,amount,chest.x+(rewardIndex++-1)*18,chest.y+18,chestId,'surface');
+  }
+  for(const scene of MINE_SCENES)for(const cavern of MINE_DISCOVERIES[scene].caverns){
+    const reward=cavern.reward,pending=state.pendingPocketLoot[reward.id];if(!pending)continue;
+    let rewardIndex=0;for(const [type,amount] of Object.entries(pending))spawnGroundDrop(type,amount,cavern.x+(rewardIndex++-1)*18,cavern.y+12,null,scene,reward.id);
   }
 
   function defaultState(){
@@ -284,7 +304,7 @@
       mined:{stone:0,copper:0,moonglass:0,gold:0,starshard:0,emberstone:0,sunslag:0,astralite:0,crownstone:0},
       veinsCompleted:{copper_run:0,moonglass_bloom:0,ember_fault:0,starfall_lattice:0},
       starforgeVariant:null,starforgeUnlocked:{crusher:false,swift:false,prospector:false},
-      openedChests:{},pendingChestLoot:{},
+      openedChests:{},pendingChestLoot:{},claimedPocketRewards:{},pendingPocketLoot:{},
       clearedMineBarriers:{},terrainDug:{mossMine:[],moonMine:[],emberMine:[],starMine:[]},discoveredCaverns:{},mineDiscovered:false,discoveredMines:{mossMine:false,moonMine:false,emberMine:false,starMine:false},
       location:{scene:'surface',x:330,y:690,surfaceX:330,surfaceY:690},
       totalGold:0,totalSwings:0,precisionHits:0
@@ -324,7 +344,16 @@
         const mine=MINE_DEFINITIONS[scene];
         base.discoveredMines[scene]=!!(raw.discoveredMines&&raw.discoveredMines[scene])||(scene==='mossMine'&&!!raw.mineDiscovered);
         for(const barrier of mine.barriers)base.clearedMineBarriers[barrier.id]=!!(raw.clearedMineBarriers&&raw.clearedMineBarriers[barrier.id]);
-        for(const cavern of MINE_DISCOVERIES[scene].caverns)base.discoveredCaverns[cavern.id]=!!(raw.discoveredCaverns&&raw.discoveredCaverns[cavern.id]);
+        for(const cavern of MINE_DISCOVERIES[scene].caverns){
+          base.discoveredCaverns[cavern.id]=!!(raw.discoveredCaverns&&raw.discoveredCaverns[cavern.id]);
+          const rewardId=cavern.reward.id;base.claimedPocketRewards[rewardId]=!!(raw.claimedPocketRewards&&raw.claimedPocketRewards[rewardId]);
+          const pending=raw.pendingPocketLoot&&raw.pendingPocketLoot[rewardId];
+          if(pending&&typeof pending==='object'){
+            base.pendingPocketLoot[rewardId]={};
+            for(const type of Object.keys(base.cargo))if(Number(pending[type])>0)base.pendingPocketLoot[rewardId][type]=Math.floor(Number(pending[type]));
+            if(!Object.keys(base.pendingPocketLoot[rewardId]).length)delete base.pendingPocketLoot[rewardId];
+          }
+        }
         const dug=raw.terrainDug&&raw.terrainDug[scene];
         const terrainCellCount=Math.ceil(mine.width/MINE_TILE_SIZE)*Math.ceil(mine.height/MINE_TILE_SIZE);
         if(Array.isArray(dug))base.terrainDug[scene]=[...new Set(dug.map(Number).filter(Number.isInteger).filter(index=>index>=0&&index<terrainCellCount))];
@@ -362,7 +391,7 @@
     pickupBatch.items=Object.create(null);pickupBatch.count=0;pickupBatch.quiet=0;pickupBatch.bestType=null;
     currentScene='surface';player.x=330;player.y=690;player.swing=null;player.swingCooldown=0;
     miningFocus.streak=0;miningFocus.timer=0;saleMotes.length=0;goldTween=null;displayedGold=0;
-    Object.assign(miningFeedback,{shake:0,shakeTime:0,flash:0,hitStop:0,terrainHitIndex:-1,terrainHitTime:0,lastDiscovery:null,lastDepositBeat:null});
+    Object.assign(miningFeedback,{shake:0,shakeTime:0,flash:0,hitStop:0,terrainHitIndex:-1,terrainHitTime:0,lastDiscovery:null,lastDepositBeat:null,lastPocketReward:null});
     lastRegion=-1;activeContext=null;menuShade.hidden=true;uiDirty=true;saveState(true);showToast('A fresh vein awaits.');
   }
 
@@ -524,6 +553,35 @@
     if(rock.scene==='surface'||rock.barrierId)return true;
     if(rock.cavernId&&!cavernIsDiscovered(rock.cavernId))return false;
     const terrain=mineTerrain[rock.scene],cell=terrainCellAt(terrain,rock.x,rock.y);return !cell||cell.type===0;
+  }
+  function pocketRewardById(id){for(const scene of MINE_SCENES)for(const cavern of MINE_DISCOVERIES[scene].caverns)if(cavern.reward.id===id)return cavern.reward;return null}
+  function pocketRewardLabel(reward){
+    if(reward.kind==='cache')return Object.entries(reward.rewards).map(([type,amount])=>amount+' '+ROCK_TYPES[type].label).join(' + ');
+    if(reward.kind==='shrine')return 'Focus restored to maximum';
+    return ROCK_TYPES[reward.type].label+' '+(reward.kind==='crystal'?'cluster':'motherlode');
+  }
+  function claimPocketReward(cavern){
+    const reward=cavern&&cavern.reward;if(!reward||state.claimedPocketRewards[reward.id])return false;
+    if(reward.kind==='crystal'||reward.kind==='motherlode')return false;
+    state.claimedPocketRewards[reward.id]=true;
+    if(reward.kind==='cache'){
+      state.pendingPocketLoot[reward.id]={...reward.rewards};let rewardIndex=0;
+      for(const [type,amount] of Object.entries(reward.rewards))spawnGroundDrop(type,amount,cavern.x+(rewardIndex++-1)*18,cavern.y+12,null,currentScene,reward.id);
+      sound('chest');
+    }else{
+      miningFocus.streak=5;miningFocus.timer=25;sound('unlock');uiDirty=true;
+    }
+    rings.push({x:cavern.x,y:cavern.y,age:0,life:.85,radius:22,color:currentMine().detail});
+    floaters.push({x:cavern.x,y:cavern.y-48,text:reward.kind==='cache'?'CACHE OPENED':'FOCUS RESTORED',color:currentMine().detail,age:0,life:1.35,size:17});
+    miningFeedback.lastPocketReward={id:reward.id,kind:reward.kind,label:reward.label};
+    showToast(pocketRewardLabel(reward));saveState(true);return true;
+  }
+  function updatePocketRewards(){
+    const terrain=currentTerrain();if(!terrain)return;
+    for(const cavern of terrain.caverns){
+      if(!cavernIsDiscovered(cavern.id)||state.claimedPocketRewards[cavern.reward.id])continue;
+      if(distance(player.x,player.y,cavern.x,cavern.y)<=Math.min(cavern.rx,cavern.ry)*.7)claimPocketReward(cavern);
+    }
   }
   function nearestTerrainCell(range){
     const terrain=currentTerrain();if(!terrain)return null;
@@ -741,12 +799,13 @@
       floaters.push({x,y:y-48,text:'HIDDEN CHAMBER',color:currentMine().detail,age:0,life:1.5,size:17});
     }
     const revealed=hiddenBefore.filter(rock=>rockIsExposed(rock));
+    const primaryReveal=revealed.find(rock=>rock.rareFind)||revealed[0];
     if(revealed.length){
-      const rock=revealed[0],data=ROCK_TYPES[rock.type],label=rock.rareFind?'RARE '+data.label.toUpperCase():rock.depositId?data.label.toUpperCase()+' VEIN':data.label.toUpperCase()+' REVEALED';
+      const rock=primaryReveal,data=ROCK_TYPES[rock.type],label=rock.rareFind?'RARE '+data.label.toUpperCase():rock.depositId?data.label.toUpperCase()+' VEIN':data.label.toUpperCase()+' REVEALED';
       spawnDiscoveryBurst(rock,label);
     }
     if(cavern||revealed.length){
-      const rock=revealed[0],detail=rock?(rock.rareFind?' Rare '+ROCK_TYPES[rock.type].label+' waits inside.':' You struck a '+ROCK_TYPES[rock.type].label+' vein.'):' It was buried in the rock.';
+      const rock=primaryReveal,detail=rock?(rock.rareFind?' Rare '+ROCK_TYPES[rock.type].label+' waits inside.':' You struck a '+ROCK_TYPES[rock.type].label+' vein.'):' It was buried in the rock.';
       showToast((cavern?cavern.name+' discovered.':'New deposit uncovered.')+detail);
       if(!revealed.length){sound('unlock');miningKick(6,.12,currentMine().detail,20)}
     }
@@ -761,6 +820,7 @@
     sound('break',rock.type);spawnBreak(rock.x,rock.y,rock.type);miningKick(ROCK_TYPES[rock.type].rare?7:4.6,ROCK_TYPES[rock.type].rare?.16:.09,ROCK_TYPES[rock.type].edge,ROCK_TYPES[rock.type].rare?24:14);rock.bonusYield=0;
     floaters.push({x:rock.x,y:rock.y-22,text:ROCK_TYPES[rock.type].label.toUpperCase(),color:ROCK_TYPES[rock.type].edge,age:0,life:.82,size:12});
     registerDepositBreak(rock);
+    if(rock.pocketRewardId)registerPocketDepositBreak(rock);
     if(vein)registerVeinBreak(vein,rock);
     if(rock.barrierId){
       const remaining=mineRocks.some(item=>item.barrierId===rock.barrierId&&!item.broken);
@@ -772,6 +832,17 @@
       }
     }
     uiDirty=true;saveState();
+  }
+
+  function registerPocketDepositBreak(rock){
+    const reward=pocketRewardById(rock.pocketRewardId);if(!reward||state.claimedPocketRewards[reward.id])return;
+    const rewardRocks=mineRocks.filter(item=>item.pocketRewardId===reward.id);if(rewardRocks.some(item=>!item.broken))return;
+    state.claimedPocketRewards[reward.id]=true;for(const item of rewardRocks)item.respawn=Infinity;
+    const bonusType=reward.kind==='crystal'?reward.type:MINE_DISCOVERY_PROFILES[currentScene].main;
+    state.pendingPocketLoot[reward.id]={[bonusType]:1};spawnGroundDrop(bonusType,1,rock.x,rock.y,null,currentScene,reward.id);
+    sound('jackpot',reward.type);rings.push({x:rock.x,y:rock.y,age:0,life:.9,radius:28,color:ROCK_TYPES[reward.type].edge});
+    floaters.push({x:rock.x,y:rock.y-52,text:reward.kind==='crystal'?'CLUSTER CLEARED':'MOTHERLODE CLEARED',color:'#fff2bd',age:0,life:1.5,size:18});
+    miningFeedback.lastPocketReward={id:reward.id,kind:reward.kind,label:reward.label};showToast(pocketRewardLabel(reward)+' cleared!');saveState(true);
   }
 
   function registerDepositBreak(rock){
@@ -863,7 +934,7 @@
     }
   }
 
-  function spawnGroundDrop(type,amount,x,y,sourceChest,scene){
+  function spawnGroundDrop(type,amount,x,y,sourceChest,scene,sourcePocket){
     if(!ROCK_TYPES[type]||amount<=0)return;
     const count=Math.max(1,Math.floor(amount));
     for(let item=0;item<count;item++){
@@ -873,7 +944,7 @@
         groundDrops.splice(oldestIndex,1);
       }
       const seed=nextDropId++,angle=(seed*2.399963)%6.283,burst=34+(seed%4)*7;
-      groundDrops.push({id:seed,type,amount:1,x,y,z:12,vx:Math.cos(angle)*burst,vy:Math.sin(angle)*burst*.58,vz:92+(seed%5)*9,age:0,settled:false,sourceChest:sourceChest||null,scene:scene||currentScene});
+      groundDrops.push({id:seed,type,amount:1,x,y,z:12,vx:Math.cos(angle)*burst,vy:Math.sin(angle)*burst*.58,vz:92+(seed%5)*9,age:0,settled:false,sourceChest:sourceChest||null,sourcePocket:sourcePocket||null,scene:scene||currentScene});
     }
   }
 
@@ -883,6 +954,10 @@
       const pending=state.pendingChestLoot[drop.sourceChest];pending[drop.type]=Math.max(0,(pending[drop.type]||0)-drop.amount);
       if(!pending[drop.type])delete pending[drop.type];
       if(!Object.keys(pending).length)delete state.pendingChestLoot[drop.sourceChest];
+    }
+    if(drop.sourcePocket&&state.pendingPocketLoot[drop.sourcePocket]){
+      const pending=state.pendingPocketLoot[drop.sourcePocket];pending[drop.type]=Math.max(0,(pending[drop.type]||0)-drop.amount);
+      if(!pending[drop.type])delete pending[drop.type];if(!Object.keys(pending).length)delete state.pendingPocketLoot[drop.sourcePocket];
     }
     pickupBatch.items[drop.type]=(pickupBatch.items[drop.type]||0)+drop.amount;pickupBatch.count+=drop.amount;pickupBatch.quiet=0;
     pickupBatch.x=drop.x;pickupBatch.y=drop.y;
@@ -1130,7 +1205,7 @@
         if(rock.glintTimer<=0){rock.glintActive=.72;rock.glintTimer=(2.4+(rock.id%4)*.38)*currentPrecisionDelay()}
       }
     }
-    if(currentScene==='surface')updateVeins(dt);updateGroundDrops(dt);
+    if(currentScene==='surface')updateVeins(dt);else updatePocketRewards();updateGroundDrops(dt);
     if(terrainSaveDelay>0){terrainSaveDelay=Math.max(0,terrainSaveDelay-dt);if(terrainSaveDelay===0)saveState()}
     updateEffects(dt);updateGoldCount(dt);updateCamera(false);
     const region=currentScene==='surface'?regionIndexAt(player.x):-1;
@@ -1360,8 +1435,25 @@
       ctx.save();ctx.translate(cavern.x,cavern.y);ctx.fillStyle='rgba(4,7,7,.42)';ctx.strokeStyle=mine.detail;ctx.globalAlpha=.82;ctx.lineWidth=3;
       ctx.beginPath();ctx.ellipse(0,0,cavern.rx,cavern.ry,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.globalAlpha=1;
       ctx.fillStyle='rgba(5,8,7,.78)';ctx.fillRect(-68,-11,136,22);ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 9px Georgia';ctx.fillText(cavern.name.toUpperCase(),0,3);ctx.restore();
+      drawPocketReward(cavern,origin);
     }
     ctx.restore();
+  }
+
+  function drawPocketReward(cavern,origin){
+    const reward=cavern.reward,claimed=!!state.claimedPocketRewards[reward.id];
+    if(reward.kind==='crystal'||reward.kind==='motherlode')return;
+    const x=origin.x+cavern.x,y=origin.y+cavern.y+30;if(x<-70||y<-70||x>viewWidth+70||y>viewHeight+70)return;
+    ctx.save();ctx.translate(cavern.x,cavern.y+30);ctx.globalAlpha=claimed?.34:1;
+    if(reward.kind==='cache'){
+      ctx.fillStyle=claimed?'#3d3327':'#765329';ctx.strokeStyle=claimed?'#75684e':'#e4bd65';ctx.lineWidth=2;ctx.fillRect(-20,-12,40,25);ctx.strokeRect(-20,-12,40,25);
+      ctx.fillStyle=claimed?'#6f6249':'#d6aa4f';ctx.fillRect(-22,-15,44,8);ctx.fillStyle='#1b1710';ctx.fillRect(-3,-8,6,9);
+    }else if(reward.kind==='shrine'){
+      ctx.strokeStyle=mine.detail;ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,20,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(0,-15);ctx.lineTo(7,0);ctx.lineTo(0,15);ctx.lineTo(-7,0);ctx.closePath();ctx.stroke();
+    }else{
+      ctx.strokeStyle=ROCK_TYPES[reward.type].edge;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,25,0,Math.PI*2);ctx.stroke();
+    }
+    if(!claimed){ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 8px Georgia';ctx.fillText(reward.label,0,31)}ctx.restore();
   }
 
   function drawMineRoute(points,edge,center){
@@ -1850,13 +1942,13 @@
       mine:currentMine()?{
         id:currentMine().id,name:currentMine().name,width:currentMine().width,height:currentMine().height,style:currentMine().style,solids:currentMine().solids,solidCount:currentMine().solids.length,barrierIds:currentMine().barriers.map(barrier=>barrier.id),labels:currentMine().labels.map(label=>label[0]),
         terrain:{tileSize:MINE_TILE_SIZE,chunkCells:MINE_CHUNK_CELLS,totalChunks:Math.ceil(currentTerrain().cols/MINE_CHUNK_CELLS)*Math.ceil(currentTerrain().rows/MINE_CHUNK_CELLS),activeChunks:currentTerrain().chunks.size,cellCount:currentTerrain().cols*currentTerrain().rows,solidCells:terrainSolidCellCount(currentTerrain()),dugCells:state.terrainDug[currentScene].length,target:nearestTerrainCell(MINING_RANGE)},
-        discovery:{caverns:currentTerrain().caverns.map(cavern=>({id:cavern.id,name:cavern.name,x:cavern.x,y:cavern.y,rx:cavern.rx,ry:cavern.ry,cellCount:cavern.cells.length,boundaryIndex:[...cavern.boundary][0],discovered:cavernIsDiscovered(cavern.id)})),deposits:MINE_DISCOVERIES[currentScene].deposits.map(deposit=>({id:deposit.id,type:deposit.type,size:deposit.positions.length,rareFind:!!deposit.rareFind,cavernId:deposit.cavernId||null}))}
+        discovery:{caverns:currentTerrain().caverns.map(cavern=>({id:cavern.id,name:cavern.name,x:cavern.x,y:cavern.y,rx:cavern.rx,ry:cavern.ry,cellCount:cavern.cells.length,boundaryIndex:[...cavern.boundary][0],discovered:cavernIsDiscovered(cavern.id),reward:{...cavern.reward,claimed:!!state.claimedPocketRewards[cavern.reward.id]}})),deposits:MINE_DISCOVERIES[currentScene].deposits.map(deposit=>({id:deposit.id,type:deposit.type,size:deposit.positions.length,rareFind:!!deposit.rareFind,cavernId:deposit.cavernId||null,pocketRewardId:deposit.pocketRewardId||null}))}
       }:null,
       focus:miningFocus,
-      rocks:rocks.map(rock=>({id:rock.id,type:rock.type,x:rock.x,y:rock.y,scene:rock.scene,barrierId:rock.barrierId,requiredPickaxe:rock.requiredPickaxe,veinId:rock.veinId,depositId:rock.depositId,cavernId:rock.cavernId,rareFind:rock.rareFind,hp:rock.hp,shell:rock.shell,broken:rock.broken,exposed:rockIsExposed(rock)})),
+      rocks:rocks.map(rock=>({id:rock.id,type:rock.type,x:rock.x,y:rock.y,scene:rock.scene,barrierId:rock.barrierId,requiredPickaxe:rock.requiredPickaxe,veinId:rock.veinId,depositId:rock.depositId,cavernId:rock.cavernId,rareFind:rock.rareFind,pocketRewardId:rock.pocketRewardId,hp:rock.hp,shell:rock.shell,broken:rock.broken,exposed:rockIsExposed(rock)})),
       veins:veins.map(vein=>({id:vein.id,status:vein.status,timer:vein.timer,broken:vein.brokenRockIds.size,total:vein.positions.length})),
       chests:chests.map(chest=>({id:chest.id,name:chest.name,x:chest.x,y:chest.y,ready:chestRequirementMet(chest),opened:!!state.openedChests[chest.id]})),
-      groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,sourceChest:drop.sourceChest})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count,particleCount:particles.length,shake:miningFeedback.shake,flash:miningFeedback.flash,hitStop:miningFeedback.hitStop,terrainHitIndex:miningFeedback.terrainHitIndex,lastDiscovery:miningFeedback.lastDiscovery,lastDepositBeat:miningFeedback.lastDepositBeat},activeContext
+      groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,sourceChest:drop.sourceChest,sourcePocket:drop.sourcePocket})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count,particleCount:particles.length,shake:miningFeedback.shake,flash:miningFeedback.flash,hitStop:miningFeedback.hitStop,terrainHitIndex:miningFeedback.terrainHitIndex,lastDiscovery:miningFeedback.lastDiscovery,lastDepositBeat:miningFeedback.lastDepositBeat,lastPocketReward:miningFeedback.lastPocketReward},activeContext
     })),
     reset:resetProgress,
     setPosition:(x,y)=>{const world=currentWorld();player.x=clamp(Number(x),52,world.width-52);player.y=clamp(Number(y),70,world.height-58);updateCamera(true);uiDirty=true},
@@ -1864,14 +1956,15 @@
     mineOnce:()=>{if(player.swingCooldown>0)update(player.swingCooldown+.001);if(startSwing(true)){update(currentCooldown());update(.021);return true}return false},
     step:seconds=>update(clamp(Number(seconds)||0,0,2)),
     setTimeScale:value=>{timeScale=clamp(Number(value)||1,.25,12)},
-    restoreRocks:()=>{for(const rock of rocks){rock.broken=!!(rock.barrierId&&state.clearedMineBarriers[rock.barrierId]);rock.hp=rock.maxHp;rock.shell=rock.maxShell;rock.respawn=rock.broken?Infinity:0;rock.glintActive=0;rock.bonusYield=0}resetVeins();uiDirty=true},
-    restoreTerrain:()=>{for(const scene of MINE_SCENES){state.terrainDug[scene]=[];for(const cavern of MINE_DISCOVERIES[scene].caverns)state.discoveredCaverns[cavern.id]=false}rebuildMineTerrain();uiDirty=true},
+    restoreRocks:()=>{for(const rock of rocks){rock.broken=!!(rock.barrierId&&state.clearedMineBarriers[rock.barrierId]||rock.pocketRewardId&&state.claimedPocketRewards[rock.pocketRewardId]);rock.hp=rock.maxHp;rock.shell=rock.maxShell;rock.respawn=rock.broken?Infinity:0;rock.glintActive=0;rock.bonusYield=0}resetVeins();uiDirty=true},
+    restoreTerrain:()=>{for(const scene of MINE_SCENES){state.terrainDug[scene]=[];for(const cavern of MINE_DISCOVERIES[scene].caverns){state.discoveredCaverns[cavern.id]=false;state.claimedPocketRewards[cavern.reward.id]=false;delete state.pendingPocketLoot[cavern.reward.id]}}for(const rock of mineRocks)if(rock.pocketRewardId){rock.broken=false;rock.respawn=0;rock.hp=rock.maxHp;rock.shell=rock.maxShell}rebuildMineTerrain();uiDirty=true},
     mineTerrainCell:index=>{hitTerrain(Number(index));return terrainTypeAt(currentTerrain(),Number(index)%currentTerrain().cols,Math.floor(Number(index)/currentTerrain().cols))},
     primePrecision:()=>{const rock=nearestRock(MINING_RANGE);if(rock){rock.glintActive=.72;return rock.id}return null},
     grantCargo:(type,amount)=>{if(Object.prototype.hasOwnProperty.call(state.cargo,type)){state.cargo[type]+=Math.max(0,Number(amount)||0);uiDirty=true}},
     grantMined:(type,amount)=>{if(Object.prototype.hasOwnProperty.call(state.mined,type)){state.mined[type]+=Math.max(0,Number(amount)||0);uiDirty=true}},
     breakVeinRock:(veinId,index)=>{const candidates=rocks.filter(rock=>rock.veinId===veinId);const rock=candidates[Math.max(0,Math.min(candidates.length-1,Number(index)||0))];if(rock&&!rock.broken){rock.shell=0;rock.hp=0;breakRock(rock);return rock.id}return null},
     breakDepositRock:(depositId,index)=>{const candidates=rocks.filter(rock=>rock.depositId===depositId);const rock=candidates[Math.max(0,Math.min(candidates.length-1,Number(index)||0))];if(rock&&!rock.broken){rock.shell=0;rock.hp=0;breakRock(rock);return rock.id}return null},
+    claimPocketReward:id=>{const terrain=currentTerrain(),cavern=terrain&&terrain.caverns.find(item=>item.reward.id===id);return claimPocketReward(cavern)},
     grantGold:amount=>{state.gold+=Math.max(0,Number(amount)||0);uiDirty=true},
     setPickaxeLevel:level=>{state.pickaxeLevel=clamp(Math.floor(Number(level)||1),1,PICKAXES.length-1);if(state.pickaxeLevel<PICKAXES.length-1)state.emberMastery=0;uiDirty=true},
     unlockAllAreas:()=>{state.areaUnlocked=true;state.discoveredSecond=true;state.emberdeepUnlocked=true;state.discoveredThird=true;uiDirty=true},

@@ -883,7 +883,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.5.1',name:'MINING COMFORT'});
+  expect(snapshot.build).toEqual({version:'0.6.0',name:'POCKET REWARDS'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -898,9 +898,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.5.1');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.6.0');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.5.1 · MINING COMFORT');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.6.0 · POCKET REWARDS');
 });
 
 test('terrain strikes produce weighted mining feedback without changing targeting',async({page})=>{
@@ -996,7 +996,7 @@ test('Discovery Pass builds deep connected ore veins and rare finds in every min
   for(const scene of ['mossMine','moonMine','emberMine','starMine']){
     await page.evaluate(sceneId=>window.__deepforgeTest.enterMine(sceneId),scene);
     const snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-    const veins=snapshot.mine.discovery.deposits.filter(deposit=>!deposit.rareFind);
+    const veins=snapshot.mine.discovery.deposits.filter(deposit=>!deposit.rareFind&&!deposit.pocketRewardId);
     const rareFinds=snapshot.mine.discovery.deposits.filter(deposit=>deposit.rareFind);
     expect(snapshot.mine.discovery.caverns.length).toBeGreaterThanOrEqual(6);
     expect(veins.length).toBeGreaterThanOrEqual(10);
@@ -1034,4 +1034,27 @@ test('breaking into a hidden chamber reveals its rare find and persists discover
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.state.discoveredCaverns[cavern.id]).toBe(true);
   expect(snapshot.rocks.find(rock=>rock.id===rareFind.id).exposed).toBe(true);
+});
+
+test('every hidden pocket contains a persistent useful reward',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.mine.discovery.caverns.every(cavern=>cavern.reward&&['cache','crystal','motherlode','shrine'].includes(cavern.reward.kind))).toBe(true);
+  const cache=snapshot.mine.discovery.caverns.find(cavern=>cavern.reward.kind==='cache');
+  await page.evaluate(cavern=>{
+    window.__deepforgeTest.mineTerrainCell(cavern.boundaryIndex);
+    window.__deepforgeTest.mineTerrainCell(cavern.boundaryIndex);
+    window.__deepforgeTest.setPosition(cavern.x,cavern.y);
+    window.__deepforgeTest.step(.1);
+    window.__deepforgeTest.save();
+  },cache);
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.claimedPocketRewards[cache.reward.id]).toBe(true);
+  expect(snapshot.feedback.lastPocketReward).toMatchObject({id:cache.reward.id,kind:'cache'});
+  expect(snapshot.feedback.shake).toBe(0);
+  expect(snapshot.feedback.flash).toBe(0);
+  await page.reload();await page.waitForFunction(()=>window.__deepforgeTest);
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.claimedPocketRewards[cache.reward.id]).toBe(true);
 });
