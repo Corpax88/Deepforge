@@ -883,7 +883,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.8.1',name:'DRILL GUIDANCE'});
+  expect(snapshot.build).toEqual({version:'0.9.0',name:'DRILL-GATED PROGRESSION'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -898,9 +898,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.8.1');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.9.0');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.8.1 · DRILL GUIDANCE');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.9.0 · DRILL-GATED PROGRESSION');
 });
 
 test('each mine hides one persistent random entrance to a contrasting Depth 2',async({page})=>{
@@ -929,7 +929,7 @@ test('each mine hides one persistent random entrance to a contrasting Depth 2',a
   }
 });
 
-test('Depth 2 replaces old ore with local materials and upgrades Starforge into faster drills',async({page})=>{
+test('drill-gated materials route progression back through earlier Depth 2 mines',async({page})=>{
   await freshGame(page);
   await page.evaluate(()=>{
     const api=window.__deepforgeTest;api.unlockAllAreas();api.unlockStarfall();api.enterMine('mossMine');api.discoverDepthEntrance();api.enterDepth();api.setStarforgeVariant('swift');
@@ -937,27 +937,47 @@ test('Depth 2 replaces old ore with local materials and upgrades Starforge into 
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   const starforgeCooldown=snapshot.effectivePickaxe.cooldown;
   expect(snapshot.mine.depthResources).toEqual({main:'rootiron',secondary:'deepstone',rare:'ambercore'});
-  expect(snapshot.mine.discovery.deposits.every(deposit=>['rootiron','deepstone','ambercore'].includes(deposit.type))).toBe(true);
+  const mossGate=snapshot.mine.discovery.deposits.find(deposit=>deposit.type==='burrowsteel');
+  expect(mossGate).toEqual(expect.objectContaining({requiresDrillLevel:1,drillGated:true}));
   expect(snapshot.state.drillGoalScene).toBe('mossMine');
-  await expect(page.locator('#objectiveText')).toHaveText('Forge the Burrower Drill');
-  await expect(page.locator('#objectiveDetail')).toContainText('8 ROOTIRON');
-  await page.evaluate(()=>{const api=window.__deepforgeTest;api.exitDepth();api.setPosition(700,900)});
-  await expect(page.locator('#objectiveText')).toHaveText('Forge the Burrower Drill');
-  await page.evaluate(()=>{const api=window.__deepforgeTest;api.enterDepth();api.grantGold(1200);api.grantCargo('rootiron',8);api.grantCargo('ambercore',1);api.grantCargo('copper',3);api.sellCargo()});
+  await expect(page.locator('#objectiveText')).toHaveText('Mine Rootiron for Burrower Drill');
+  await expect(page.locator('#objectiveDetail')).toContainText('MOSSVEIN DEPTH 2');
+  const lockedHit=await page.evaluate(id=>window.__deepforgeTest.hitDepositRock(id,0),mossGate.id);
+  expect(lockedHit.after).toEqual(lockedHit.before);
+
+  await page.evaluate(()=>{const api=window.__deepforgeTest;api.grantGold(1200);api.grantCargo('rootiron',8);api.grantCargo('ambercore',1);api.grantCargo('copper',3);api.sellCargo()});
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.state.cargo).toEqual(expect.objectContaining({rootiron:8,ambercore:1,copper:0}));
   await expect(page.locator('#objectiveDetail')).toHaveText('READY AT ANY DEPTH 2 DRILL FORGE');
-  await page.evaluate(()=>{const api=window.__deepforgeTest;api.upgradeDrill();api.save()});
+  await page.evaluate(()=>window.__deepforgeTest.upgradeDrill());
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.state.drillLevel).toBe(1);expect(snapshot.effectivePickaxe.name).toBe('Burrower Drill');expect(snapshot.effectivePickaxe.cooldown).toBeLessThan(starforgeCooldown);
   expect(snapshot.toolMode).toBe('drill');
   await expect(page.locator('#mineAction')).toHaveText('DRILL');
-  await expect(page.locator('#toolKind')).toHaveText('YOUR DRILL');
-  await expect(page.locator('#objectiveText')).toHaveText('Forge the Pulse Drill');
-  await page.reload();await page.waitForFunction(()=>window.__deepforgeTest);snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.state.drillLevel).toBe(1);expect(snapshot.effectivePickaxe.name).toBe('Burrower Drill');expect(snapshot.state.drillGoalScene).toBe('mossMine');
-});
+  await expect(page.locator('#objectiveText')).toHaveText('Mine Burrowsteel for Pulse Drill');
+  const unlockedHit=await page.evaluate(id=>window.__deepforgeTest.hitDepositRock(id,0),mossGate.id);
+  expect(unlockedHit.after).not.toEqual(unlockedHit.before);
 
+  await page.evaluate(()=>{const api=window.__deepforgeTest;api.grantGold(3200);api.grantCargo('burrowsteel',12);api.upgradeDrill();api.exitDepth();api.exitMine();api.enterMine('moonMine');api.discoverDepthEntrance();api.enterDepth()});
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.drillLevel).toBe(2);expect(snapshot.effectivePickaxe.name).toBe('Pulse Drill');
+  const moonGate=snapshot.mine.discovery.deposits.find(deposit=>deposit.type==='phasecrystal');
+  expect(moonGate).toEqual(expect.objectContaining({requiresDrillLevel:2,drillGated:true}));
+  await expect(page.locator('#objectiveText')).toHaveText('Mine Phase Crystal for Deepcore Drill');
+  const moonHit=await page.evaluate(id=>window.__deepforgeTest.hitDepositRock(id,0),moonGate.id);
+  expect(moonHit.after).not.toEqual(moonHit.before);
+  await page.evaluate(()=>{const api=window.__deepforgeTest;api.grantCargo('phasecrystal',10);api.exitDepth();api.exitMine();api.enterMine('emberMine');api.discoverDepthEntrance();api.enterDepth()});
+  await expect(page.locator('#objectiveText')).toHaveText('Mine Infernium for Deepcore Drill');
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  const emberGate=snapshot.mine.discovery.deposits.find(deposit=>deposit.type==='infernium');
+  expect(emberGate).toEqual(expect.objectContaining({requiresDrillLevel:2,drillGated:true}));
+  await page.evaluate(()=>{const api=window.__deepforgeTest;api.grantCargo('infernium',10);api.grantGold(7200);api.upgradeDrill();api.save()});
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.drillLevel).toBe(3);expect(snapshot.effectivePickaxe.name).toBe('Deepcore Drill');
+  await expect(page.locator('#objectiveText')).toHaveText('Deepcore Drill mastered');
+  await page.reload();await page.waitForFunction(()=>window.__deepforgeTest);snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.drillLevel).toBe(3);expect(snapshot.effectivePickaxe.name).toBe('Deepcore Drill');
+});
 test('terrain strikes produce weighted mining feedback without changing targeting',async({page})=>{
   await freshGame(page);
   await page.evaluate(()=>{
