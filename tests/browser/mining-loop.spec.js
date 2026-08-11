@@ -879,6 +879,30 @@ test('mine terrain can be excavated into a persistent player-made tunnel',async(
   expect(snapshot.mine.terrain.dugCells).toBe(dug);
 });
 
+test('expanded mine depths use lazy terrain chunks and a following camera',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.build).toEqual({version:'0.3.0',name:'EXPANDED DEPTHS'});
+  expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
+  expect(snapshot.mine.terrain.chunkCells).toBe(16);
+  expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
+
+  await page.evaluate(()=>window.__deepforgeTest.setPosition(960,4300));
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.camera.y).toBeGreaterThan(3500);
+  expect(snapshot.player.y).toBe(4300);
+  expect(snapshot.mine.terrain.target).not.toBeNull();
+  expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
+});
+
+test('the exact build version is always visible in the game HUD',async({page})=>{
+  await freshGame(page);
+  await expect(page.locator('#buildVersion')).toHaveText('v0.3.0');
+  await page.locator('#menuButton').click();
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.3.0 · EXPANDED DEPTHS');
+});
+
 test('held movement targets the first blocking terrain cell instead of skipping deeper',async({page})=>{
   await freshGame(page);
   await page.evaluate(()=>{

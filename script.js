@@ -34,36 +34,40 @@
   const resumeButton=document.getElementById('resumeButton');
   const resetButton=document.getElementById('resetButton');
 
+  const BUILD={version:'0.3.0',name:'EXPANDED DEPTHS'};
+  document.getElementById('buildVersion').textContent='v'+BUILD.version;
+  document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
+
   const WORLD={width:4480,height:1280,gateX:1110,emberGateX:2240,starfallGateX:3360,gateY:650,gateHalfGap:118};
   const MINE_DEFINITIONS={
     mossMine:{
-      id:'mossMine',name:'MOSSVEIN MINE',surfaceName:'MOSSVEIN QUARRY',width:1920,height:1280,entrance:{x:145,y:640},surfaceEntrance:{x:165,y:690,radius:112},
+      id:'mossMine',name:'MOSSVEIN MINE',surfaceName:'MOSSVEIN QUARRY',width:1920,height:5120,entrance:{x:145,y:640},surfaceEntrance:{x:165,y:690,radius:112},
       unlock:()=>true,accent:'#d2a65b',detail:'#e9cf8c',floor:'#20241d',wall:'#2c3027',wallEdge:'#4f533f',style:'moss',finalGoal:'Mine the Gilded Heart',
-      solids:[{x:0,y:0,w:1920,h:145},{x:0,y:1135,w:1920,h:145},{x:585,y:145,w:125,h:345},{x:585,y:790,w:125,h:345},{x:1190,y:145,w:125,h:345},{x:1190,y:790,w:125,h:345}],
+      solids:[{x:0,y:0,w:1920,h:145},{x:0,y:4975,w:1920,h:145},{x:585,y:145,w:125,h:345},{x:585,y:790,w:125,h:345},{x:1190,y:145,w:125,h:345},{x:1190,y:790,w:125,h:345}],
       barriers:[{id:'outer_rubble',x:620,y:490,w:76,h:300,requiresPickaxe:1,label:'Loose Rubble',objective:'Break through the loose rubble'},{id:'iron_seam',x:1225,y:490,w:76,h:300,requiresPickaxe:2,label:'Ironbound Collapse'}],
       rocks:[['stone',285,350],['stone',430,530],['stone',260,890],['copper',465,940],['stone',655,590,'outer_rubble'],['stone',655,640,'outer_rubble'],['stone',655,690,'outer_rubble'],['stone',835,335],['copper',930,495],['stone',1040,760],['copper',845,950],['copper',1085,1020],['stone',1260,590,'iron_seam'],['stone',1260,640,'iron_seam'],['stone',1260,690,'iron_seam'],['copper',1450,350],['copper',1650,470],['copper',1435,885],['gold',1680,820],['gold',1535,1010]],
       labels:[['OLD WORKINGS',360,205,'#b8ad82'],['COPPER CHAMBER',945,205,'#dc9c65'],['GILDED HEART',1570,205,'#ffe18a']]
     },
     moonMine:{
-      id:'moonMine',name:'MOONGLASS LABYRINTH',surfaceName:'MOONGLASS CAVERN',width:1680,height:1440,entrance:{x:150,y:1180},surfaceEntrance:{x:1225,y:720,radius:112},
+      id:'moonMine',name:'MOONGLASS LABYRINTH',surfaceName:'MOONGLASS CAVERN',width:1680,height:5760,entrance:{x:150,y:1180},surfaceEntrance:{x:1225,y:720,radius:112},
       unlock:state=>state.areaUnlocked,accent:'#71e3df',detail:'#c8a7ff',floor:'#10272a',wall:'#18363b',wallEdge:'#4c8d91',style:'moon',finalGoal:'Reach the Starshard Sanctum',
-      solids:[{x:0,y:0,w:1680,h:135},{x:0,y:1305,w:1680,h:135},{x:480,y:135,w:110,h:435},{x:480,y:825,w:110,h:480},{x:1000,y:135,w:110,h:230},{x:1000,y:650,w:110,h:655},{x:590,y:1010,w:260,h:85}],
+      solids:[{x:0,y:0,w:1680,h:135},{x:0,y:5625,w:1680,h:135},{x:480,y:135,w:110,h:435},{x:480,y:825,w:110,h:480},{x:1000,y:135,w:110,h:230},{x:1000,y:650,w:110,h:655},{x:590,y:1010,w:260,h:85}],
       barriers:[{id:'moon_prism_gate',x:497,y:570,w:76,h:255,requiresPickaxe:3,label:'Prismatic Fault'},{id:'moon_star_lock',x:1017,y:365,w:76,h:285,requiresPickaxe:4,label:'Starbound Geode'}],
       rocks:[['copper',270,1050],['moonglass',335,820],['moonglass',280,420],['moonglass',535,645,'moon_prism_gate'],['moonglass',535,695,'moon_prism_gate'],['moonglass',535,745,'moon_prism_gate'],['moonglass',760,1160],['moonglass',760,760],['moonglass',830,430],['starshard',910,245],['moonglass',1055,455,'moon_star_lock'],['moonglass',1055,505,'moon_star_lock'],['moonglass',1055,555,'moon_star_lock'],['moonglass',1270,310],['moonglass',1420,560],['moonglass',1275,890],['starshard',1445,1120],['starshard',1270,1230]],
       labels:[['LOWER CRYSTALS',300,1260,'#78d9d7'],['REFRACTION HALL',790,700,'#c8a7ff'],['STARSHARD SANCTUM',1335,205,'#efe0ff']]
     },
     emberMine:{
-      id:'emberMine',name:'EMBERDEEP WORKS',surfaceName:'EMBERDEEP FOUNDRY',width:1880,height:1280,entrance:{x:145,y:1030},surfaceEntrance:{x:2340,y:650,radius:112},
+      id:'emberMine',name:'EMBERDEEP WORKS',surfaceName:'EMBERDEEP FOUNDRY',width:1880,height:6400,entrance:{x:145,y:1030},surfaceEntrance:{x:2340,y:650,radius:112},
       unlock:state=>state.emberdeepUnlocked,accent:'#ff7543',detail:'#ffc06f',floor:'#251817',wall:'#39201c',wallEdge:'#8f4b32',style:'ember',finalGoal:'Claim the Sunslag Crucible',
-      solids:[{x:0,y:0,w:1880,h:145},{x:0,y:1135,w:1880,h:145},{x:500,y:145,w:110,h:390},{x:500,y:720,w:110,h:415},{x:1210,y:145,w:110,h:215},{x:1210,y:545,w:110,h:590},{x:770,y:360,w:250,h:190},{x:770,y:820,w:250,h:190}],
+      solids:[{x:0,y:0,w:1880,h:145},{x:0,y:6255,w:1880,h:145},{x:500,y:145,w:110,h:390},{x:500,y:720,w:110,h:415},{x:1210,y:145,w:110,h:215},{x:1210,y:545,w:110,h:590},{x:770,y:360,w:250,h:190},{x:770,y:820,w:250,h:190}],
       barriers:[{id:'ember_bulkhead',x:517,y:535,w:76,h:185,requiresPickaxe:4,label:'Cinder Bulkhead'},{id:'ember_crucible_lock',x:1227,y:360,w:76,h:185,requiresPickaxe:5,label:'Crucible Seal'}],
       rocks:[['moonglass',250,930],['emberstone',310,690],['emberstone',300,350],['emberstone',555,575,'ember_bulkhead'],['emberstone',555,625,'ember_bulkhead'],['emberstone',555,675,'ember_bulkhead'],['emberstone',700,1050],['emberstone',720,680],['emberstone',910,680],['emberstone',1100,960],['emberstone',1265,400,'ember_crucible_lock'],['emberstone',1265,452,'ember_crucible_lock'],['emberstone',1265,505,'ember_crucible_lock'],['emberstone',1445,270],['emberstone',1615,470],['emberstone',1475,800],['sunslag',1660,980],['sunslag',1480,1060]],
       labels:[['COOLING TUNNELS',290,1090,'#caa77d'],['FURNACE MAZE',900,700,'#ff8a52'],['SUNSLAG CRUCIBLE',1540,205,'#ffd27d']]
     },
     starMine:{
-      id:'starMine',name:'STARFALL HOLLOW',surfaceName:'STARFALL DEPTHS',width:2200,height:1500,entrance:{x:160,y:750},surfaceEntrance:{x:3450,y:690,radius:112},
+      id:'starMine',name:'STARFALL HOLLOW',surfaceName:'STARFALL DEPTHS',width:2200,height:7200,entrance:{x:160,y:750},surfaceEntrance:{x:3450,y:690,radius:112},
       unlock:state=>state.fourthUnlocked,accent:'#b8c3ff',detail:'#f0ddff',floor:'#121329',wall:'#0a0b19',wallEdge:'#5a5f96',style:'star',finalGoal:'Reach the Crownstone Observatory',
-      solids:[{x:0,y:0,w:2200,h:135},{x:0,y:1365,w:2200,h:135},{x:700,y:135,w:400,h:490},{x:700,y:825,w:400,h:540},{x:1450,y:135,w:400,h:215},{x:1450,y:570,w:400,h:795},{x:1110,y:1030,w:220,h:335}],
+      solids:[{x:0,y:0,w:2200,h:135},{x:0,y:7065,w:2200,h:135},{x:700,y:135,w:400,h:490},{x:700,y:825,w:400,h:540},{x:1450,y:135,w:400,h:215},{x:1450,y:570,w:400,h:795},{x:1110,y:1030,w:220,h:335}],
       barriers:[{id:'star_bridge_lock',x:862,y:625,w:76,h:200,requiresPickaxe:5,label:'Astral Bridge Lock'},{id:'star_crown_lock',x:1612,y:350,w:76,h:220,requiresPickaxe:5,label:'Crownstone Ward'}],
       rocks:[['emberstone',300,480],['astralite',360,750],['astralite',315,1050],['astralite',900,675,'star_bridge_lock'],['astralite',900,725,'star_bridge_lock'],['astralite',900,775,'star_bridge_lock'],['astralite',1180,420],['astralite',1260,760],['astralite',1390,1180],['crownstone',1360,250],['astralite',1650,410,'star_crown_lock'],['astralite',1650,460,'star_crown_lock'],['astralite',1650,510,'star_crown_lock'],['astralite',1950,280],['astralite',2020,650],['astralite',1940,1030],['crownstone',2025,1250],['crownstone',1910,1180]],
       labels:[['FALLEN APPROACH',350,205,'#aeb8ee'],['ASTRAL CROSSING',1260,710,'#c9d2ff'],['CROWNSTONE OBSERVATORY',1940,205,'#f1d7ff']]
@@ -99,6 +103,7 @@
   ];
   const MINING_RANGE=116;
   const MINE_TILE_SIZE=48;
+  const MINE_CHUNK_CELLS=16;
   const MINE_TERRAIN_HP=8;
   const PLAYER_SPEED=340;
   const ROCK_TYPES={
@@ -256,7 +261,8 @@
         base.discoveredMines[scene]=!!(raw.discoveredMines&&raw.discoveredMines[scene])||(scene==='mossMine'&&!!raw.mineDiscovered);
         for(const barrier of mine.barriers)base.clearedMineBarriers[barrier.id]=!!(raw.clearedMineBarriers&&raw.clearedMineBarriers[barrier.id]);
         const dug=raw.terrainDug&&raw.terrainDug[scene];
-        if(Array.isArray(dug))base.terrainDug[scene]=[...new Set(dug.map(Number).filter(Number.isInteger).filter(index=>index>=0&&index<10000))];
+        const terrainCellCount=Math.ceil(mine.width/MINE_TILE_SIZE)*Math.ceil(mine.height/MINE_TILE_SIZE);
+        if(Array.isArray(dug))base.terrainDug[scene]=[...new Set(dug.map(Number).filter(Number.isInteger).filter(index=>index>=0&&index<terrainCellCount))];
       }
       base.mineDiscovered=base.discoveredMines.mossMine;
       if(raw.location&&MINE_SCENES.includes(raw.location.scene)){
@@ -366,9 +372,8 @@
 
   function createMineTerrain(scene){
     const mine=MINE_DEFINITIONS[scene],cols=Math.ceil(mine.width/MINE_TILE_SIZE),rows=Math.ceil(mine.height/MINE_TILE_SIZE);
-    const terrain={scene,cols,rows,types:new Uint8Array(cols*rows),hp:new Uint8Array(cols*rows)};
-    terrain.types.fill(1);terrain.hp.fill(MINE_TERRAIN_HP);
-    const clearCell=(col,row)=>{if(col>=0&&row>=0&&col<cols&&row<rows){const index=row*cols+col;terrain.types[index]=0;terrain.hp[index]=0}};
+    const terrain={scene,cols,rows,chunks:new Map(),cleared:new Set(),dug:new Set(state.terrainDug[scene]||[])};
+    const clearCell=(col,row)=>{if(col>=0&&row>=0&&col<cols&&row<rows)terrain.cleared.add(row*cols+col)};
     const clearCircle=(x,y,radius)=>{
       const minCol=Math.max(0,Math.floor((x-radius)/MINE_TILE_SIZE)),maxCol=Math.min(cols-1,Math.floor((x+radius)/MINE_TILE_SIZE));
       const minRow=Math.max(0,Math.floor((y-radius)/MINE_TILE_SIZE)),maxRow=Math.min(rows-1,Math.floor((y+radius)/MINE_TILE_SIZE));
@@ -384,17 +389,42 @@
     clearCircle(mine.entrance.x+54,mine.entrance.y,142);
     for(const wall of mine.solids)clearRect(wall.x,wall.y,wall.w,wall.h);
     for(const barrier of mine.barriers)clearRect(barrier.x-125,barrier.y-62,barrier.w+250,barrier.h+124);
-    for(const index of state.terrainDug[scene]||[])if(index<terrain.types.length){terrain.types[index]=0;terrain.hp[index]=0}
     return terrain;
   }
 
   function rebuildMineTerrain(){for(const scene of MINE_SCENES)mineTerrain[scene]=createMineTerrain(scene)}
   function currentTerrain(){return mineTerrain[currentScene]||null}
+  function terrainChunkAt(terrain,col,row){
+    const chunkCol=Math.floor(col/MINE_CHUNK_CELLS),chunkRow=Math.floor(row/MINE_CHUNK_CELLS),key=chunkCol+','+chunkRow;
+    let chunk=terrain.chunks.get(key);if(chunk)return chunk;
+    const types=new Uint8Array(MINE_CHUNK_CELLS*MINE_CHUNK_CELLS),hp=new Uint8Array(types.length);
+    for(let localRow=0;localRow<MINE_CHUNK_CELLS;localRow++)for(let localCol=0;localCol<MINE_CHUNK_CELLS;localCol++){
+      const worldCol=chunkCol*MINE_CHUNK_CELLS+localCol,worldRow=chunkRow*MINE_CHUNK_CELLS+localRow;
+      if(worldCol>=terrain.cols||worldRow>=terrain.rows)continue;
+      const index=worldRow*terrain.cols+worldCol,localIndex=localRow*MINE_CHUNK_CELLS+localCol;
+      if(!terrain.cleared.has(index)&&!terrain.dug.has(index)){types[localIndex]=1;hp[localIndex]=MINE_TERRAIN_HP}
+    }
+    chunk={col:chunkCol,row:chunkRow,types,hp};terrain.chunks.set(key,chunk);return chunk;
+  }
+  function terrainLocalIndex(col,row){return row%MINE_CHUNK_CELLS*MINE_CHUNK_CELLS+col%MINE_CHUNK_CELLS}
+  function terrainTypeAt(terrain,col,row){
+    if(!terrain||col<0||row<0||col>=terrain.cols||row>=terrain.rows)return 0;
+    return terrainChunkAt(terrain,col,row).types[terrainLocalIndex(col,row)];
+  }
+  function terrainHpAt(terrain,col,row){
+    if(!terrain||col<0||row<0||col>=terrain.cols||row>=terrain.rows)return 0;
+    return terrainChunkAt(terrain,col,row).hp[terrainLocalIndex(col,row)];
+  }
+  function setTerrainCell(terrain,col,row,type,hp){
+    const chunk=terrainChunkAt(terrain,col,row),localIndex=terrainLocalIndex(col,row);
+    chunk.types[localIndex]=type;chunk.hp[localIndex]=hp;
+  }
+  function terrainSolidCellCount(terrain){return terrain.cols*terrain.rows-terrain.cleared.size-[...terrain.dug].filter(index=>!terrain.cleared.has(index)).length}
   function terrainCellAt(terrain,x,y){
     if(!terrain)return null;
     const col=Math.floor(x/MINE_TILE_SIZE),row=Math.floor(y/MINE_TILE_SIZE);
     if(col<0||row<0||col>=terrain.cols||row>=terrain.rows)return null;
-    const index=row*terrain.cols+col;return{index,col,row,x:(col+.5)*MINE_TILE_SIZE,y:(row+.5)*MINE_TILE_SIZE,type:terrain.types[index],hp:terrain.hp[index]};
+    const index=row*terrain.cols+col;return{index,col,row,x:(col+.5)*MINE_TILE_SIZE,y:(row+.5)*MINE_TILE_SIZE,type:terrainTypeAt(terrain,col,row),hp:terrainHpAt(terrain,col,row)};
   }
   function rockIsExposed(rock){
     if(rock.scene==='surface'||rock.barrierId)return true;
@@ -410,13 +440,13 @@
       const minRow=Math.max(0,Math.floor((probeY-player.radius)/MINE_TILE_SIZE)),maxRow=Math.min(terrain.rows-1,Math.floor((probeY+player.radius)/MINE_TILE_SIZE));
       let best=null,bestLateral=Infinity,bestForward=Infinity;
       for(let row=minRow;row<=maxRow;row++)for(let col=minCol;col<=maxCol;col++){
-        const index=row*terrain.cols+col;if(!terrain.types[index])continue;
+        const index=row*terrain.cols+col,type=terrainTypeAt(terrain,col,row);if(!type)continue;
         const left=col*MINE_TILE_SIZE,top=row*MINE_TILE_SIZE,nearestX=clamp(probeX,left,left+MINE_TILE_SIZE),nearestY=clamp(probeY,top,top+MINE_TILE_SIZE);
         if(distance(probeX,probeY,nearestX,nearestY)>=player.radius)continue;
         const x=(col+.5)*MINE_TILE_SIZE,y=(row+.5)*MINE_TILE_SIZE,dx=x-player.x,dy=y-player.y;
         const forward=dx*aimX+dy*aimY,lateral=Math.abs(dx*-aimY+dy*aimX);
         if(lateral<bestLateral-.01||Math.abs(lateral-bestLateral)<.01&&forward<bestForward){
-          bestLateral=lateral;bestForward=forward;best={index,col,row,x,y,type:terrain.types[index],hp:terrain.hp[index]};
+          bestLateral=lateral;bestForward=forward;best={index,col,row,x,y,type,hp:terrainHpAt(terrain,col,row)};
         }
       }
       if(best)return best;
@@ -428,7 +458,7 @@
     const minCol=Math.max(0,Math.floor((x-player.radius)/MINE_TILE_SIZE)),maxCol=Math.min(terrain.cols-1,Math.floor((x+player.radius)/MINE_TILE_SIZE));
     const minRow=Math.max(0,Math.floor((y-player.radius)/MINE_TILE_SIZE)),maxRow=Math.min(terrain.rows-1,Math.floor((y+player.radius)/MINE_TILE_SIZE));
     for(let row=minRow;row<=maxRow;row++)for(let col=minCol;col<=maxCol;col++){
-      const index=row*terrain.cols+col;if(!terrain.types[index])continue;
+      if(!terrainTypeAt(terrain,col,row))continue;
       const left=col*MINE_TILE_SIZE,top=row*MINE_TILE_SIZE,nearestX=clamp(x,left,left+MINE_TILE_SIZE),nearestY=clamp(y,top,top+MINE_TILE_SIZE);
       if(distance(x,y,nearestX,nearestY)<player.radius)return true;
     }
@@ -573,13 +603,14 @@
   }
 
   function hitTerrain(index){
-    const terrain=currentTerrain();if(!terrain||index<0||index>=terrain.types.length||!terrain.types[index])return;
+    const terrain=currentTerrain(),cellCount=terrain?terrain.cols*terrain.rows:0;if(!terrain||index<0||index>=cellCount)return;
     const col=index%terrain.cols,row=Math.floor(index/terrain.cols),x=(col+.5)*MINE_TILE_SIZE,y=(row+.5)*MINE_TILE_SIZE;
+    const type=terrainTypeAt(terrain,col,row);if(!type)return;
     const hiddenBefore=mineRocks.filter(rock=>rock.scene===currentScene&&!rock.barrierId&&!rock.broken&&!rockIsExposed(rock));
-    terrain.hp[index]=Math.max(0,terrain.hp[index]-currentPower());
+    const hp=Math.max(0,terrainHpAt(terrain,col,row)-currentPower());setTerrainCell(terrain,col,row,type,hp);
     spawnImpact(x,y,'stone',currentPower(),false);sound('hit','stone');
-    if(terrain.hp[index]>0)return;
-    terrain.types[index]=0;
+    if(hp>0)return;
+    setTerrainCell(terrain,col,row,0,0);terrain.dug.add(index);
     state.terrainDug[currentScene].push(index);
     state.mined.stone++;spawnGroundDrop('stone',1,x,y);spawnBreak(x,y,'stone');sound('break','stone');
     floaters.push({x,y:y-22,text:'TUNNEL OPEN',color:'#d8c49a',age:0,life:.72,size:11});
@@ -1166,8 +1197,8 @@
     const startRow=Math.max(0,Math.floor(camera.y/MINE_TILE_SIZE)-1),endRow=Math.min(terrain.rows-1,Math.ceil((camera.y+viewHeight)/MINE_TILE_SIZE)+1);
     const target=nearestTerrainCell(MINING_RANGE);
     for(let row=startRow;row<=endRow;row++)for(let col=startCol;col<=endCol;col++){
-      const index=row*terrain.cols+col;if(!terrain.types[index])continue;
-      const x=col*MINE_TILE_SIZE-camera.x,y=row*MINE_TILE_SIZE-camera.y,seed=(index*37+row*11)%29,damage=1-terrain.hp[index]/MINE_TERRAIN_HP;
+      const index=row*terrain.cols+col,type=terrainTypeAt(terrain,col,row);if(!type)continue;
+      const x=col*MINE_TILE_SIZE-camera.x,y=row*MINE_TILE_SIZE-camera.y,seed=(index*37+row*11)%29,damage=1-terrainHpAt(terrain,col,row)/MINE_TERRAIN_HP;
       ctx.fillStyle=mine.wall;ctx.fillRect(x-.5,y-.5,MINE_TILE_SIZE+1,MINE_TILE_SIZE+1);
       ctx.strokeStyle=mine.wallEdge;ctx.globalAlpha=.28;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+4,y+13+seed%8);ctx.lineTo(x+18+seed%12,y+4);ctx.lineTo(x+MINE_TILE_SIZE-3,y+17+seed%11);ctx.lineTo(x+MINE_TILE_SIZE-9,y+MINE_TILE_SIZE-4);ctx.lineTo(x+9,y+MINE_TILE_SIZE-7);ctx.closePath();ctx.stroke();
       if(damage>0){ctx.globalAlpha=.45+.4*damage;ctx.strokeStyle='#171713';ctx.lineWidth=1+damage*2;ctx.beginPath();ctx.moveTo(x+MINE_TILE_SIZE*.48,y+5);ctx.lineTo(x+MINE_TILE_SIZE*.36,y+21);ctx.lineTo(x+MINE_TILE_SIZE*.58,y+30);ctx.lineTo(x+MINE_TILE_SIZE*.45,y+MINE_TILE_SIZE-4);ctx.stroke()}
@@ -1614,7 +1645,7 @@
   window.addEventListener('resize',resize,{passive:true});
 
   window.__deepforgeTest={
-    snapshot:()=>JSON.parse(JSON.stringify({state,scene:currentScene,effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower())},player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},biome:currentBiome().id,mine:currentMine()?{id:currentMine().id,name:currentMine().name,width:currentMine().width,height:currentMine().height,style:currentMine().style,solids:currentMine().solids,solidCount:currentMine().solids.length,barrierIds:currentMine().barriers.map(barrier=>barrier.id),labels:currentMine().labels.map(label=>label[0]),terrain:{tileSize:MINE_TILE_SIZE,cellCount:currentTerrain().types.length,solidCells:currentTerrain().types.reduce((sum,type)=>sum+(type?1:0),0),dugCells:state.terrainDug[currentScene].length,target:nearestTerrainCell(MINING_RANGE)}}:null,focus:miningFocus,rocks:rocks.map(rock=>({id:rock.id,type:rock.type,x:rock.x,y:rock.y,scene:rock.scene,barrierId:rock.barrierId,requiredPickaxe:rock.requiredPickaxe,veinId:rock.veinId,hp:rock.hp,shell:rock.shell,broken:rock.broken,exposed:rockIsExposed(rock)})),veins:veins.map(vein=>({id:vein.id,status:vein.status,timer:vein.timer,broken:vein.brokenRockIds.size,total:vein.positions.length})),chests:chests.map(chest=>({id:chest.id,name:chest.name,x:chest.x,y:chest.y,ready:chestRequirementMet(chest),opened:!!state.openedChests[chest.id]})),groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,sourceChest:drop.sourceChest})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count},activeContext})),
+    snapshot:()=>JSON.parse(JSON.stringify({build:BUILD,state,scene:currentScene,effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower())},player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,mine:currentMine()?{id:currentMine().id,name:currentMine().name,width:currentMine().width,height:currentMine().height,style:currentMine().style,solids:currentMine().solids,solidCount:currentMine().solids.length,barrierIds:currentMine().barriers.map(barrier=>barrier.id),labels:currentMine().labels.map(label=>label[0]),terrain:{tileSize:MINE_TILE_SIZE,chunkCells:MINE_CHUNK_CELLS,totalChunks:Math.ceil(currentTerrain().cols/MINE_CHUNK_CELLS)*Math.ceil(currentTerrain().rows/MINE_CHUNK_CELLS),activeChunks:currentTerrain().chunks.size,cellCount:currentTerrain().cols*currentTerrain().rows,solidCells:terrainSolidCellCount(currentTerrain()),dugCells:state.terrainDug[currentScene].length,target:nearestTerrainCell(MINING_RANGE)}}:null,focus:miningFocus,rocks:rocks.map(rock=>({id:rock.id,type:rock.type,x:rock.x,y:rock.y,scene:rock.scene,barrierId:rock.barrierId,requiredPickaxe:rock.requiredPickaxe,veinId:rock.veinId,hp:rock.hp,shell:rock.shell,broken:rock.broken,exposed:rockIsExposed(rock)})),veins:veins.map(vein=>({id:vein.id,status:vein.status,timer:vein.timer,broken:vein.brokenRockIds.size,total:vein.positions.length})),chests:chests.map(chest=>({id:chest.id,name:chest.name,x:chest.x,y:chest.y,ready:chestRequirementMet(chest),opened:!!state.openedChests[chest.id]})),groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,sourceChest:drop.sourceChest})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count},activeContext})),
     reset:resetProgress,
     setPosition:(x,y)=>{const world=currentWorld();player.x=clamp(Number(x),52,world.width-52);player.y=clamp(Number(y),70,world.height-58);updateCamera(true);uiDirty=true},
     setAim:(x,y)=>{const length=Math.hypot(Number(x)||0,Number(y)||0);if(length){player.aimX=Number(x)/length;player.aimY=Number(y)/length;player.facing=player.aimX<0?-1:1}},
