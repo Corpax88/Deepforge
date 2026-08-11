@@ -137,7 +137,7 @@ test('clearing a connected ore vein grants its completion bonus',async({page},te
   let vein=snapshot.veins.find(item=>item.id==='copper_run');
   expect(vein.status).toBe('active');
   expect(vein.broken).toBe(1);
-  await expect(page.locator('#objectiveText')).toContainText('COPPER RUN 1/3');
+  await expect(page.locator('#objectiveText')).toHaveText('Sell your haul at the assay cart');
 
   await page.evaluate(()=>{
     window.__deepforgeTest.breakVeinRock('copper_run',1);
@@ -524,8 +524,8 @@ test('Starforge crafts and swaps three distinct endgame pickaxes',async({page},t
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.state.starforgeVariant).toBe('prospector');
   expect(snapshot.state.starforgeUnlocked).toEqual({crusher:true,swift:true,prospector:true});
-  await expect(page.locator('#objectiveText')).toHaveText('Deepforge mastered - every Starforge form forged');
-  await expect(page.locator('#unlockLabel')).toHaveText('DEEPFORGE MASTERED - 3/3 STARFORGE FORMS');
+  await expect(page.locator('#objectiveText')).toHaveText('Find a hidden Depth 2 entrance');
+  await expect(page.locator('#unlockLabel')).toHaveText('FIND DEPTH 2 - THE DRILL AGE AWAITS');
 });
 
 test('all four regions expose a distinct biome identity without changing the world flow',async({page})=>{
@@ -729,7 +729,7 @@ test('Mossvein Mine remains readable on an iPhone viewport',async({page},testInf
   await page.evaluate(()=>window.__deepforgeTest.enterMine());
   await page.evaluate(()=>window.__deepforgeTest.setPosition(555,640));
   await expect(page.locator('#areaName')).toHaveText('MOSSVEIN MINE');
-  await expect(page.locator('#objectiveText')).toHaveText('Break through the loose rubble');
+  await expect(page.locator('#objectiveText')).toHaveText('Hold MINE near a rock');
   await page.screenshot({path:testInfo.outputPath('mossvein-mine-mobile.png'),fullPage:true});
   await page.evaluate(()=>window.__deepforgeTest.setPosition(145,640));
   await expect(page.locator('#contextTitle')).toHaveText('Return to Mossvein Quarry');
@@ -883,7 +883,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.8.0',name:'DRILL AGE'});
+  expect(snapshot.build).toEqual({version:'0.8.1',name:'DRILL GUIDANCE'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -898,9 +898,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.8.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.8.1');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.8.0 · DRILL AGE');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.8.1 · DRILL GUIDANCE');
 });
 
 test('each mine hides one persistent random entrance to a contrasting Depth 2',async({page})=>{
@@ -938,11 +938,24 @@ test('Depth 2 replaces old ore with local materials and upgrades Starforge into 
   const starforgeCooldown=snapshot.effectivePickaxe.cooldown;
   expect(snapshot.mine.depthResources).toEqual({main:'rootiron',secondary:'deepstone',rare:'ambercore'});
   expect(snapshot.mine.discovery.deposits.every(deposit=>['rootiron','deepstone','ambercore'].includes(deposit.type))).toBe(true);
-  await page.evaluate(()=>{const api=window.__deepforgeTest;api.grantGold(1200);api.grantCargo('rootiron',8);api.grantCargo('ambercore',1);api.upgradeDrill();api.save()});
+  expect(snapshot.state.drillGoalScene).toBe('mossMine');
+  await expect(page.locator('#objectiveText')).toHaveText('Forge the Burrower Drill');
+  await expect(page.locator('#objectiveDetail')).toContainText('8 ROOTIRON');
+  await page.evaluate(()=>{const api=window.__deepforgeTest;api.exitDepth();api.setPosition(700,900)});
+  await expect(page.locator('#objectiveText')).toHaveText('Forge the Burrower Drill');
+  await page.evaluate(()=>{const api=window.__deepforgeTest;api.enterDepth();api.grantGold(1200);api.grantCargo('rootiron',8);api.grantCargo('ambercore',1);api.grantCargo('copper',3);api.sellCargo()});
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.cargo).toEqual(expect.objectContaining({rootiron:8,ambercore:1,copper:0}));
+  await expect(page.locator('#objectiveDetail')).toHaveText('READY AT ANY DEPTH 2 DRILL FORGE');
+  await page.evaluate(()=>{const api=window.__deepforgeTest;api.upgradeDrill();api.save()});
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.state.drillLevel).toBe(1);expect(snapshot.effectivePickaxe.name).toBe('Burrower Drill');expect(snapshot.effectivePickaxe.cooldown).toBeLessThan(starforgeCooldown);
+  expect(snapshot.toolMode).toBe('drill');
+  await expect(page.locator('#mineAction')).toHaveText('DRILL');
+  await expect(page.locator('#toolKind')).toHaveText('YOUR DRILL');
+  await expect(page.locator('#objectiveText')).toHaveText('Forge the Pulse Drill');
   await page.reload();await page.waitForFunction(()=>window.__deepforgeTest);snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.state.drillLevel).toBe(1);expect(snapshot.effectivePickaxe.name).toBe('Burrower Drill');
+  expect(snapshot.state.drillLevel).toBe(1);expect(snapshot.effectivePickaxe.name).toBe('Burrower Drill');expect(snapshot.state.drillGoalScene).toBe('mossMine');
 });
 
 test('terrain strikes produce weighted mining feedback without changing targeting',async({page})=>{

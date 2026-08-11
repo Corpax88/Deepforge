@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.8.0');
-assert.equal(api.snapshot().build.name,'DRILL AGE');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.8.0');
+assert.equal(api.snapshot().build.version,'0.8.1');
+assert.equal(api.snapshot().build.name,'DRILL GUIDANCE');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.8.1');
 
 api.unlockAllAreas();api.unlockStarfall();api.enterMine('starMine');
 let fallenPocket=api.snapshot().mine.discovery.caverns.find(item=>item.name==='Fallen Pocket');
@@ -139,9 +139,13 @@ api.mineTerrainCell(target.index);assert.equal(api.snapshot().mine.terrain.targe
 api.setStarforgeVariant('swift');
 const starforgeCooldown=api.snapshot().effectivePickaxe.cooldown;
 api.mineTerrainCell(target.index);assert.ok(api.snapshot().mine.terrain.target.hp<target.hp);
-api.grantGold(1200);api.grantCargo('rootiron',8);api.grantCargo('ambercore',1);
+after=api.snapshot();assert.equal(after.state.drillGoalScene,'mossMine');assert.equal(after.goal.title,'Forge the Burrower Drill');assert.ok(after.goal.detail.includes('8 ROOTIRON'));
+const lockedGoal=JSON.stringify(after.goal);assert.equal(api.exitDepth(),true);api.setPosition(720,900);assert.equal(JSON.stringify(api.snapshot().goal),lockedGoal);assert.equal(api.enterDepth(),true);
+api.grantGold(1200);api.grantCargo('rootiron',8);api.grantCargo('ambercore',1);api.grantCargo('copper',3);
+after=api.snapshot();assert.equal(after.goal.detail,'READY AT ANY DEPTH 2 DRILL FORGE');assert.equal(after.protectedCargo.rootiron,8);assert.equal(after.protectedCargo.ambercore,1);assert.equal(after.sellableCargo.copper,3);
+api.sellCargo();after=api.snapshot();assert.equal(after.state.cargo.rootiron,8);assert.equal(after.state.cargo.ambercore,1);assert.equal(after.state.cargo.copper,0);
 const drillForge=api.snapshot().mine.depthStations.forge;api.setPosition(drillForge.x,drillForge.y);api.upgradeDrill();after=api.snapshot();
-assert.equal(after.state.drillLevel,1);assert.equal(after.effectivePickaxe.name,'Burrower Drill');assert.ok(after.effectivePickaxe.cooldown<starforgeCooldown);
+assert.equal(after.state.drillLevel,1);assert.equal(after.effectivePickaxe.name,'Burrower Drill');assert.ok(after.effectivePickaxe.cooldown<starforgeCooldown);assert.equal(after.toolMode,'drill');assert.equal(after.goal.title,'Forge the Pulse Drill');assert.doesNotThrow(()=>api.renderOnce());
 api.save();
 
 runtime=createRuntime();after=runtime.api.snapshot();
@@ -167,4 +171,4 @@ for(const scene of ['mossMine','moonMine','emberMine','starMine']){
   assert.doesNotThrow(()=>api.renderOnce());
   assert.equal(api.exitDepth(),true);api.exitMine();
 }
-console.log('Runtime smoke passed: targeting, rewards, new Depth 2 materials, Drill Forge, contrast, and save reload.');
+console.log('Runtime smoke passed: targeting, rewards, locked drill guidance, protected sales, drill rendering, and save reload.');
