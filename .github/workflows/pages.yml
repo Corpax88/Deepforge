@@ -32,8 +32,11 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
+          name: deepforge-pages-${{ github.run_id }}-${{ github.run_attempt }}
           path: "."
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: deepforge-pages-${{ github.run_id }}-${{ github.run_attempt }}
