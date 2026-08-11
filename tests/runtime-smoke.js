@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.9.0');
-assert.equal(api.snapshot().build.name,'DRILL-GATED PROGRESSION');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.9.0');
+assert.equal(api.snapshot().build.version,'0.9.1');
+assert.equal(api.snapshot().build.name,'PERFORMANCE & GOLD SHOP');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.9.1');
 
 api.unlockAllAreas();api.unlockStarfall();api.enterMine('starMine');
 let fallenPocket=api.snapshot().mine.discovery.caverns.find(item=>item.name==='Fallen Pocket');
@@ -136,12 +136,12 @@ assert.ok(after.mine.discovery.deposits.every(deposit=>['rootiron','deepstone','
 assert.ok(after.rocks.filter(rock=>rock.scene==='mossMine'&&rock.depth===2&&rock.depositId).every(rock=>rock.requiresDeepTool));
 assert.ok(after.mine.depthStations.sell&&after.mine.depthStations.forge);
 
-api.setPosition(after.mine.depthEntrance.x+185,after.mine.depthEntrance.y);api.setAim(1,0);before=api.snapshot();target=before.mine.terrain.target;assert.ok(target);
+const depthAim=after.mine.depthEntrance.x<after.mine.width/2?1:-1;api.setPosition(after.mine.depthEntrance.x+depthAim*185,after.mine.depthEntrance.y);api.setAim(depthAim,0);before=api.snapshot();target=before.mine.terrain.target;assert.ok(target);
 api.mineTerrainCell(target.index);assert.equal(api.snapshot().mine.terrain.target.hp,target.hp);
 api.setStarforgeVariant('swift');
 const starforgeCooldown=api.snapshot().effectivePickaxe.cooldown;
 api.mineTerrainCell(target.index);assert.ok(api.snapshot().mine.terrain.target.hp<target.hp);
-after=api.snapshot();assert.equal(after.state.drillGoalScene,'mossMine');assert.equal(after.goal.title,'Mine Rootiron for Burrower Drill');assert.ok(after.goal.detail.includes('MOSSVEIN DEPTH 2'));
+after=api.snapshot();assert.equal(after.state.drillGoalScene,'mossMine');assert.equal(after.goal.title,'Mine Rootiron for Burrower Drill');assert.ok(after.goal.detail.includes('ROOTWOUND DEPTHS'));
 let gatedHit=api.hitDepositRock(mossGate.id,0);assert.deepEqual(gatedHit.after,gatedHit.before);
 const lockedGoal=JSON.stringify(after.goal);assert.equal(api.exitDepth(),true);api.setPosition(720,900);assert.equal(JSON.stringify(api.snapshot().goal),lockedGoal);assert.equal(api.enterDepth(),true);
 api.grantGold(1200);api.grantCargo('rootiron',8);api.grantCargo('ambercore',1);api.grantCargo('copper',3);
@@ -187,4 +187,13 @@ for(const scene of ['mossMine','moonMine','emberMine','starMine']){
   assert.notEqual(after.mine.dirt,after.mine.floor);assert.doesNotThrow(()=>api.renderOnce());
   assert.equal(api.exitDepth(),true);api.exitMine();
 }
-console.log('Runtime smoke passed: targeting, drill gates, Mossvein backtracking, Moon/Ember routing, protected sales, rendering, and save reload.');
+
+const movementBefore=api.snapshot().movement;
+api.grantGold(10000000);
+for(let level=0;level<25;level++)assert.equal(api.buyMovementSpeed(),true);
+after=api.snapshot();assert.equal(after.movement.level,movementBefore.level+25);assert.ok(after.movement.multiplier>movementBefore.multiplier);assert.ok(after.movement.nextCost>movementBefore.nextCost);
+const normalCooldown=after.effectivePickaxe.cooldown;api.activateMiningRush();after=api.snapshot();assert.equal(after.miningRush.timer,30);assert.ok(after.effectivePickaxe.cooldown<normalCooldown);
+const dropsBefore=after.groundDrops.length;api.spawnGroundDrops('copper',2,800,500);api.enterMine('mossMine');api.spawnGroundDrops('stone',3,280,650);assert.equal(api.snapshot().groundDrops.length,dropsBefore+5);
+assert.equal(api.forceGlobalLootSweep(),dropsBefore+5);after=api.snapshot();assert.equal(after.groundDrops.length,0);assert.ok(after.lootSweep.remaining>299);api.save();
+runtime=createRuntime();after=runtime.api.snapshot();assert.equal(after.movement.level,movementBefore.level+25);assert.ok(after.movement.multiplier>1);
+console.log('Runtime smoke passed: drill routing, Mining Rush, global loot cleanup, unlimited movement upgrades, rendering, and save reload.');

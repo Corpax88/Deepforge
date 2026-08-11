@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.9.0 - Drill-Gated Progression**
+Current build: **Deepforge v0.9.1 - Performance & Gold Shop**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
@@ -39,12 +39,14 @@ Open `http://127.0.0.1:4180` on the same computer.
 - Terrain is generated lazily in compact 16 x 16-cell typed-array chunks and only visible cells are drawn, avoiding one heavy object per rock tile on mobile.
 - Deterministic connected ore veins run through the deep terrain in clusters of 4-10 nodes instead of isolated random rocks.
 - Buried chambers remain visually concealed until the player breaks through their perimeter, then permanently reveal their name and rare find.
-- Every buried chamber now contains a persistent reward: a buried cache, crystal cluster, motherlode, or restorative shrine.
+- Every buried chamber now contains a persistent reward: a buried cache, crystal cluster, motherlode, or Mining Rush shrine that grants 55% faster mining for 30 seconds.
+- The Wayfarer Shop turns spare gold into permanent movement speed with rising prices and no upgrade cap.
+- Drill terrain hits use indexed reveal lookups instead of scanning every hidden deposit, reducing frame spikes while digging quickly.
 - Stone, copper, Moonglass, armored Emberstone, Astralite, and four valuable rare veins.
 - Five pickaxe tiers with stronger damage and faster swings.
 - Emberstone shells that can be ground down normally or cracked quickly with precision strikes.
 - Four timed bonus veins that reward clearing a full connected cluster quickly.
-- Broken ore now bursts onto the ground, settles physically, and must be collected by walking over it. Uncollected ore fades after five minutes.
+- Broken ore now bursts onto the ground and must be collected by walking over it. One global five-minute cleanup clears loose items from every map, with warnings before the sweep.
 - Ember Pickaxe requires 12 lifetime Emberstone mined plus 650 gold.
 - Five Ember Mastery ranks extend progression after the final pickaxe. Each rank needs gold plus a lifetime Sunslag milestone, then grants higher power, swing speed, shell penetration, precision frequency, and bonus yield.
 - Damage left over after breaking an armored shell now carries into the ore core, so stronger pickaxes never waste their extra power at the shell boundary.

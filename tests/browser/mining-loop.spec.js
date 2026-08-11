@@ -484,6 +484,51 @@ test('mined resources land in the world, require pickup, and expire cleanly',asy
   expect(snapshot.groundDrops.length).toBe(0);
 });
 
+test('one global five-minute cleanup clears loose items from every map',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    const api=window.__deepforgeTest;api.spawnGroundDrops('copper',2,900,500);api.enterMine('mossMine');api.spawnGroundDrops('stone',3,280,650);
+  });
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.groundDrops).toHaveLength(5);
+  expect(snapshot.groundDrops.some(drop=>drop.scene==='surface')).toBe(true);
+  expect(snapshot.groundDrops.some(drop=>drop.scene==='mossMine')).toBe(true);
+  expect(await page.evaluate(()=>window.__deepforgeTest.forceGlobalLootSweep())).toBe(5);
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.groundDrops).toHaveLength(0);
+  expect(snapshot.lootSweep.remaining).toBeGreaterThan(299);
+});
+
+test('restorative shrines grant temporary Mining Rush instead of full Focus',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  const normalCooldown=snapshot.effectivePickaxe.cooldown,shrine=snapshot.mine.discovery.caverns.find(cavern=>cavern.reward.kind==='shrine');
+  expect(shrine).toBeTruthy();
+  await page.evaluate(shrineData=>{
+    const api=window.__deepforgeTest;api.mineTerrainCell(shrineData.boundaryIndex);api.mineTerrainCell(shrineData.boundaryIndex);api.setPosition(shrineData.x,shrineData.y);api.claimPocketReward(shrineData.reward.id);
+  },shrine);
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.miningRush.timer).toBeGreaterThan(29);
+  expect(snapshot.focus.streak).toBe(0);
+  expect(snapshot.effectivePickaxe.cooldown).toBeLessThan(normalCooldown);
+  await expect(page.locator('#mineHint')).toContainText('RUSH');
+});
+
+test('Wayfarer Shop sells persistent movement speed with no level cap',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{const api=window.__deepforgeTest;api.grantGold(100000000);api.setPosition(730,220)});
+  await expect(page.locator('#contextPanel')).toBeVisible();
+  await expect(page.locator('#contextTitle')).toContainText('Movement');
+  const before=await page.evaluate(()=>window.__deepforgeTest.snapshot().movement);
+  await page.locator('#contextButton').click();
+  await page.evaluate(()=>{for(let level=1;level<40;level++)window.__deepforgeTest.buyMovementSpeed();window.__deepforgeTest.save()});
+  let movement=await page.evaluate(()=>window.__deepforgeTest.snapshot().movement);
+  expect(movement.level).toBe(40);expect(movement.multiplier).toBeGreaterThan(before.multiplier);expect(movement.nextCost).toBeGreaterThan(before.nextCost);
+  await page.reload();await page.waitForFunction(()=>window.__deepforgeTest);movement=await page.evaluate(()=>window.__deepforgeTest.snapshot().movement);
+  expect(movement.level).toBe(40);expect(movement.multiplier).toBeCloseTo(3.8);
+});
+
 test('Starforge crafts and swaps three distinct endgame pickaxes',async({page},testInfo)=>{
   await freshGame(page);
   await page.evaluate(()=>{
@@ -883,7 +928,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.9.0',name:'DRILL-GATED PROGRESSION'});
+  expect(snapshot.build).toEqual({version:'0.9.1',name:'PERFORMANCE & GOLD SHOP'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -898,9 +943,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.9.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.9.1');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.9.0 · DRILL-GATED PROGRESSION');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.9.1 · PERFORMANCE & GOLD SHOP');
 });
 
 test('each mine hides one persistent random entrance to a contrasting Depth 2',async({page})=>{
@@ -941,7 +986,7 @@ test('drill-gated materials route progression back through earlier Depth 2 mines
   expect(mossGate).toEqual(expect.objectContaining({requiresDrillLevel:1,drillGated:true}));
   expect(snapshot.state.drillGoalScene).toBe('mossMine');
   await expect(page.locator('#objectiveText')).toHaveText('Mine Rootiron for Burrower Drill');
-  await expect(page.locator('#objectiveDetail')).toContainText('MOSSVEIN DEPTH 2');
+  await expect(page.locator('#objectiveDetail')).toContainText('ROOTWOUND DEPTHS');
   const lockedHit=await page.evaluate(id=>window.__deepforgeTest.hitDepositRock(id,0),mossGate.id);
   expect(lockedHit.after).toEqual(lockedHit.before);
 
@@ -964,10 +1009,12 @@ test('drill-gated materials route progression back through earlier Depth 2 mines
   const moonGate=snapshot.mine.discovery.deposits.find(deposit=>deposit.type==='phasecrystal');
   expect(moonGate).toEqual(expect.objectContaining({requiresDrillLevel:2,drillGated:true}));
   await expect(page.locator('#objectiveText')).toHaveText('Mine Phase Crystal for Deepcore Drill');
+  await expect(page.locator('#objectiveDetail')).toContainText('PRISMATIC DEPTHS');
   const moonHit=await page.evaluate(id=>window.__deepforgeTest.hitDepositRock(id,0),moonGate.id);
   expect(moonHit.after).not.toEqual(moonHit.before);
   await page.evaluate(()=>{const api=window.__deepforgeTest;api.grantCargo('phasecrystal',10);api.exitDepth();api.exitMine();api.enterMine('emberMine');api.discoverDepthEntrance();api.enterDepth()});
   await expect(page.locator('#objectiveText')).toHaveText('Mine Infernium for Deepcore Drill');
+  await expect(page.locator('#objectiveDetail')).toContainText('MOLTEN DEPTHS');
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   const emberGate=snapshot.mine.discovery.deposits.find(deposit=>deposit.type==='infernium');
   expect(emberGate).toEqual(expect.objectContaining({requiresDrillLevel:2,drillGated:true}));
