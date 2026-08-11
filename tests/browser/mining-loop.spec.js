@@ -928,7 +928,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.9.1',name:'PERFORMANCE & GOLD SHOP'});
+  expect(snapshot.build).toEqual({version:'0.9.2',name:'VISUAL GUIDANCE'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -943,9 +943,23 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.9.1');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.9.2');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.9.1 · PERFORMANCE & GOLD SHOP');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.9.2 · VISUAL GUIDANCE');
+});
+
+test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{
+  await freshGame(page);
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.guide).toEqual(expect.objectContaining({kind:'rock',scene:'surface',visible:true}));
+  expect(snapshot.markerStyle.bonusVeinRings).toBe(false);
+  await page.evaluate(guide=>window.__deepforgeTest.setPosition(guide.x,guide.y),snapshot.guide);
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.guide.visible).toBe(false);
+  await page.evaluate(()=>{window.__deepforgeTest.grantMined('stone',1);window.__deepforgeTest.grantCargo('stone',1)});
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.guide).toEqual(expect.objectContaining({kind:'sell',scene:'surface'}));
+  await expect(page.locator('#objectiveText')).toHaveText('Sell your haul at the assay cart');
 });
 
 test('each mine hides one persistent random entrance to a contrasting Depth 2',async({page})=>{

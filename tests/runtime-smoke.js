@@ -36,9 +36,13 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.9.1');
-assert.equal(api.snapshot().build.name,'PERFORMANCE & GOLD SHOP');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.9.1');
+assert.equal(api.snapshot().build.version,'0.9.2');
+assert.equal(api.snapshot().build.name,'VISUAL GUIDANCE');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.9.2');
+let openingGuide=api.snapshot().guide;
+assert.equal(openingGuide.kind,'rock');assert.equal(openingGuide.scene,'surface');assert.equal(openingGuide.visible,true);
+api.setPosition(openingGuide.x,openingGuide.y);assert.equal(api.snapshot().guide.visible,false);
+assert.equal(api.snapshot().markerStyle.bonusVeinRings,false);api.reset();
 
 api.unlockAllAreas();api.unlockStarfall();api.enterMine('starMine');
 let fallenPocket=api.snapshot().mine.discovery.caverns.find(item=>item.name==='Fallen Pocket');
@@ -142,22 +146,26 @@ api.setStarforgeVariant('swift');
 const starforgeCooldown=api.snapshot().effectivePickaxe.cooldown;
 api.mineTerrainCell(target.index);assert.ok(api.snapshot().mine.terrain.target.hp<target.hp);
 after=api.snapshot();assert.equal(after.state.drillGoalScene,'mossMine');assert.equal(after.goal.title,'Mine Rootiron for Burrower Drill');assert.ok(after.goal.detail.includes('ROOTWOUND DEPTHS'));
+assert.equal(after.guide.kind,'rock');assert.equal(after.guide.resource,'rootiron');assert.equal(after.guide.scene,'mossMine');assert.equal(after.guide.depth,2);
 let gatedHit=api.hitDepositRock(mossGate.id,0);assert.deepEqual(gatedHit.after,gatedHit.before);
 const lockedGoal=JSON.stringify(after.goal);assert.equal(api.exitDepth(),true);api.setPosition(720,900);assert.equal(JSON.stringify(api.snapshot().goal),lockedGoal);assert.equal(api.enterDepth(),true);
 api.grantGold(1200);api.grantCargo('rootiron',8);api.grantCargo('ambercore',1);api.grantCargo('copper',3);
 after=api.snapshot();assert.equal(after.goal.detail,'READY AT ANY DEPTH 2 DRILL FORGE');assert.equal(after.protectedCargo.rootiron,8);assert.equal(after.protectedCargo.ambercore,1);assert.equal(after.sellableCargo.copper,3);
 api.sellCargo();after=api.snapshot();assert.equal(after.state.cargo.rootiron,8);assert.equal(after.state.cargo.ambercore,1);assert.equal(after.state.cargo.copper,0);
+assert.equal(after.guide.kind,'drill-forge');assert.equal(after.guide.scene,'mossMine');assert.equal(after.guide.depth,2);
 const drillForge=api.snapshot().mine.depthStations.forge;api.setPosition(drillForge.x,drillForge.y);api.upgradeDrill();after=api.snapshot();
 assert.equal(after.state.drillLevel,1);assert.equal(after.effectivePickaxe.name,'Burrower Drill');assert.ok(after.effectivePickaxe.cooldown<starforgeCooldown);assert.equal(after.toolMode,'drill');assert.equal(after.goal.title,'Mine Burrowsteel for Pulse Drill');
 gatedHit=api.hitDepositRock(mossGate.id,0);assert.notDeepEqual(gatedHit.after,gatedHit.before);
 api.grantGold(3200);api.grantCargo('burrowsteel',12);api.grantCargo('copper',2);api.sellCargo();after=api.snapshot();
 assert.equal(after.state.cargo.burrowsteel,12);assert.equal(after.state.cargo.copper,0);assert.equal(after.goal.detail,'READY AT ANY DEPTH 2 DRILL FORGE');
 api.upgradeDrill();after=api.snapshot();assert.equal(after.state.drillLevel,2);assert.equal(after.effectivePickaxe.name,'Pulse Drill');assert.equal(after.goal.title,'Mine Phase Crystal for Deepcore Drill');api.save();
+assert.equal(after.guide.kind,'depth-exit');assert.equal(after.guide.scene,'mossMine');assert.equal(after.guide.depth,2);
 
 runtime=createRuntime();api=runtime.api;after=api.snapshot();
 assert.equal(after.scene,'mossMine');assert.equal(after.depth,2);assert.equal(after.mine.depthEntrance.x,hiddenDescent.x);assert.equal(after.mine.depthEntrance.y,hiddenDescent.y);
 assert.equal(after.state.discoveredDepthEntrances.mossMine,true);assert.equal(after.state.drillLevel,2);
-assert.equal(api.exitDepth(),true);api.exitMine();api.unlockAllAreas();api.unlockStarfall();
+assert.equal(api.exitDepth(),true);assert.equal(api.snapshot().guide.kind,'mine-exit');api.exitMine();api.unlockAllAreas();api.unlockStarfall();
+assert.equal(api.snapshot().guide.kind,'mine-entrance');assert.equal(api.snapshot().guide.destination,'moonMine');
 
 api.enterMine('moonMine');if(!api.snapshot().mine.depthEntrance.discovered)assert.equal(api.discoverDepthEntrance(),true);assert.equal(api.enterDepth(),true);
 after=api.snapshot();const moonGate=after.mine.discovery.deposits.find(deposit=>deposit.type==='phasecrystal');
@@ -196,4 +204,4 @@ const normalCooldown=after.effectivePickaxe.cooldown;api.activateMiningRush();af
 const dropsBefore=after.groundDrops.length;api.spawnGroundDrops('copper',2,800,500);api.enterMine('mossMine');api.spawnGroundDrops('stone',3,280,650);assert.equal(api.snapshot().groundDrops.length,dropsBefore+5);
 assert.equal(api.forceGlobalLootSweep(),dropsBefore+5);after=api.snapshot();assert.equal(after.groundDrops.length,0);assert.ok(after.lootSweep.remaining>299);api.save();
 runtime=createRuntime();after=runtime.api.snapshot();assert.equal(after.movement.level,movementBefore.level+25);assert.ok(after.movement.multiplier>1);
-console.log('Runtime smoke passed: drill routing, Mining Rush, global loot cleanup, unlimited movement upgrades, rendering, and save reload.');
+console.log('Runtime smoke passed: visual guidance, drill routing, Mining Rush, global loot cleanup, unlimited movement upgrades, rendering, and save reload.');

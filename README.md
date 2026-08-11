@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.9.1 - Performance & Gold Shop**
+Current build: **Deepforge v0.9.2 - Visual Guidance**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
@@ -32,6 +32,9 @@ Open `http://127.0.0.1:4180` on the same computer.
 - Depth 2 uses entirely new local resources: Rootiron and Ambercore, Prismite and Lunacore, Magmaite and Furnace Hearts, or Voidglass and Singularity Cores. Mineable dirt yields Deepstone instead of surface Stone.
 - A forged Starforge pickaxe can bootstrap Depth 2, then three permanent drill tiers replace it with much faster mining: Burrower Drill, Pulse Drill, and Deepcore Drill.
 - The top objective stays locked to the next permanent progression goal, including exact missing drill materials and gold.
+- One soft, text-free guidance light points toward the next useful rock, route, entrance or station, then fades as the player gets close.
+- Off-screen objectives use a single pulsing chevron, including the route back out of the wrong mine and onward to the correct Depth 2.
+- Persistent circular area markers were removed from bonus veins; their subtle connecting trace and status remain.
 - Sell All automatically protects the materials reserved for the active drill upgrade.
 - Drills use their own braced, spinning bore animation and matching HUD controls instead of a pickaxe swing.
 - Drill progression now routes back through earlier Depth 2 mines: Burrowsteel in Mossvein requires the Burrower Drill, while Phase Crystal in Moonglass and Infernium in Emberdeep require the Pulse Drill for the final Deepcore upgrade.
