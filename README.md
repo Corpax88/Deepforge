@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.4.0 - Discovery Pass**
+Current build: **Deepforge v0.5.0 - Mining Satisfaction**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
@@ -41,6 +41,7 @@ Open `http://127.0.0.1:4180` on the same computer.
 - Ember Mastery 5 opens the Starfall Master Seal and reveals Starfall Depths, armored Astralite, rare Crownstone, and the Starfall Lattice.
 - The Starforge consumes Astralite and Crownstone to unlock three swappable endgame styles: the heavy Astral Crusher, rapid Comet Edge, and high-yield Crownseeker.
 - Three visible rock-damage stages and optional timing-based precision strikes.
+- Stronger mining feedback with staged terrain cracks, compact camera kick, brief impact weight, material-tuned audio, optional haptics, escalating vein feedback, and discovery/jackpot bursts.
 - A five-step Mining Focus streak for accurate active play.
 - Animated resource selling with a smooth gold count-up.
 - Local browser save.

@@ -883,7 +883,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.4.0',name:'DISCOVERY PASS'});
+  expect(snapshot.build).toEqual({version:'0.5.0',name:'MINING SATISFACTION'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -898,9 +898,37 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.4.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.5.0');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.4.0 · DISCOVERY PASS');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.5.0 · MINING SATISFACTION');
+});
+
+test('terrain strikes produce weighted mining feedback without changing targeting',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    window.__deepforgeTest.enterMine('mossMine');
+    window.__deepforgeTest.setPosition(180,503);
+    window.__deepforgeTest.setAim(.899,-.438);
+  });
+  const target=await page.evaluate(()=>window.__deepforgeTest.snapshot().mine.terrain.target.index);
+  await page.evaluate(()=>window.__deepforgeTest.mineOnce());
+  const snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.feedback.terrainHitIndex).toBe(target);
+  expect(snapshot.feedback.particleCount).toBeGreaterThan(0);
+  expect(snapshot.feedback.shake).toBeGreaterThan(0);
+  expect(snapshot.feedback.hitStop).toBeGreaterThan(0);
+  expect(snapshot.mine.terrain.target.index).toBe(target);
+});
+
+test('connected discovery veins build to a clear jackpot finish',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
+  const deposit=await page.evaluate(()=>window.__deepforgeTest.snapshot().mine.discovery.deposits.find(item=>!item.rareFind));
+  for(let index=0;index<deposit.size;index++)await page.evaluate(([id,rockIndex])=>window.__deepforgeTest.breakDepositRock(id,rockIndex),[deposit.id,index]);
+  const feedback=await page.evaluate(()=>window.__deepforgeTest.snapshot().feedback);
+  expect(feedback.lastDepositBeat).toEqual({id:deposit.id,type:deposit.type,broken:deposit.size,total:deposit.size,jackpot:true});
+  expect(feedback.floaters).toContain('VEIN CLEARED!');
+  expect(feedback.particleCount).toBeGreaterThanOrEqual(28);
 });
 
 test('held movement targets the first blocking terrain cell instead of skipping deeper',async({page})=>{
@@ -920,6 +948,24 @@ test('held movement targets the first blocking terrain cell instead of skipping 
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.mine.terrain.target.index).toBe(firstTarget.index);
   expect(snapshot.mine.terrain.target.hp).toBeLessThan(firstTarget.hp);
+});
+
+test('terrain hits trigger bounded satisfaction feedback without changing targeting',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    window.__deepforgeTest.enterMine('mossMine');
+    window.__deepforgeTest.setPosition(180,503);
+    window.__deepforgeTest.setAim(.899,-.438);
+  });
+  const before=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  const target=before.mine.terrain.target;
+  await page.evaluate(index=>window.__deepforgeTest.mineTerrainCell(index),target.index);
+  const after=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(after.feedback.shake).toBeGreaterThan(0);
+  expect(after.feedback.terrainHitIndex).toBe(target.index);
+  expect(after.feedback.particleCount).toBeGreaterThan(0);
+  expect(after.feedback.particleCount).toBeLessThanOrEqual(260);
+  expect(after.mine.terrain.target.index).toBe(target.index);
 });
 
 test('resources stay hidden until tunneling exposes their terrain cell',async({page})=>{
@@ -978,6 +1024,8 @@ test('breaking into a hidden chamber reveals its rare find and persists discover
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.mine.discovery.caverns.find(item=>item.id===cavern.id).discovered).toBe(true);
   expect(snapshot.rocks.find(rock=>rock.id===rareFind.id).exposed).toBe(true);
+  expect(snapshot.feedback.lastDiscovery).toMatchObject({type:rareFind.type,rare:true});
+  expect(snapshot.feedback.particleCount).toBeLessThanOrEqual(260);
 
   await page.reload();
   await page.waitForFunction(()=>window.__deepforgeTest);
