@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.7.0 - Hidden Depths**
+Current build: **Deepforge v0.8.0 - Drill Age**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
@@ -28,6 +28,9 @@ Open `http://127.0.0.1:4180` on the same computer.
 - One continuous world with four visually distinct areas.
 - Every mine is now four to five times deeper: aim with movement, hold mine to carve persistent tunnels, and let the camera follow the descent.
 - Each mine hides exactly one persistent, randomly placed descent. Break into it to unlock a separate Depth 2 with harder dirt, denser veins and its own tunnels.
+- Every Depth 2 now has a permanent Exchange and Drill Forge beside its return shaft.
+- Depth 2 uses entirely new local resources: Rootiron and Ambercore, Prismite and Lunacore, Magmaite and Furnace Hearts, or Voidglass and Singularity Cores. Mineable dirt yields Deepstone instead of surface Stone.
+- A forged Starforge pickaxe can bootstrap Depth 2, then three permanent drill tiers replace it with much faster mining: Burrower Drill, Pulse Drill, and Deepcore Drill.
 - Dirt now uses a stronger contrasting color in every mine so open cave floor and mineable terrain are easy to read on mobile.
 - Terrain is generated lazily in compact 16 x 16-cell typed-array chunks and only visible cells are drawn, avoiding one heavy object per rock tile on mobile.
 - Deterministic connected ore veins run through the deep terrain in clusters of 4-10 nodes instead of isolated random rocks.

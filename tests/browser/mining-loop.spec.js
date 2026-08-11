@@ -883,7 +883,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.7.0',name:'HIDDEN DEPTHS'});
+  expect(snapshot.build).toEqual({version:'0.8.0',name:'DRILL AGE'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -898,9 +898,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.7.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.8.0');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.7.0 · HIDDEN DEPTHS');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.8.0 · DRILL AGE');
 });
 
 test('each mine hides one persistent random entrance to a contrasting Depth 2',async({page})=>{
@@ -921,10 +921,28 @@ test('each mine hides one persistent random entrance to a contrasting Depth 2',a
     expect(snapshot.mine.terrain.maxHp).toBeGreaterThan(8);
     expect(snapshot.mine.dirt).not.toBe(snapshot.mine.floor);
     expect(snapshot.mine.discovery.deposits.length).toBeGreaterThanOrEqual(14);
+    expect(snapshot.mine.discovery.deposits.every(deposit=>Object.values(snapshot.mine.depthResources).includes(deposit.type))).toBe(true);
+    expect(snapshot.mine.depthStations).toEqual(expect.objectContaining({sell:expect.any(Object),forge:expect.any(Object)}));
     expect(snapshot.mine.depthEntrance).toMatchObject({...entrance,discovered:true});
     expect(await page.evaluate(()=>window.__deepforgeTest.exitDepth())).toBe(true);
     await page.evaluate(()=>window.__deepforgeTest.exitMine());
   }
+});
+
+test('Depth 2 replaces old ore with local materials and upgrades Starforge into faster drills',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    const api=window.__deepforgeTest;api.unlockAllAreas();api.unlockStarfall();api.enterMine('mossMine');api.discoverDepthEntrance();api.enterDepth();api.setStarforgeVariant('swift');
+  });
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  const starforgeCooldown=snapshot.effectivePickaxe.cooldown;
+  expect(snapshot.mine.depthResources).toEqual({main:'rootiron',secondary:'deepstone',rare:'ambercore'});
+  expect(snapshot.mine.discovery.deposits.every(deposit=>['rootiron','deepstone','ambercore'].includes(deposit.type))).toBe(true);
+  await page.evaluate(()=>{const api=window.__deepforgeTest;api.grantGold(1200);api.grantCargo('rootiron',8);api.grantCargo('ambercore',1);api.upgradeDrill();api.save()});
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.drillLevel).toBe(1);expect(snapshot.effectivePickaxe.name).toBe('Burrower Drill');expect(snapshot.effectivePickaxe.cooldown).toBeLessThan(starforgeCooldown);
+  await page.reload();await page.waitForFunction(()=>window.__deepforgeTest);snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.drillLevel).toBe(1);expect(snapshot.effectivePickaxe.name).toBe('Burrower Drill');
 });
 
 test('terrain strikes produce weighted mining feedback without changing targeting',async({page})=>{

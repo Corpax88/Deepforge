@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.7.0');
-assert.equal(api.snapshot().build.name,'HIDDEN DEPTHS');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.7.0');
+assert.equal(api.snapshot().build.version,'0.8.0');
+assert.equal(api.snapshot().build.name,'DRILL AGE');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.8.0');
 
 api.unlockAllAreas();api.unlockStarfall();api.enterMine('starMine');
 let fallenPocket=api.snapshot().mine.discovery.caverns.find(item=>item.name==='Fallen Pocket');
@@ -125,10 +125,23 @@ after=api.snapshot();
 assert.equal(after.depth,2);
 assert.equal(after.mine.depth,2);
 assert.equal(after.mine.name,'ROOTWOUND DEPTHS');
-assert.equal(after.mine.terrain.maxHp,14);
+assert.equal(after.mine.terrain.maxHp,320);
 assert.notEqual(after.mine.dirt,after.mine.floor);
 assert.ok(after.mine.discovery.deposits.length>before.mine.discovery.deposits.length);
 assert.ok(after.rocks.filter(rock=>rock.scene==='mossMine'&&rock.depth===2&&rock.depositId).length>0);
+assert.equal(after.mine.depthResources.main,'rootiron');assert.equal(after.mine.depthResources.secondary,'deepstone');assert.equal(after.mine.depthResources.rare,'ambercore');
+assert.ok(after.mine.discovery.deposits.every(deposit=>['rootiron','deepstone','ambercore'].includes(deposit.type)));
+assert.ok(after.rocks.filter(rock=>rock.scene==='mossMine'&&rock.depth===2&&rock.depositId).every(rock=>rock.requiresDeepTool));
+assert.ok(after.mine.depthStations.sell&&after.mine.depthStations.forge);
+
+api.setPosition(after.mine.depthEntrance.x+185,after.mine.depthEntrance.y);api.setAim(1,0);before=api.snapshot();target=before.mine.terrain.target;assert.ok(target);
+api.mineTerrainCell(target.index);assert.equal(api.snapshot().mine.terrain.target.hp,target.hp);
+api.setStarforgeVariant('swift');
+const starforgeCooldown=api.snapshot().effectivePickaxe.cooldown;
+api.mineTerrainCell(target.index);assert.ok(api.snapshot().mine.terrain.target.hp<target.hp);
+api.grantGold(1200);api.grantCargo('rootiron',8);api.grantCargo('ambercore',1);
+const drillForge=api.snapshot().mine.depthStations.forge;api.setPosition(drillForge.x,drillForge.y);api.upgradeDrill();after=api.snapshot();
+assert.equal(after.state.drillLevel,1);assert.equal(after.effectivePickaxe.name,'Burrower Drill');assert.ok(after.effectivePickaxe.cooldown<starforgeCooldown);
 api.save();
 
 runtime=createRuntime();after=runtime.api.snapshot();
@@ -137,6 +150,7 @@ assert.equal(after.depth,2);
 assert.equal(after.mine.depthEntrance.x,hiddenDescent.x);
 assert.equal(after.mine.depthEntrance.y,hiddenDescent.y);
 assert.equal(after.state.discoveredDepthEntrances.mossMine,true);
+assert.equal(after.state.drillLevel,1);
 assert.equal(runtime.api.exitDepth(),true);
 assert.equal(runtime.api.snapshot().depth,1);
 
@@ -147,9 +161,10 @@ for(const scene of ['mossMine','moonMine','emberMine','starMine']){
   assert.notEqual(before.mine.dirt,before.mine.floor);
   if(!before.mine.depthEntrance.discovered)assert.equal(api.discoverDepthEntrance(),true);
   assert.equal(api.enterDepth(),true);after=api.snapshot();
-  assert.equal(after.depth,2);assert.equal(after.mine.terrain.maxHp,14);
+  assert.equal(after.depth,2);assert.ok(after.mine.terrain.maxHp>=320);
+  assert.ok(after.mine.discovery.deposits.every(deposit=>Object.values(after.mine.depthResources).includes(deposit.type)));
   assert.notEqual(after.mine.dirt,after.mine.floor);
   assert.doesNotThrow(()=>api.renderOnce());
   assert.equal(api.exitDepth(),true);api.exitMine();
 }
-console.log('Runtime smoke passed: targeting, rewards, hidden Depth 2, contrast, and save reload.');
+console.log('Runtime smoke passed: targeting, rewards, new Depth 2 materials, Drill Forge, contrast, and save reload.');
