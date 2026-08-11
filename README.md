@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.6.0 - Pocket Rewards**
+Current build: **Deepforge v0.7.0 - Hidden Depths**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
@@ -27,6 +27,8 @@ Open `http://127.0.0.1:4180` on the same computer.
 
 - One continuous world with four visually distinct areas.
 - Every mine is now four to five times deeper: aim with movement, hold mine to carve persistent tunnels, and let the camera follow the descent.
+- Each mine hides exactly one persistent, randomly placed descent. Break into it to unlock a separate Depth 2 with harder dirt, denser veins and its own tunnels.
+- Dirt now uses a stronger contrasting color in every mine so open cave floor and mineable terrain are easy to read on mobile.
 - Terrain is generated lazily in compact 16 x 16-cell typed-array chunks and only visible cells are drawn, avoiding one heavy object per rock tile on mobile.
 - Deterministic connected ore veins run through the deep terrain in clusters of 4-10 nodes instead of isolated random rocks.
 - Buried chambers remain visually concealed until the player breaks through their perimeter, then permanently reveal their name and rare find.

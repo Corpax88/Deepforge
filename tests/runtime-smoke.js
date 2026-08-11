@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.6.1');
-assert.equal(api.snapshot().build.name,'POCKET RENDER FIX');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.6.1');
+assert.equal(api.snapshot().build.version,'0.7.0');
+assert.equal(api.snapshot().build.name,'HIDDEN DEPTHS');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.7.0');
 
 api.unlockAllAreas();api.unlockStarfall();api.enterMine('starMine');
 let fallenPocket=api.snapshot().mine.discovery.caverns.find(item=>item.name==='Fallen Pocket');
@@ -110,4 +110,46 @@ after=runtime.api.snapshot();
 assert.equal(after.scene,'mossMine');
 assert.equal(after.state.discoveredCaverns[cavern.id],true);
 assert.equal(after.state.claimedPocketRewards[cacheCavern.reward.id],true);
-console.log('Runtime smoke passed: targeting, feedback, pocket rewards, particle cap, and save reload.');
+
+api=runtime.api;api.restoreTerrain();
+before=api.snapshot();
+const hiddenDescent={...before.mine.depthEntrance};
+assert.equal(hiddenDescent.discovered,false);
+assert.ok(hiddenDescent.boundaryIndex>=0);
+assert.notEqual(before.mine.dirt,before.mine.floor);
+assert.equal(api.discoverDepthEntrance(),true);
+after=api.snapshot();
+assert.equal(after.state.discoveredDepthEntrances.mossMine,true);
+assert.equal(api.enterDepth(),true);
+after=api.snapshot();
+assert.equal(after.depth,2);
+assert.equal(after.mine.depth,2);
+assert.equal(after.mine.name,'ROOTWOUND DEPTHS');
+assert.equal(after.mine.terrain.maxHp,14);
+assert.notEqual(after.mine.dirt,after.mine.floor);
+assert.ok(after.mine.discovery.deposits.length>before.mine.discovery.deposits.length);
+assert.ok(after.rocks.filter(rock=>rock.scene==='mossMine'&&rock.depth===2&&rock.depositId).length>0);
+api.save();
+
+runtime=createRuntime();after=runtime.api.snapshot();
+assert.equal(after.scene,'mossMine');
+assert.equal(after.depth,2);
+assert.equal(after.mine.depthEntrance.x,hiddenDescent.x);
+assert.equal(after.mine.depthEntrance.y,hiddenDescent.y);
+assert.equal(after.state.discoveredDepthEntrances.mossMine,true);
+assert.equal(runtime.api.exitDepth(),true);
+assert.equal(runtime.api.snapshot().depth,1);
+
+api=runtime.api;api.exitMine();api.unlockAllAreas();api.unlockStarfall();
+for(const scene of ['mossMine','moonMine','emberMine','starMine']){
+  api.enterMine(scene);before=api.snapshot();
+  assert.equal(before.mine.depthEntrance.scene,scene);
+  assert.notEqual(before.mine.dirt,before.mine.floor);
+  if(!before.mine.depthEntrance.discovered)assert.equal(api.discoverDepthEntrance(),true);
+  assert.equal(api.enterDepth(),true);after=api.snapshot();
+  assert.equal(after.depth,2);assert.equal(after.mine.terrain.maxHp,14);
+  assert.notEqual(after.mine.dirt,after.mine.floor);
+  assert.doesNotThrow(()=>api.renderOnce());
+  assert.equal(api.exitDepth(),true);api.exitMine();
+}
+console.log('Runtime smoke passed: targeting, rewards, hidden Depth 2, contrast, and save reload.');

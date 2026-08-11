@@ -883,7 +883,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.6.0',name:'POCKET REWARDS'});
+  expect(snapshot.build).toEqual({version:'0.7.0',name:'HIDDEN DEPTHS'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -898,9 +898,33 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.6.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.7.0');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.6.0 · POCKET REWARDS');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.7.0 · HIDDEN DEPTHS');
+});
+
+test('each mine hides one persistent random entrance to a contrasting Depth 2',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{window.__deepforgeTest.unlockAllAreas();window.__deepforgeTest.unlockStarfall()});
+  for(const scene of ['mossMine','moonMine','emberMine','starMine']){
+    await page.evaluate(sceneId=>window.__deepforgeTest.enterMine(sceneId),scene);
+    let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+    expect(snapshot.depth).toBe(1);
+    expect(snapshot.mine.depthEntrance).toMatchObject({scene,discovered:false});
+    expect(snapshot.mine.depthEntrance.boundaryIndex).not.toBeNull();
+    expect(snapshot.mine.dirt).not.toBe(snapshot.mine.floor);
+    const entrance={x:snapshot.mine.depthEntrance.x,y:snapshot.mine.depthEntrance.y};
+    expect(await page.evaluate(()=>window.__deepforgeTest.discoverDepthEntrance())).toBe(true);
+    expect(await page.evaluate(()=>window.__deepforgeTest.enterDepth())).toBe(true);
+    snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+    expect(snapshot.depth).toBe(2);
+    expect(snapshot.mine.terrain.maxHp).toBeGreaterThan(8);
+    expect(snapshot.mine.dirt).not.toBe(snapshot.mine.floor);
+    expect(snapshot.mine.discovery.deposits.length).toBeGreaterThanOrEqual(14);
+    expect(snapshot.mine.depthEntrance).toMatchObject({...entrance,discovered:true});
+    expect(await page.evaluate(()=>window.__deepforgeTest.exitDepth())).toBe(true);
+    await page.evaluate(()=>window.__deepforgeTest.exitMine());
+  }
 });
 
 test('terrain strikes produce weighted mining feedback without changing targeting',async({page})=>{
