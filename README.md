@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.8.1 - Drill Guidance**
+Current build: **Deepforge v0.9.0 - Drill-Gated Progression**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
@@ -34,6 +34,7 @@ Open `http://127.0.0.1:4180` on the same computer.
 - The top objective stays locked to the next permanent progression goal, including exact missing drill materials and gold.
 - Sell All automatically protects the materials reserved for the active drill upgrade.
 - Drills use their own braced, spinning bore animation and matching HUD controls instead of a pickaxe swing.
+- Drill progression now routes back through earlier Depth 2 mines: Burrowsteel in Mossvein requires the Burrower Drill, while Phase Crystal in Moonglass and Infernium in Emberdeep require the Pulse Drill for the final Deepcore upgrade.
 - Dirt now uses a stronger contrasting color in every mine so open cave floor and mineable terrain are easy to read on mobile.
 - Terrain is generated lazily in compact 16 x 16-cell typed-array chunks and only visible cells are drawn, avoiding one heavy object per rock tile on mobile.
 - Deterministic connected ore veins run through the deep terrain in clusters of 4-10 nodes instead of isolated random rocks.
