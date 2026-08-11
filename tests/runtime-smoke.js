@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.5.0');
-assert.equal(api.snapshot().build.name,'MINING SATISFACTION');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.5.0');
+assert.equal(api.snapshot().build.version,'0.5.1');
+assert.equal(api.snapshot().build.name,'MINING COMFORT');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.5.1');
 
 api.enterMine('mossMine');
 api.setPosition(180,503);api.setAim(.899,-.438);
@@ -49,7 +49,8 @@ let after=api.snapshot();
 assert.equal(after.mine.terrain.target.index,target.index);
 assert.ok(after.mine.terrain.target.hp<target.hp);
 assert.equal(after.feedback.terrainHitIndex,target.index);
-assert.ok(after.feedback.shake>0);
+assert.equal(after.feedback.shake,0);
+assert.equal(after.feedback.flash,0);
 assert.ok(after.feedback.particleCount>0&&after.feedback.particleCount<=260);
 
 const deposit=after.mine.discovery.deposits.find(item=>!item.rareFind);

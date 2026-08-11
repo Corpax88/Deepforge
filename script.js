@@ -34,7 +34,7 @@
   const resumeButton=document.getElementById('resumeButton');
   const resetButton=document.getElementById('resetButton');
 
-  const BUILD={version:'0.5.0',name:'MINING SATISFACTION'};
+  const BUILD={version:'0.5.1',name:'MINING COMFORT'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -590,11 +590,12 @@
     particles.push(particle);
   }
 
-  function miningKick(strength,flash,color,hapticDuration){
-    miningFeedback.shake=Math.max(miningFeedback.shake,strength);
-    miningFeedback.shakeTime=Math.max(miningFeedback.shakeTime,.11+strength*.012);
-    miningFeedback.flash=Math.max(miningFeedback.flash,flash||0);
-    miningFeedback.flashColor=color||'#ffffff';
+  function miningKick(strength,_flash,_color,hapticDuration){
+    // Keep impact weight in timing, sound, particles and optional haptics without
+    // moving or flashing the entire screen during repeated mining.
+    miningFeedback.shake=0;
+    miningFeedback.shakeTime=0;
+    miningFeedback.flash=0;
     miningFeedback.hitStop=Math.max(miningFeedback.hitStop,strength>=7?.065:strength>=4?.038:.016);
     if(hapticDuration&&navigator.vibrate&&time-lastHapticAt>.065){
       try{navigator.vibrate(hapticDuration);lastHapticAt=time}catch(error){}
@@ -1324,14 +1325,12 @@
   function draw(){
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
     ctx.save();ctx.scale(viewZoom,viewZoom);
-    if(miningFeedback.shake>0)ctx.translate(Math.sin(time*91)*miningFeedback.shake,Math.cos(time*73)*miningFeedback.shake*.72);
     if(currentMine()){
       drawMineGround();drawMineTerrain();drawMineWalls();drawMineEntrance(false,currentMine());drawRocks();drawWorldLabels();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
     }else{
       drawGround();drawBiomeStructure();drawDecorations();drawStations();drawSurfaceMineEntrances();drawGate();drawVeins();drawRocks();drawChests();drawWorldLabels();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
     }
     ctx.restore();
-    if(miningFeedback.flash>0){ctx.save();ctx.globalAlpha=Math.min(.22,miningFeedback.flash);ctx.fillStyle=miningFeedback.flashColor;ctx.fillRect(0,0,width,height);ctx.restore()}
   }
 
   function drawMineGround(){
@@ -1857,7 +1856,7 @@
       rocks:rocks.map(rock=>({id:rock.id,type:rock.type,x:rock.x,y:rock.y,scene:rock.scene,barrierId:rock.barrierId,requiredPickaxe:rock.requiredPickaxe,veinId:rock.veinId,depositId:rock.depositId,cavernId:rock.cavernId,rareFind:rock.rareFind,hp:rock.hp,shell:rock.shell,broken:rock.broken,exposed:rockIsExposed(rock)})),
       veins:veins.map(vein=>({id:vein.id,status:vein.status,timer:vein.timer,broken:vein.brokenRockIds.size,total:vein.positions.length})),
       chests:chests.map(chest=>({id:chest.id,name:chest.name,x:chest.x,y:chest.y,ready:chestRequirementMet(chest),opened:!!state.openedChests[chest.id]})),
-      groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,sourceChest:drop.sourceChest})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count,particleCount:particles.length,shake:miningFeedback.shake,hitStop:miningFeedback.hitStop,terrainHitIndex:miningFeedback.terrainHitIndex,lastDiscovery:miningFeedback.lastDiscovery,lastDepositBeat:miningFeedback.lastDepositBeat},activeContext
+      groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,sourceChest:drop.sourceChest})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count,particleCount:particles.length,shake:miningFeedback.shake,flash:miningFeedback.flash,hitStop:miningFeedback.hitStop,terrainHitIndex:miningFeedback.terrainHitIndex,lastDiscovery:miningFeedback.lastDiscovery,lastDepositBeat:miningFeedback.lastDepositBeat},activeContext
     })),
     reset:resetProgress,
     setPosition:(x,y)=>{const world=currentWorld();player.x=clamp(Number(x),52,world.width-52);player.y=clamp(Number(y),70,world.height-58);updateCamera(true);uiDirty=true},

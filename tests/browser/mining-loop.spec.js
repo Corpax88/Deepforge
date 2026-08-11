@@ -883,7 +883,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.5.0',name:'MINING SATISFACTION'});
+  expect(snapshot.build).toEqual({version:'0.5.1',name:'MINING COMFORT'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -898,9 +898,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.5.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.5.1');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.5.0 · MINING SATISFACTION');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.5.1 · MINING COMFORT');
 });
 
 test('terrain strikes produce weighted mining feedback without changing targeting',async({page})=>{
@@ -915,7 +915,8 @@ test('terrain strikes produce weighted mining feedback without changing targetin
   const snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.feedback.terrainHitIndex).toBe(target);
   expect(snapshot.feedback.particleCount).toBeGreaterThan(0);
-  expect(snapshot.feedback.shake).toBeGreaterThan(0);
+  expect(snapshot.feedback.shake).toBe(0);
+  expect(snapshot.feedback.flash).toBe(0);
   expect(snapshot.feedback.hitStop).toBeGreaterThan(0);
   expect(snapshot.mine.terrain.target.index).toBe(target);
 });
@@ -961,7 +962,8 @@ test('terrain hits trigger bounded satisfaction feedback without changing target
   const target=before.mine.terrain.target;
   await page.evaluate(index=>window.__deepforgeTest.mineTerrainCell(index),target.index);
   const after=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(after.feedback.shake).toBeGreaterThan(0);
+  expect(after.feedback.shake).toBe(0);
+  expect(after.feedback.flash).toBe(0);
   expect(after.feedback.terrainHitIndex).toBe(target.index);
   expect(after.feedback.particleCount).toBeGreaterThan(0);
   expect(after.feedback.particleCount).toBeLessThanOrEqual(260);
