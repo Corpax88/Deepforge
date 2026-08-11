@@ -36,9 +36,18 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.6.0');
-assert.equal(api.snapshot().build.name,'POCKET REWARDS');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.6.0');
+assert.equal(api.snapshot().build.version,'0.6.1');
+assert.equal(api.snapshot().build.name,'POCKET RENDER FIX');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.6.1');
+
+api.unlockAllAreas();api.unlockStarfall();api.enterMine('starMine');
+let fallenPocket=api.snapshot().mine.discovery.caverns.find(item=>item.name==='Fallen Pocket');
+api.mineTerrainCell(fallenPocket.boundaryIndex);api.mineTerrainCell(fallenPocket.boundaryIndex);
+api.setPosition(fallenPocket.x,fallenPocket.y);
+assert.doesNotThrow(()=>api.renderOnce());
+api.claimPocketReward(fallenPocket.reward.id);
+assert.equal(api.snapshot().state.claimedPocketRewards[fallenPocket.reward.id],true);
+api.exitMine();
 
 api.enterMine('mossMine');
 api.setPosition(180,503);api.setAim(.899,-.438);
