@@ -51,7 +51,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.11.0',name:'PREMIUM MOBILE FOUNDATION'};
+  const BUILD={version:'0.12.0',name:'MOSSVEIN VISUAL REWORK'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -59,7 +59,7 @@
   const MINE_DEFINITIONS={
     mossMine:{
       id:'mossMine',name:'MOSSVEIN MINE',surfaceName:'MOSSVEIN QUARRY',width:1920,height:5120,entrance:{x:145,y:640},surfaceEntrance:{x:165,y:690,radius:112},
-      unlock:()=>true,accent:'#d2a65b',detail:'#e9cf8c',floor:'#20241d',wall:'#2c3027',wallEdge:'#4f533f',style:'moss',finalGoal:'Mine the Gilded Heart',
+      unlock:()=>true,accent:'#d2a65b',detail:'#e9cf8c',floor:'#121813',wall:'#34372e',wallEdge:'#716b4d',style:'moss',finalGoal:'Mine the Gilded Heart',
       solids:[{x:0,y:0,w:1920,h:145},{x:0,y:4975,w:1920,h:145},{x:585,y:145,w:125,h:345},{x:585,y:790,w:125,h:345},{x:1190,y:145,w:125,h:345},{x:1190,y:790,w:125,h:345}],
       barriers:[{id:'outer_rubble',x:620,y:490,w:76,h:300,requiresPickaxe:1,label:'Loose Rubble',objective:'Break through the loose rubble'},{id:'iron_seam',x:1225,y:490,w:76,h:300,requiresPickaxe:2,label:'Ironbound Collapse'}],
       rocks:[['stone',285,350],['stone',430,530],['stone',260,890],['copper',465,940],['stone',655,590,'outer_rubble'],['stone',655,640,'outer_rubble'],['stone',655,690,'outer_rubble'],['stone',835,335],['copper',930,495],['stone',1040,760],['copper',845,950],['copper',1085,1020],['stone',1260,590,'iron_seam'],['stone',1260,640,'iron_seam'],['stone',1260,690,'iron_seam'],['copper',1450,350],['copper',1650,470],['copper',1435,885],['gold',1680,820],['gold',1535,1010]],
@@ -109,7 +109,7 @@
     emberMine:{type:'infernium',requiresDrillLevel:2,veinCount:4}
   };
   const DEPTH_ROUTE_LABELS={mossMine:'ROOTWOUND DEPTHS',moonMine:'PRISMATIC DEPTHS',emberMine:'MOLTEN DEPTHS',starMine:'VOIDSTAR DEPTHS'};
-  const MINE_DIRT_COLORS={mossMine:'#57432d',moonMine:'#244d57',emberMine:'#5b2c23',starMine:'#303154'};
+  const MINE_DIRT_COLORS={mossMine:'#59462f',moonMine:'#244d57',emberMine:'#5b2c23',starMine:'#303154'};
   const BIOMES=[
     {id:'mossvein',name:'MOSSVEIN QUARRY',start:0,end:WORLD.gateX,floor:'#273228',accent:'#78b36c',detail:'#a8c48e'},
     {id:'moonglass',name:'MOONGLASS CAVERN',start:WORLD.gateX,end:WORLD.emberGateX,floor:'#14282b',accent:'#65dedb',detail:'#b294ef'},
@@ -2029,7 +2029,7 @@
       if(currentDepth===1)drawMineEntrance(false,currentMine());
       if(currentDepth===2||state.discoveredDepthEntrances[currentScene])drawDepthEntrance();
       if(currentDepth===2)drawDepthStations();
-      drawBaseModules();drawRocks();drawWorldLabels();drawVisualGuide();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
+      drawBaseModules();drawRocks();drawWorldLabels();drawVisualGuide();drawEffects(false);drawGroundDrops();drawMineAtmosphere();drawPlayer();drawEffects(true);
     }else{
       drawGround();drawBiomeStructure();drawDecorations();drawStations();drawSurfaceMineEntrances();drawGate();drawVeins();drawRocks();drawChests();drawWorldLabels();drawVisualGuide();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
     }
@@ -2059,15 +2059,103 @@
     ctx.globalAlpha*=.72;ctx.beginPath();ctx.moveTo(-9,-39);ctx.lineTo(0,-29);ctx.lineTo(9,-39);ctx.stroke();ctx.restore();
   }
 
+
+  function isMossveinVisual(mine){return !!mine&&String(mine.style).startsWith('moss')}
+
+  function visualNoise(x,y,salt=0){
+    let value=Math.imul((x|0)+salt*101,374761393)^Math.imul((y|0)-salt*53,668265263);
+    value=Math.imul(value^(value>>>13),1274126177);return((value^(value>>>16))>>>0)/4294967295;
+  }
+
+  function drawMossveinFloorDetail(mine){
+    const spacing=96,startX=Math.max(0,Math.floor(camera.x/spacing)-1)*spacing,endX=Math.min(mine.width,camera.x+viewWidth+spacing);
+    const startY=Math.max(0,Math.floor(camera.y/spacing)-1)*spacing,endY=Math.min(mine.height,camera.y+viewHeight+spacing),deep=currentDepth===2;
+    for(let gridY=startY;gridY<=endY;gridY+=spacing)for(let gridX=startX;gridX<=endX;gridX+=spacing){
+      const noise=visualNoise(gridX/spacing,gridY/spacing,currentDepth),x=gridX+16+noise*58,y=gridY+14+visualNoise(gridY/spacing,gridX/spacing,7)*60;
+      ctx.save();ctx.translate(x,y);ctx.rotate((noise-.5)*1.3);
+      if(noise>.73){
+        ctx.fillStyle=deep?'rgba(151,101,54,.13)':'rgba(92,125,72,.15)';
+        ctx.beginPath();ctx.ellipse(0,0,13+noise*9,5+noise*4,0,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle=deep?'rgba(218,155,77,.18)':'rgba(126,167,91,.2)';
+        for(let leaf=0;leaf<3;leaf++){ctx.beginPath();ctx.ellipse(-8+leaf*7,-2+(leaf%2)*4,5,2.4,leaf*.4,0,Math.PI*2);ctx.fill()}
+      }else{
+        ctx.fillStyle=deep?'rgba(108,82,59,.22)':'rgba(92,98,82,.2)';ctx.strokeStyle=deep?'rgba(177,124,70,.16)':'rgba(167,159,119,.13)';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(-10,-3);ctx.lineTo(-2,-8);ctx.lineTo(11,-2);ctx.lineTo(7,6);ctx.lineTo(-7,7);ctx.closePath();ctx.fill();ctx.stroke();
+      }
+      if(noise<.28){
+        ctx.strokeStyle=deep?'rgba(171,116,66,.17)':'rgba(120,119,91,.15)';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-18,4);ctx.lineTo(-5,-1);ctx.lineTo(3,5);ctx.lineTo(17,-3);ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawMossveinTarget(x,y){
+    ctx.globalAlpha=.82;ctx.strokeStyle='#f0c977';ctx.lineWidth=2.5;ctx.lineCap='round';const inset=5,length=11;
+    ctx.beginPath();
+    ctx.moveTo(x+inset,y+inset+length);ctx.lineTo(x+inset,y+inset);ctx.lineTo(x+inset+length,y+inset);
+    ctx.moveTo(x+MINE_TILE_SIZE-inset-length,y+inset);ctx.lineTo(x+MINE_TILE_SIZE-inset,y+inset);ctx.lineTo(x+MINE_TILE_SIZE-inset,y+inset+length);
+    ctx.moveTo(x+inset,y+MINE_TILE_SIZE-inset-length);ctx.lineTo(x+inset,y+MINE_TILE_SIZE-inset);ctx.lineTo(x+inset+length,y+MINE_TILE_SIZE-inset);
+    ctx.moveTo(x+MINE_TILE_SIZE-inset-length,y+MINE_TILE_SIZE-inset);ctx.lineTo(x+MINE_TILE_SIZE-inset,y+MINE_TILE_SIZE-inset);ctx.lineTo(x+MINE_TILE_SIZE-inset,y+MINE_TILE_SIZE-inset-length);ctx.stroke();
+  }
+
+  function drawMossveinTerrainCell(mine,index,col,row,damage,targeted){
+    const x=col*MINE_TILE_SIZE-camera.x,y=row*MINE_TILE_SIZE-camera.y,deep=currentDepth===2,noise=visualNoise(col,row,deep?19:3),noise2=visualNoise(row,col,11);
+    ctx.fillStyle=mine.dirt||mine.wall;ctx.fillRect(x-.5,y-.5,MINE_TILE_SIZE+1,MINE_TILE_SIZE+1);
+    ctx.fillStyle=deep?(noise>.5?'#604229':'#704e30'):(noise>.5?'#51412d':'#604b32');
+    ctx.beginPath();ctx.moveTo(x-1,y+8+noise*10);ctx.lineTo(x+12+noise2*8,y-1);ctx.lineTo(x+MINE_TILE_SIZE+1,y+5+noise2*13);ctx.lineTo(x+MINE_TILE_SIZE-5-noise*7,y+MINE_TILE_SIZE+1);ctx.lineTo(x+7+noise*8,y+MINE_TILE_SIZE-3);ctx.closePath();ctx.fill();
+    ctx.fillStyle=deep?'rgba(218,157,83,.1)':'rgba(194,174,116,.09)';
+    ctx.beginPath();ctx.moveTo(x+4,y+8);ctx.lineTo(x+15+noise*9,y+3);ctx.lineTo(x+MINE_TILE_SIZE-5,y+13+noise2*9);ctx.lineTo(x+MINE_TILE_SIZE-11,y+20+noise*7);ctx.lineTo(x+13,y+17+noise2*8);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=deep?'rgba(217,157,87,.28)':'rgba(163,151,105,.24)';ctx.lineWidth=1.15;ctx.beginPath();ctx.moveTo(x+5,y+18+noise*6);ctx.lineTo(x+18+noise2*9,y+5);ctx.lineTo(x+MINE_TILE_SIZE-4,y+15+noise*9);ctx.moveTo(x+9,y+MINE_TILE_SIZE-8);ctx.lineTo(x+25,y+26);ctx.lineTo(x+MINE_TILE_SIZE-7,y+MINE_TILE_SIZE-5);ctx.stroke();
+    if(noise>.78){
+      ctx.fillStyle=deep?'rgba(206,143,68,.2)':'rgba(107,151,75,.24)';
+      ctx.beginPath();ctx.ellipse(x+12+noise2*18,y+10+noise*18,8+noise*5,3.4,noise,0,Math.PI*2);ctx.fill();
+    }
+    const terrain=currentTerrain(),actualSolid=!!terrainTypeAt(terrain,col,row),topOpen=actualSolid&&!terrainTypeAt(terrain,col,row-1),rightOpen=actualSolid&&!terrainTypeAt(terrain,col+1,row),bottomOpen=actualSolid&&!terrainTypeAt(terrain,col,row+1),leftOpen=actualSolid&&!terrainTypeAt(terrain,col-1,row);
+    ctx.lineCap='round';
+    if(topOpen){ctx.strokeStyle='rgba(3,7,4,.72)';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(x+2,y+2);ctx.lineTo(x+15,y+5);ctx.lineTo(x+30,y+1);ctx.lineTo(x+46,y+4);ctx.stroke();ctx.strokeStyle=deep?'#b47b47':'#807451';ctx.lineWidth=2;ctx.stroke()}
+    if(bottomOpen){ctx.strokeStyle='rgba(3,7,4,.72)';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(x+2,y+46);ctx.lineTo(x+14,y+43);ctx.lineTo(x+31,y+47);ctx.lineTo(x+46,y+44);ctx.stroke();ctx.strokeStyle=deep?'#8b5c38':'#655f45';ctx.lineWidth=2;ctx.stroke()}
+    if(leftOpen){ctx.strokeStyle='rgba(3,7,4,.72)';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(x+2,y+2);ctx.lineTo(x+5,y+15);ctx.lineTo(x+1,y+31);ctx.lineTo(x+4,y+46);ctx.stroke();ctx.strokeStyle=deep?'#a36d41':'#746a4b';ctx.lineWidth=2;ctx.stroke()}
+    if(rightOpen){ctx.strokeStyle='rgba(3,7,4,.72)';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(x+46,y+2);ctx.lineTo(x+43,y+16);ctx.lineTo(x+47,y+30);ctx.lineTo(x+44,y+46);ctx.stroke();ctx.strokeStyle=deep?'#835333':'#5d5841';ctx.lineWidth=2;ctx.stroke()}
+    if(damage>0){
+      const stage=Math.max(1,Math.min(3,Math.ceil(damage*3))),cx=x+MINE_TILE_SIZE*.5,cy=y+MINE_TILE_SIZE*.5,jitter=noise*7-3;
+      ctx.globalAlpha=.6+.1*stage;ctx.strokeStyle='#15130e';ctx.lineWidth=1.4+stage*.75;ctx.beginPath();
+      ctx.moveTo(cx+jitter,cy);ctx.lineTo(x+7+noise*10,y+5);ctx.moveTo(cx+jitter,cy);ctx.lineTo(x+MINE_TILE_SIZE-6,y+10+noise2*14);
+      if(stage>=2){ctx.moveTo(cx,cy);ctx.lineTo(x+10,y+MINE_TILE_SIZE-4);ctx.moveTo(cx-3,cy-3);ctx.lineTo(x+5,y+23)}
+      if(stage>=3){ctx.moveTo(cx,cy);ctx.lineTo(x+MINE_TILE_SIZE-6,y+MINE_TILE_SIZE-5);ctx.moveTo(cx+7,cy+4);ctx.lineTo(x+MINE_TILE_SIZE-4,y+29)}ctx.stroke();
+    }
+    if(miningFeedback.terrainHitIndex===index&&miningFeedback.terrainHitTime>0){ctx.globalAlpha=miningFeedback.terrainHitTime/.16*.22;ctx.fillStyle=mine.wallEdge;ctx.fillRect(x+1,y+1,MINE_TILE_SIZE-2,MINE_TILE_SIZE-2)}
+    if(targeted)drawMossveinTarget(x,y);ctx.globalAlpha=1;
+  }
+
+  function drawMossveinSolidWall(mine,wall,p){
+    ctx.save();ctx.translate(p.x,p.y);const deep=currentDepth===2,base=ctx.createLinearGradient(0,0,wall.w,wall.h);base.addColorStop(0,deep?'#32261d':'#242821');base.addColorStop(1,deep?'#17130f':'#111510');ctx.fillStyle=base;ctx.fillRect(0,0,wall.w,wall.h);
+    for(let x=8;x<wall.w+30;x+=42)for(let y=8;y<wall.h+30;y+=38){
+      const noise=visualNoise(x,y,5),size=30+noise*13;ctx.fillStyle=deep?(noise>.5?'#55402d':'#403326'):(noise>.5?'#3c4035':'#30352d');ctx.strokeStyle=deep?'rgba(183,126,72,.3)':'rgba(147,142,103,.27)';ctx.lineWidth=1.2;
+      ctx.beginPath();ctx.moveTo(x-size*.55,y+size*.2);ctx.lineTo(x-size*.22,y-size*.45);ctx.lineTo(x+size*.45,y-size*.35);ctx.lineTo(x+size*.58,y+size*.24);ctx.lineTo(x+size*.05,y+size*.5);ctx.closePath();ctx.fill();ctx.stroke();
+      if(!deep&&noise>.68){ctx.fillStyle='rgba(102,145,73,.28)';ctx.beginPath();ctx.ellipse(x,y-size*.18,9,3.2,noise,0,Math.PI*2);ctx.fill()}
+    }
+    ctx.strokeStyle=deep?'#a27349':'#777151';ctx.globalAlpha=.65;ctx.lineWidth=3;ctx.strokeRect(1.5,1.5,wall.w-3,wall.h-3);ctx.restore();
+  }
+
+  function drawMineAtmosphere(){
+    const mine=currentMineVisual();if(!isMossveinVisual(mine))return;
+    const p=worldToScreen(player.x,player.y),radius=Math.max(viewWidth,viewHeight)*.82;
+    ctx.save();const shade=ctx.createRadialGradient(p.x,p.y,82,p.x,p.y,radius);shade.addColorStop(0,'rgba(3,8,5,0)');shade.addColorStop(.48,currentDepth===2?'rgba(15,8,3,.035)':'rgba(2,8,4,.025)');shade.addColorStop(1,currentDepth===2?'rgba(6,3,2,.28)':'rgba(1,5,3,.22)');ctx.fillStyle=shade;ctx.fillRect(0,0,viewWidth,viewHeight);
+    const lamp=ctx.createRadialGradient(p.x-7,p.y-13,0,p.x-7,p.y-13,105);lamp.addColorStop(0,'rgba(255,207,111,.09)');lamp.addColorStop(1,'rgba(255,190,85,0)');ctx.fillStyle=lamp;ctx.fillRect(p.x-112,p.y-118,224,224);ctx.restore();
+  }
+
   function drawMineGround(){
     const mine=currentMineVisual();ctx.fillStyle=mine.floor;ctx.fillRect(0,0,viewWidth,viewHeight);
     const origin=worldToScreen(0,0);
     ctx.save();ctx.translate(origin.x,origin.y);ctx.fillStyle=mine.floor;ctx.fillRect(0,0,mine.width,mine.height);
     const glowX=mine.width*.78,glowY=mine.height*.5,glow=ctx.createRadialGradient(glowX,glowY,40,glowX,glowY,Math.max(mine.width,mine.height)*.38);
-    glow.addColorStop(0,mine.style==='ember'?'rgba(255,91,34,.18)':mine.style==='moon'?'rgba(92,226,225,.14)':mine.style==='star'?'rgba(163,145,255,.15)':'rgba(166,118,45,.17)');glow.addColorStop(1,'rgba(10,12,14,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,mine.width,mine.height);
-    ctx.strokeStyle=mine.style==='ember'?'rgba(255,127,69,.055)':mine.style==='star'?'rgba(190,195,255,.05)':mine.style==='moon'?'rgba(115,224,220,.055)':'rgba(198,174,112,.055)';ctx.lineWidth=1;
-    for(let x=0;x<=mine.width;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,mine.height);ctx.stroke()}
-    for(let y=0;y<=mine.height;y+=80){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(mine.width,y);ctx.stroke()}
+    glow.addColorStop(0,mine.style==='ember'?'rgba(255,91,34,.18)':mine.style==='moon'?'rgba(92,226,225,.14)':mine.style==='star'?'rgba(163,145,255,.15)':isMossveinVisual(mine)?'rgba(138,105,54,.11)':'rgba(166,118,45,.17)');glow.addColorStop(1,'rgba(10,12,14,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,mine.width,mine.height);
+    if(isMossveinVisual(mine))drawMossveinFloorDetail(mine);
+    else{
+      ctx.strokeStyle=mine.style==='ember'?'rgba(255,127,69,.055)':mine.style==='star'?'rgba(190,195,255,.05)':mine.style==='moon'?'rgba(115,224,220,.055)':'rgba(198,174,112,.055)';ctx.lineWidth=1;
+      for(let x=0;x<=mine.width;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,mine.height);ctx.stroke()}
+      for(let y=0;y<=mine.height;y+=80){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(mine.width,y);ctx.stroke()}
+    }
     if(currentDepth===2){
       ctx.strokeStyle=mine.wallEdge;ctx.globalAlpha=.12;ctx.lineWidth=5;
       for(let y=180;y<mine.height;y+=310){ctx.beginPath();ctx.moveTo(40,y);ctx.bezierCurveTo(mine.width*.28,y-70,mine.width*.68,y+75,mine.width-40,y-15);ctx.stroke()}
@@ -2117,6 +2205,7 @@
   }
 
   function drawMineTerrainCell(mine,index,col,row,damage,targeted){
+    if(isMossveinVisual(mine)){drawMossveinTerrainCell(mine,index,col,row,damage,targeted);return}
     const x=col*MINE_TILE_SIZE-camera.x,y=row*MINE_TILE_SIZE-camera.y,seed=(index*37+row*11)%29;
     ctx.fillStyle=mine.dirt||mine.wall;ctx.fillRect(x-.5,y-.5,MINE_TILE_SIZE+1,MINE_TILE_SIZE+1);
     ctx.strokeStyle=mine.wallEdge;ctx.globalAlpha=.28;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+4,y+13+seed%8);ctx.lineTo(x+18+seed%12,y+4);ctx.lineTo(x+MINE_TILE_SIZE-3,y+17+seed%11);ctx.lineTo(x+MINE_TILE_SIZE-9,y+MINE_TILE_SIZE-4);ctx.lineTo(x+9,y+MINE_TILE_SIZE-7);ctx.closePath();ctx.stroke();
@@ -2162,6 +2251,7 @@
     const mine=currentMine();
     for(const wall of mine.solids){
       const p=worldToScreen(wall.x,wall.y);if(p.x>viewWidth+60||p.y>viewHeight+60||p.x+wall.w< -60||p.y+wall.h< -60)continue;
+      if(mine.style==='moss'){drawMossveinSolidWall(mine,wall,p);continue}
       ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle=mine.style==='star'?'#050610':'#0e1110';ctx.fillRect(0,0,wall.w,wall.h);ctx.fillStyle=mine.wall;ctx.strokeStyle=mine.wallEdge;ctx.lineWidth=2;
       for(let x=12;x<wall.w;x+=48)for(let y=12;y<wall.h;y+=44){const jitter=((x+y)*.13)%7;ctx.beginPath();ctx.moveTo(x-10,y+12);ctx.lineTo(x+jitter,y-8);ctx.lineTo(x+25,y-3);ctx.lineTo(x+32,y+17);ctx.lineTo(x+8,y+24);ctx.closePath();ctx.fill();ctx.stroke();if(mine.style==='ember'){ctx.fillStyle='#d86635';ctx.beginPath();ctx.arc(x+8,y+7,2,0,Math.PI*2);ctx.fill();ctx.fillStyle=mine.wall}else if(mine.style==='moon'){ctx.strokeStyle='rgba(113,227,223,.45)';ctx.beginPath();ctx.moveTo(x+2,y+18);ctx.lineTo(x+18,y-2);ctx.stroke();ctx.strokeStyle=mine.wallEdge}else if(mine.style==='star'&&((x+y)%3<1)){ctx.fillStyle='#cdd2ff';ctx.fillRect(x+5,y+4,1.5,1.5);ctx.fillStyle=mine.wall}}
       ctx.restore();
@@ -2676,7 +2766,7 @@
       goal:mainGoal(),guide:(()=>{const guide=visualGuide();return guide?{...guide,distance:distance(player.x,player.y,guide.x,guide.y),visible:distance(player.x,player.y,guide.x,guide.y)>guide.closeRadius}:null})(),markerStyle:{bonusVeinRings:false},toolMode:state.drillLevel?'drill':'pickaxe',protectedCargo:protectedDrillCargo(),sellableCargo:sellableCargo(),movement:{level:state.movementSpeedLevel,multiplier:movementSpeedMultiplier(),nextCost:movementSpeedCost()},miningRush:{...miningRush},lootSweep:{remaining:lootSweepRemaining(),nextAt:state.nextLootSweepAt},
       player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,
       mine:currentMine()?{
-        id:currentMine().id,name:currentMineVisual().name,depth:currentDepth,width:currentMine().width,height:currentMine().height,style:currentMineVisual().style,dirt:currentMineVisual().dirt,floor:currentMineVisual().floor,solids:currentDepth===1?currentMine().solids:[],solidCount:currentDepth===1?currentMine().solids.length:0,barrierIds:currentDepth===1?currentMine().barriers.map(barrier=>barrier.id):[],labels:currentDepth===1?currentMine().labels.map(label=>label[0]):[],
+        id:currentMine().id,name:currentMineVisual().name,depth:currentDepth,width:currentMine().width,height:currentMine().height,style:currentMineVisual().style,visualPass:isMossveinVisual(currentMineVisual())?'mossvein-premium-v1':'legacy',dirt:currentMineVisual().dirt,floor:currentMineVisual().floor,solids:currentDepth===1?currentMine().solids:[],solidCount:currentDepth===1?currentMine().solids.length:0,barrierIds:currentDepth===1?currentMine().barriers.map(barrier=>barrier.id):[],labels:currentDepth===1?currentMine().labels.map(label=>label[0]):[],
         depthEntrance:{...depthEntrances[currentScene],discovered:!!state.discoveredDepthEntrances[currentScene],boundaryIndex:mineTerrain[currentScene][1].depthEntrance?[...mineTerrain[currentScene][1].depthEntrance.boundary][0]:null},depthStations:currentDepth===2?depthStations():null,depthResources:currentDepth===2?{...DEPTH2_RESOURCE_PROFILES[currentScene]}:null,
         terrain:{tileSize:MINE_TILE_SIZE,chunkCells:MINE_CHUNK_CELLS,maxHp:currentTerrain().maxHp,totalChunks:Math.ceil(currentTerrain().cols/MINE_CHUNK_CELLS)*Math.ceil(currentTerrain().rows/MINE_CHUNK_CELLS),activeChunks:currentTerrain().chunks.size,cellCount:currentTerrain().cols*currentTerrain().rows,solidCells:terrainSolidCellCount(currentTerrain()),dugCells:state.terrainDug[currentTerrain().stateKey].length,target:nearestTerrainCell(MINING_RANGE)},
         discovery:{caverns:currentTerrain().caverns.map(cavern=>({id:cavern.id,name:cavern.name,x:cavern.x,y:cavern.y,rx:cavern.rx,ry:cavern.ry,cellCount:cavern.cells.length,boundaryIndex:[...cavern.boundary][0],discovered:cavernIsDiscovered(cavern.id),reward:{...cavern.reward,claimed:!!state.claimedPocketRewards[cavern.reward.id]}})),deposits:discoveriesFor(currentScene,currentDepth).deposits.map(deposit=>({id:deposit.id,type:deposit.type,size:deposit.positions.length,rareFind:!!deposit.rareFind,cavernId:deposit.cavernId||null,pocketRewardId:deposit.pocketRewardId||null,requiresDrillLevel:deposit.requiresDrillLevel||0,drillGated:!!deposit.drillGated}))}
