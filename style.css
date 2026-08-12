@@ -267,3 +267,73 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
 }
 @media (prefers-reduced-motion:reduce){button{transition:none}}
 
+/* v0.11.0 · MOBILE TOPBAR CLEANUP
+   Symmetric mockup-inspired header. No gameplay or control changes. */
+@media (max-width:620px){
+  .topbar{
+    min-height:72px;
+    padding:max(8px,env(safe-area-inset-top)) 8px 8px;
+    display:block;
+  }
+  .topbar::before{inset:5px 6px 4px;border-radius:12px}
+  .brand{
+    position:absolute;
+    z-index:2;
+    left:50%;
+    top:calc(max(8px,env(safe-area-inset-top)) + 10px);
+    width:auto;
+    gap:7px;
+    transform:translateX(-50%);
+  }
+  .brand-mark{
+    width:32px;
+    height:32px;
+    flex-basis:32px;
+  }
+  .brand h1{
+    font-size:15px;
+    letter-spacing:1px;
+  }
+  .brand-heading span,
+  .brand small{display:none}
+  .resources{display:contents}
+  .resource{
+    position:absolute;
+    z-index:2;
+    top:calc(max(8px,env(safe-area-inset-top)) + 6px);
+    height:44px;
+    min-width:68px;
+    padding-inline:7px;
+    gap:6px;
+  }
+  .resource.gold{left:11px}
+  .resource.cargo{right:52px}
+  .resource b{font-size:13px}
+  .resource i{transform:scale(.82)}
+  .icon-button{
+    position:absolute;
+    z-index:2;
+    top:calc(max(8px,env(safe-area-inset-top)) + 6px);
+    right:9px;
+    width:36px;
+    height:44px;
+    border-radius:9px;
+  }
+  .icon-button span,
+  .icon-button span::before,
+  .icon-button span::after{
+    left:9px;
+    width:16px;
+  }
+  .icon-button span{top:20px}
+}
+@media (max-width:380px){
+  .brand{gap:5px}
+  .brand-mark{width:28px;height:28px;flex-basis:28px}
+  .brand h1{font-size:13px;letter-spacing:.7px}
+  .resource{min-width:62px;padding-inline:5px}
+  .resource.gold{left:8px}
+  .resource.cargo{right:46px}
+  .icon-button{right:6px;width:34px}
+}
+
