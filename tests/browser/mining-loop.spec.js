@@ -484,6 +484,26 @@ test('mined resources land in the world, require pickup, and expire cleanly',asy
   expect(snapshot.groundDrops.length).toBe(0);
 });
 
+test('goal card yields when the player reaches the top edge',async({page})=>{
+  await freshGame(page);
+  const centerX=await page.evaluate(()=>window.__deepforgeTest.snapshot().camera.viewWidth/2);
+  await page.evaluate(x=>window.__deepforgeTest.setPosition(x,70),centerX);
+  await expect(page.locator('#objective')).toHaveClass(/player-overlap/);
+  await page.evaluate(x=>window.__deepforgeTest.setPosition(x,320),centerX);
+  await expect(page.locator('#objective')).not.toHaveClass(/player-overlap/);
+});
+
+test('ground drops stay inside reachable top and right edges',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__deepforgeTest.spawnGroundDrops('copper',1,-500,-500));
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.groundDrops.at(-1)).toMatchObject({x:56,y:76});
+  await page.evaluate(()=>{const api=window.__deepforgeTest;api.forceGlobalLootSweep();api.enterMine('mossMine');api.spawnGroundDrops('stone',1,999999,999999)});
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.groundDrops.at(-1).x).toBe(snapshot.mine.width-56);
+  expect(snapshot.groundDrops.at(-1).y).toBe(snapshot.mine.height-64);
+});
+
 test('one global five-minute cleanup clears loose items from every map',async({page})=>{
   await freshGame(page);
   await page.evaluate(()=>{
