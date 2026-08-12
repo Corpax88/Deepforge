@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.9.2');
-assert.equal(api.snapshot().build.name,'VISUAL GUIDANCE');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.9.2');
+assert.equal(api.snapshot().build.version,'0.10.0');
+assert.equal(api.snapshot().build.name,'RESOURCE INVENTORY & MOVABLE BASE');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.10.0');
 let openingGuide=api.snapshot().guide;
 assert.equal(openingGuide.kind,'rock');assert.equal(openingGuide.scene,'surface');assert.equal(openingGuide.visible,true);
 api.setPosition(openingGuide.x,openingGuide.y);assert.equal(api.snapshot().guide.visible,false);
@@ -204,4 +204,15 @@ const normalCooldown=after.effectivePickaxe.cooldown;api.activateMiningRush();af
 const dropsBefore=after.groundDrops.length;api.spawnGroundDrops('copper',2,800,500);api.enterMine('mossMine');api.spawnGroundDrops('stone',3,280,650);assert.equal(api.snapshot().groundDrops.length,dropsBefore+5);
 assert.equal(api.forceGlobalLootSweep(),dropsBefore+5);after=api.snapshot();assert.equal(after.groundDrops.length,0);assert.ok(after.lootSweep.remaining>299);api.save();
 runtime=createRuntime();after=runtime.api.snapshot();assert.equal(after.movement.level,movementBefore.level+25);assert.ok(after.movement.multiplier>1);
-console.log('Runtime smoke passed: visual guidance, drill routing, Mining Rush, global loot cleanup, unlimited movement upgrades, rendering, and save reload.');
+api=runtime.api;api.reset();before=api.snapshot();
+assert.equal(before.state.base.chests.length,1);assert.equal(before.state.base.chests[0].packed,false);assert.equal(Object.values(before.state.base.chests[0].items).reduce((total,amount)=>total+amount,0),0);
+for(const type of Object.keys(before.state.cargo))api.grantCargo(type,1);
+api.grantCargo('rootiron',8);api.grantCargo('ambercore',1);
+assert.equal(api.autoSort(),20);after=api.snapshot();
+assert.equal(Object.values(after.state.base.chests[0].items).filter(amount=>amount>0).length,20);assert.equal(Object.values(after.state.cargo).reduce((total,amount)=>total+amount,0),10);
+api.grantGold(1000);assert.equal(api.buyStorageChest(),true);after=api.snapshot();
+const secondChest=after.state.base.chests[1];assert.equal(secondChest.packed,true);assert.equal(api.placeBaseModule(secondChest.id),true);assert.equal(api.autoSort(),1);after=api.snapshot();assert.equal(Object.values(after.state.cargo).reduce((total,amount)=>total+amount,0),9);
+const forge={...after.state.base.forge};api.setPosition(forge.x,forge.y);assert.equal(api.packBaseModule('forge'),true);api.enterMine('mossMine');assert.equal(api.placeBaseModule('forge'),true);after=api.snapshot();assert.equal(after.state.base.forge.scene,'mossMine');assert.equal(after.state.base.forge.packed,false);
+const movedChest={...after.state.base.chests[1]};api.exitMine();api.setPosition(movedChest.x,movedChest.y);assert.equal(api.packBaseModule(movedChest.id),true);api.enterMine('mossMine');assert.equal(api.placeBaseModule(movedChest.id),true);api.save();
+runtime=createRuntime();after=runtime.api.snapshot();assert.equal(after.state.base.forge.scene,'mossMine');assert.equal(after.state.base.chests.find(chest=>chest.id===movedChest.id).scene,'mossMine');assert.equal(Object.values(after.state.base.chests[0].items).reduce((total,amount)=>total+amount,0),20);
+console.log('Runtime smoke passed: progression, guidance, movable base, 20-type storage, auto-sort, Mining Rush, global loot cleanup, rendering, and save reload.');

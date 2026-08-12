@@ -20,6 +20,8 @@
   const contextTitle=document.getElementById('contextTitle');
   const contextDetail=document.getElementById('contextDetail');
   const contextButton=document.getElementById('contextButton');
+  const contextActions=document.getElementById('contextActions');
+  const contextSecondaryButton=document.getElementById('contextSecondaryButton');
   const starforgeChoices=document.getElementById('starforgeChoices');
   const mineButton=document.getElementById('mineButton');
   const mineAction=document.getElementById('mineAction');
@@ -37,8 +39,19 @@
   const menuShade=document.getElementById('menuShade');
   const resumeButton=document.getElementById('resumeButton');
   const resetButton=document.getElementById('resetButton');
+  const inventoryButton=document.getElementById('inventoryButton');
+  const inventoryShade=document.getElementById('inventoryShade');
+  const inventoryCloseButton=document.getElementById('inventoryCloseButton');
+  const inventoryTotal=document.getElementById('inventoryTotal');
+  const inventoryTypes=document.getElementById('inventoryTypes');
+  const inventoryGrid=document.getElementById('inventoryGrid');
+  const autoSortButton=document.getElementById('autoSortButton');
+  const autoSortHint=document.getElementById('autoSortHint');
+  const buyChestButton=document.getElementById('buyChestButton');
+  const buyChestCost=document.getElementById('buyChestCost');
+  const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.9.2',name:'VISUAL GUIDANCE'};
+  const BUILD={version:'0.10.0',name:'RESOURCE INVENTORY & MOVABLE BASE'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -113,13 +126,16 @@
     furnaceheart:{shape:'ember',gravity:180,spread:1.25},voidglass:{shape:'shard',gravity:95,spread:1.2},singularity:{shape:'star',gravity:45,spread:1.3},
     burrowsteel:{shape:'spark',gravity:360,spread:1.16},phasecrystal:{shape:'shard',gravity:150,spread:1.24},infernium:{shape:'ember',gravity:180,spread:1.28}
   };
-  const SAVE_KEY='deepforgePrototypeV1';
+  const SAVE_KEY='deepforgePrototypeV2';
   const GATE_COST=120;
   const EMBER_GATE_COST=360;
   const EMBER_PICKAXE_ORE_REQUIRED=12;
   const GROUND_DROP_LIFETIME=300;
   const LOOT_SWEEP_WARNING_SECONDS=30;
   const GROUND_DROP_PICKUP_RADIUS=48;
+  const BASE_MODULE_INTERACT_RADIUS=118;
+  const AUTO_SORT_RADIUS=360;
+  const STORAGE_CHEST_CAPACITY=20;
   const MAX_GROUND_DROPS=160;
   const MAX_MINING_PARTICLES=260;
   const EMBER_MASTERY=[
@@ -411,6 +427,34 @@
   }
   if(state.nextLootSweepAt<=Date.now())performGlobalLootSweep(false);
 
+  function emptyResourceStore(){return Object.fromEntries(Object.keys(ROCK_TYPES).map(type=>[type,0]))}
+
+  function defaultBaseState(){
+    return{
+      forge:{id:'forge',kind:'forge',scene:'surface',depth:1,x:STATIONS.forge.x,y:STATIONS.forge.y,packed:false},
+      sell:{id:'sell',kind:'sell',scene:'surface',depth:1,x:STATIONS.sell.x,y:STATIONS.sell.y,packed:false},
+      chests:[{id:'storage-1',kind:'storage',scene:'surface',depth:1,x:335,y:390,packed:false,items:emptyResourceStore()}],
+      nextChestId:2
+    };
+  }
+
+  function sanitizeBaseState(raw){
+    const fallback=defaultBaseState(),source=raw&&typeof raw==='object'?raw:{};
+    const sanitizeModule=(value,baseModule)=>{
+      const scene=value&&(['surface',...MINE_SCENES].includes(value.scene))?value.scene:baseModule.scene;
+      return{...baseModule,scene,depth:scene==='surface'?1:value&&value.depth===2?2:1,x:Number(value&&value.x)||baseModule.x,y:Number(value&&value.y)||baseModule.y,packed:!!(value&&value.packed)};
+    };
+    fallback.forge=sanitizeModule(source.forge,fallback.forge);fallback.sell=sanitizeModule(source.sell,fallback.sell);
+    if(Array.isArray(source.chests)&&source.chests.length){
+      fallback.chests=source.chests.map((rawChest,index)=>{
+        const chest=sanitizeModule(rawChest,{id:'storage-'+(index+1),kind:'storage',scene:'surface',depth:1,x:335,y:390,packed:true}),items=emptyResourceStore();
+        for(const type of Object.keys(items))items[type]=Math.max(0,Math.floor(Number(rawChest&&rawChest.items&&rawChest.items[type])||0));
+        chest.id=typeof rawChest.id==='string'&&rawChest.id?rawChest.id:'storage-'+(index+1);chest.items=items;return chest;
+      });
+    }
+    fallback.nextChestId=Math.max(fallback.chests.length+1,Math.floor(Number(source.nextChestId)||0),2);return fallback;
+  }
+
   function defaultState(){
     return{
       gold:0,pickaxeLevel:1,emberMastery:0,drillLevel:0,drillGoalScene:null,movementSpeedLevel:0,nextLootSweepAt:Date.now()+GROUND_DROP_LIFETIME*1000,areaUnlocked:false,discoveredSecond:false,emberdeepUnlocked:false,discoveredThird:false,fourthUnlocked:false,discoveredFourth:false,
@@ -420,6 +464,7 @@
       starforgeVariant:null,starforgeUnlocked:{crusher:false,swift:false,prospector:false},
       openedChests:{},pendingChestLoot:{},claimedPocketRewards:{},pendingPocketLoot:{},
       clearedMineBarriers:{},terrainDug:{mossMine:[],moonMine:[],emberMine:[],starMine:[],mossMineDepth2:[],moonMineDepth2:[],emberMineDepth2:[],starMineDepth2:[]},discoveredCaverns:{},discoveredDepthEntrances:{},visitedDepths:{},mineDiscovered:false,discoveredMines:{mossMine:false,moonMine:false,emberMine:false,starMine:false},
+      base:defaultBaseState(),
       worldSeed:newWorldSeed(),location:{scene:'surface',depth:1,x:330,y:690,surfaceX:330,surfaceY:690},
       totalGold:0,totalSwings:0,precisionHits:0
     };
@@ -447,6 +492,7 @@
         base.cargo[key]=Math.max(0,Number(raw.cargo&&raw.cargo[key])||0);
         base.mined[key]=Math.max(0,Number(raw.mined&&raw.mined[key])||0);
       }
+      base.base=sanitizeBaseState(raw.base);
       for(const key of Object.keys(base.veinsCompleted))base.veinsCompleted[key]=Math.max(0,Number(raw.veinsCompleted&&raw.veinsCompleted[key])||0);
       for(const key of Object.keys(base.starforgeUnlocked))base.starforgeUnlocked[key]=!!(raw.starforgeUnlocked&&raw.starforgeUnlocked[key]);
       for(const chest of CHEST_DEFINITIONS){
@@ -516,7 +562,7 @@
     miningFocus.streak=0;miningFocus.timer=0;miningRush.timer=0;miningRush.lastSecond=0;saleMotes.length=0;goldTween=null;displayedGold=0;
     lootSweepCheck=0;lootSweepWarned30=false;lootSweepWarned10=false;
     Object.assign(miningFeedback,{shake:0,shakeTime:0,flash:0,hitStop:0,terrainHitIndex:-1,terrainHitTime:0,lastDiscovery:null,lastDepositBeat:null,lastPocketReward:null});
-    lastRegion=-1;activeContext=null;menuShade.hidden=true;uiDirty=true;saveState(true);showToast('A fresh vein awaits.');
+    lastRegion=-1;activeContext=null;menuShade.hidden=true;inventoryShade.hidden=true;uiDirty=true;saveState(true);showToast('A fresh vein awaits.');
   }
 
   function resize(){
@@ -659,6 +705,86 @@
     return Object.entries(protectedDrillCargo()).filter(([,amount])=>amount>0).map(([type,amount])=>amount+' '+ROCK_TYPES[type].label).join(' + ');
   }
 
+  function allBaseModules(){return[state.base.forge,state.base.sell,...state.base.chests]}
+  function baseModuleById(id){return allBaseModules().find(module=>module.id===id)||null}
+  function moduleIsHere(module){return !!module&&!module.packed&&module.scene===currentScene&&module.depth===currentDepth}
+  function canInteractModule(module,range=BASE_MODULE_INTERACT_RADIUS){return moduleIsHere(module)&&distance(player.x,player.y,module.x,module.y)<=range}
+  function nearbyStorageChests(range=AUTO_SORT_RADIUS){return state.base.chests.filter(chest=>moduleIsHere(chest)&&distance(player.x,player.y,chest.x,chest.y)<=range)}
+  function chestTypeCount(chest){return Object.values(chest.items).filter(amount=>amount>0).length}
+  function storageChestCost(){return Math.round(250*Math.pow(1.65,Math.max(0,state.base.chests.length-1))/10)*10}
+  function moduleLocationLabel(module){
+    if(module.packed)return'PACKED · READY TO PLACE';
+    if(module.scene==='surface')return'SURFACE · '+titleCase(BIOMES[regionIndexAt(module.x)].name);
+    const mine=MINE_DEFINITIONS[module.scene],name=module.depth===2?MINE_DEPTH_PROFILES[module.scene].name:mine.name;return titleCase(name);
+  }
+  function nearestBaseModule(){
+    let nearest=null,best=BASE_MODULE_INTERACT_RADIUS;
+    for(const module of allBaseModules()){
+      if(!moduleIsHere(module))continue;const range=distance(player.x,player.y,module.x,module.y);
+      if(range<=best){best=range;nearest=module}
+    }
+    return nearest;
+  }
+  function findModulePlacement(){
+    const candidates=[[player.aimX*86,player.aimY*86],[0,82],[82,0],[-82,0],[0,-82],[58,58],[-58,58]],world=currentWorld();
+    for(const [ox,oy] of candidates){
+      const x=clamp(player.x+ox,58,world.width-58),y=clamp(player.y+oy,76,world.height-64);
+      if(currentMine()&&collidesWithMine(x,y))continue;
+      if(allBaseModules().some(module=>moduleIsHere(module)&&distance(x,y,module.x,module.y)<68))continue;
+      return{x,y};
+    }
+    return{x:player.x,y:player.y};
+  }
+  function placeBaseModule(id){
+    const module=baseModuleById(id);if(!module||!module.packed)return false;
+    const placement=findModulePlacement();module.scene=currentScene;module.depth=currentDepth;module.x=placement.x;module.y=placement.y;module.packed=false;
+    inventoryShade.hidden=true;activeContext=null;uiDirty=true;sound('upgrade');rings.push({x:module.x,y:module.y,age:0,life:.65,radius:22,color:module.kind==='forge'?'#f2a35d':module.kind==='sell'?'#e9cb82':'#8fcf9d'});showToast((module.kind==='storage'?'Storage chest':module.kind==='forge'?'Forge':'Sell Chest')+' placed.');saveState(true);return true;
+  }
+  function packBaseModule(id){
+    const module=baseModuleById(id);if(!module||!canInteractModule(module))return false;
+    module.packed=true;activeContext=null;uiDirty=true;sound('pickup',module.kind==='storage'?'gold':'stone');showToast((module.kind==='storage'?'Storage chest':module.kind==='forge'?'Forge':'Sell Chest')+' packed without loss.');saveState(true);if(!inventoryShade.hidden)renderInventory();return true;
+  }
+  function buyStorageChest(){
+    const cost=storageChestCost();if(state.gold<cost){showToast('Need '+(cost-state.gold)+' more gold.');sound('empty');return false}
+    const goldBefore=state.gold,id='storage-'+state.base.nextChestId++;state.gold-=cost;state.base.chests.push({id,kind:'storage',scene:currentScene,depth:currentDepth,x:player.x,y:player.y,packed:true,items:emptyResourceStore()});startGoldCount(goldBefore,state.gold);sound('coin');showToast('New 20-type storage chest added to your base.');uiDirty=true;renderInventory();saveState(true);return true;
+  }
+  function autoSortResources(){
+    const chests=nearbyStorageChests(),protectedCargo=protectedDrillCargo();if(!chests.length){showToast('No storage chest nearby.');sound('empty');return 0}
+    let moved=0;
+    for(const type of Object.keys(state.cargo)){
+      let remaining=Math.max(0,state.cargo[type]-(protectedCargo[type]||0));if(!remaining)continue;
+      const existing=chests.find(chest=>chest.items[type]>0),target=existing||chests.find(chest=>chestTypeCount(chest)<STORAGE_CHEST_CAPACITY);
+      if(!target)continue;target.items[type]+=remaining;state.cargo[type]-=remaining;moved+=remaining;
+    }
+    if(!moved){showToast('Nothing can be sorted. Drill materials stay with you.');sound('empty');return 0}
+    sound('pickup','gold');showToast(moved+' resources sorted into nearby chests.');uiDirty=true;renderInventory();saveState(true);return moved;
+  }
+  function takeAllFromChest(id){
+    const chest=baseModuleById(id);if(!chest||chest.kind!=='storage'||!canInteractModule(chest,AUTO_SORT_RADIUS))return false;
+    let moved=0;for(const type of Object.keys(chest.items)){const amount=chest.items[type];if(!amount)continue;state.cargo[type]+=amount;chest.items[type]=0;moved+=amount}
+    if(!moved){showToast('This chest is empty.');sound('empty');return false}
+    sound('pickup','gold');showToast(moved+' resources returned to your inventory.');uiDirty=true;renderInventory();saveState(true);return true;
+  }
+
+  function openInventory(){releaseTouchControls();inventoryShade.hidden=false;renderInventory()}
+  function closeInventory(){inventoryShade.hidden=true}
+
+  function renderInventory(){
+    const total=cargoCount(),types=Object.values(state.cargo).filter(amount=>amount>0).length,protectedCargo=protectedDrillCargo();inventoryTotal.textContent=String(total);inventoryTypes.textContent=String(types);
+    const entries=Object.entries(state.cargo).filter(([,amount])=>amount>0).sort((a,b)=>Number(ROCK_TYPES[b[0]].rare)-Number(ROCK_TYPES[a[0]].rare)||ROCK_TYPES[a[0]].label.localeCompare(ROCK_TYPES[b[0]].label));
+    inventoryGrid.innerHTML=entries.length?entries.map(([type,amount])=>{const data=ROCK_TYPES[type],protectedAmount=protectedCargo[type]||0;return'<div class="inventory-slot'+(protectedAmount?' protected':'')+'"><i class="resource-gem" style="--gem-color:'+data.color+';--gem-edge:'+data.edge+'"></i><span>'+data.label+'</span><b>'+amount+'</b></div>'}).join(''):'<div class="inventory-slot empty">Resources you pick up will appear here.</div>';
+    const nearby=nearbyStorageChests();autoSortButton.disabled=!nearby.length||!total;autoSortHint.textContent=nearby.length?nearby.length+' CHEST'+(nearby.length===1?'':'S')+' NEARBY':'NO CHEST NEARBY';
+    const cost=storageChestCost();buyChestCost.textContent=cost+' GOLD';buyChestButton.disabled=state.gold<cost;
+    const modules=allBaseModules();baseModuleList.innerHTML=modules.map(module=>{
+      const nearbyModule=canInteractModule(module),nearbyStorage=canInteractModule(module,AUTO_SORT_RADIUS),placedHere=moduleIsHere(module),items=module.kind==='storage'?Object.entries(module.items).filter(([,amount])=>amount>0):[];
+      const title=module.kind==='forge'?'Forge':module.kind==='sell'?'Sell Chest':'Storage Chest '+(state.base.chests.indexOf(module)+1);
+      const contents=module.kind==='storage'?(items.length?items.map(([type,amount])=>ROCK_TYPES[type].label+' ×'+amount).join(' · '):'Empty · '+chestTypeCount(module)+' / '+STORAGE_CHEST_CAPACITY+' types'):(module.kind==='forge'?'Pickaxe upgrades and Ember Mastery.':'Sell carried resources while protecting drill materials.');
+      const action=module.packed?'<button data-base-place="'+module.id+'">PLACE HERE</button>':placedHere&&nearbyModule?'<button class="secondary" data-base-pack="'+module.id+'">PACK</button>':'<button disabled>'+moduleLocationLabel(module)+'</button>';
+      const take=module.kind==='storage'&&placedHere&&nearbyStorage?'<button data-chest-take="'+module.id+'"'+(items.length?'':' disabled')+'>TAKE ALL</button>':'';
+      return'<article class="base-module"><div class="base-module-head"><h4>'+title+'</h4><small>'+(module.kind==='storage'?chestTypeCount(module)+' / '+STORAGE_CHEST_CAPACITY+' TYPES':'BASE MODULE')+'</small></div><small>'+moduleLocationLabel(module)+'</small><div class="base-module-items">'+contents+'</div><div class="base-module-actions">'+action+take+'</div></article>';
+    }).join('');
+  }
+
   function guidePoint(kind,scene,depth,x,y,color,closeRadius=96,extra={}){
     return{kind,scene,depth,x,y,color:color||'#fff0ad',closeRadius,...extra};
   }
@@ -681,6 +807,7 @@
   }
 
   function surfaceStationGuide(kind,station,color){return guidePoint(kind,'surface',1,station.x,station.y,color,station.radius||116)}
+  function baseModuleGuide(kind,color){const module=state.base[kind];return module&&!module.packed?guidePoint(kind,module.scene,module.depth,module.x,module.y,color,BASE_MODULE_INTERACT_RADIUS):null}
   function mineEntranceGuide(scene){const mine=MINE_DEFINITIONS[scene];return guidePoint('mine-entrance','surface',1,mine.surfaceEntrance.x,mine.surfaceEntrance.y,mine.detail,mine.surfaceEntrance.radius,{destination:scene})}
   function depthEntranceGuide(scene){const entrance=depthEntrances[scene];return guidePoint(state.discoveredDepthEntrances[scene]?'depth-entrance':'dig-route',scene,1,entrance.x,entrance.y,MINE_DEPTH_PROFILES[scene].detail,108)}
   function depthForgeGuide(scene){const station=depthStations(scene).forge;return guidePoint('drill-forge',scene,2,station.x,station.y,MINE_DEPTH_PROFILES[scene].detail,station.radius)}
@@ -702,7 +829,7 @@
   function mineForGoldGuide(){
     if(cargoValueTotal(sellableCargo())>0){
       if(currentScene!=='surface'&&currentDepth===2){const station=depthStations().sell;return guidePoint('sell',currentScene,2,station.x,station.y,currentMineVisual().detail,station.radius)}
-      return routeVisualGuide(surfaceStationGuide('sell',STATIONS.sell,'#f4d68a'));
+      return routeVisualGuide(baseModuleGuide('sell','#f4d68a'));
     }
     const localTypes=currentRocks().filter(rock=>!rock.broken&&rockIsExposed(rock)&&rock.requiredPickaxe<=state.pickaxeLevel&&(!rock.requiresDeepTool||hasDeepTool())&&(rock.requiresDrillLevel||0)<=state.drillLevel).map(rock=>rock.type);
     const local=localTypes.length?closestGuideRock(currentScene,currentDepth,localTypes,true):null;
@@ -743,22 +870,22 @@
     if(state.discoveredFourth&&!starforgeMastered())return starforgeGuide();
     if(Object.values(state.mined).every(value=>value===0))return routeVisualGuide(closestGuideRock('surface',1,['stone','copper'],true));
     if(state.totalGold===0)return mineForGoldGuide();
-    if(state.pickaxeLevel===1)return purchaseGuide(PICKAXES[2].cost,surfaceStationGuide('forge',STATIONS.forge,'#f2a35d'));
-    if(state.pickaxeLevel===2)return purchaseGuide(PICKAXES[3].cost,surfaceStationGuide('forge',STATIONS.forge,'#f2a35d'));
+    if(state.pickaxeLevel===1)return purchaseGuide(PICKAXES[2].cost,baseModuleGuide('forge','#f2a35d'));
+    if(state.pickaxeLevel===2)return purchaseGuide(PICKAXES[3].cost,baseModuleGuide('forge','#f2a35d'));
     if(!state.areaUnlocked){
-      if(state.pickaxeLevel<3)return purchaseGuide(PICKAXES[3].cost,surfaceStationGuide('forge',STATIONS.forge,'#f2a35d'));
+      if(state.pickaxeLevel<3)return purchaseGuide(PICKAXES[3].cost,baseModuleGuide('forge','#f2a35d'));
       return purchaseGuide(GATE_COST,surfaceStationGuide('gate',STATIONS.gate,'#9ce7e6'));
     }
     if(!state.discoveredSecond)return routeVisualGuide(mineEntranceGuide('moonMine'));
     if(state.mined.moonglass===0)return routeVisualGuide(resourceGuide('moonglass','surface',1));
-    if(state.pickaxeLevel===3)return purchaseGuide(PICKAXES[4].cost,surfaceStationGuide('forge',STATIONS.forge,'#f2a35d'));
+    if(state.pickaxeLevel===3)return purchaseGuide(PICKAXES[4].cost,baseModuleGuide('forge','#f2a35d'));
     if(!state.emberdeepUnlocked)return purchaseGuide(EMBER_GATE_COST,surfaceStationGuide('gate',STATIONS.emberGate,'#ff9a68'));
     if(!state.discoveredThird)return routeVisualGuide(mineEntranceGuide('emberMine'));
     if(state.mined.emberstone===0||state.pickaxeLevel===4&&state.mined.emberstone<EMBER_PICKAXE_ORE_REQUIRED)return routeVisualGuide(resourceGuide('emberstone','surface',1));
-    if(state.pickaxeLevel===4)return purchaseGuide(PICKAXES[5].cost,surfaceStationGuide('forge',STATIONS.forge,'#f2a35d'));
+    if(state.pickaxeLevel===4)return purchaseGuide(PICKAXES[5].cost,baseModuleGuide('forge','#f2a35d'));
     if(state.mined.gold+state.mined.starshard+state.mined.sunslag===0)return routeVisualGuide(resourceGuide('gold','surface',1));
     if(nextMastery()&&state.mined.sunslag<nextMastery().sunslag)return routeVisualGuide(resourceGuide('sunslag','surface',1));
-    if(nextMastery())return purchaseGuide(nextMastery().gold,surfaceStationGuide('forge',STATIONS.forge,'#f2a35d'));
+    if(nextMastery())return purchaseGuide(nextMastery().gold,baseModuleGuide('forge','#f2a35d'));
     return null;
   }
 
@@ -1392,6 +1519,7 @@
   }
 
   function contextAtPlayer(){
+    const baseModule=nearestBaseModule();if(baseModule)return'base:'+baseModule.id;
     const mine=currentMine();
     if(mine){
       const depthEntrance=depthEntrances[currentScene];
@@ -1410,8 +1538,6 @@
       const candidate=MINE_DEFINITIONS[scene],entrance=candidate.surfaceEntrance;
       if(candidate.unlock(state)&&distance(player.x,player.y,entrance.x,entrance.y)<=entrance.radius)return'mineEntrance:'+scene;
     }
-    if(distance(player.x,player.y,STATIONS.sell.x,STATIONS.sell.y)<=STATIONS.sell.radius)return'sell';
-    if(distance(player.x,player.y,STATIONS.forge.x,STATIONS.forge.y)<=STATIONS.forge.radius)return'forge';
     if(distance(player.x,player.y,STATIONS.speedShop.x,STATIONS.speedShop.y)<=STATIONS.speedShop.radius)return'speedShop';
     if(!state.areaUnlocked&&distance(player.x,player.y,STATIONS.gate.x,STATIONS.gate.y)<=STATIONS.gate.radius)return'gate';
     if(state.areaUnlocked&&!state.emberdeepUnlocked&&distance(player.x,player.y,STATIONS.emberGate.x,STATIONS.emberGate.y)<=STATIONS.emberGate.radius)return'emberGate';
@@ -1428,14 +1554,18 @@
     else if(activeContext==='depthExit')transitionMineDepth(1);
     else if(activeContext==='depthSell')sellCargo(depthStations().sell);
     else if(activeContext==='drillForge')upgradeDrill();
+    else if(activeContext&&activeContext.startsWith('base:')){
+      const module=baseModuleById(activeContext.slice(5));
+      if(module&&module.kind==='forge')upgradePickaxe();else if(module&&module.kind==='sell')sellCargo(module);else if(module&&module.kind==='storage')openInventory();
+    }
     else if(activeContext&&activeContext.startsWith('chest:'))openChest(chestById(activeContext.slice(6)));
-    else if(activeContext==='sell')sellCargo();
-    else if(activeContext==='forge')upgradePickaxe();
     else if(activeContext==='speedShop')buyMovementSpeed();
     else if(activeContext==='gate')unlockArea();
     else if(activeContext==='emberGate')unlockEmberdeep();
     else if(activeContext==='starfallGate')unlockStarfall();
   }
+
+  function performSecondaryContext(){if(activeContext&&activeContext.startsWith('base:'))packBaseModule(activeContext.slice(5))}
 
   function openChest(chest){
     if(!chest||state.openedChests[chest.id])return;
@@ -1496,11 +1626,11 @@
     showToast('Permanent movement speed increased. No level cap.');uiDirty=true;saveState(true);return true;
   }
 
-  function sellCargo(station=STATIONS.sell){
+  function sellCargo(station=state.base.sell){
     const soldCargo=sellableCargo(),value=cargoValueTotal(soldCargo),protectedCargo=protectedDrillCargo();
     if(value<=0){
       const protectedCount=Object.values(protectedCargo).reduce((total,amount)=>total+amount,0);
-      showToast(protectedCount?'Upgrade materials are protected for '+nextDrill().name+'.':'Your satchel is empty.');sound('empty');return;
+      showToast(protectedCount?'Upgrade materials are protected for '+nextDrill().name+'.':'Your inventory is empty.');sound('empty');return;
     }
     const goldBefore=state.gold;
     state.gold+=value;state.totalGold+=value;
@@ -1597,7 +1727,7 @@
   }
 
   function update(dt){
-    updateLootSweep(dt);if(!menuShade.hidden)return;
+    updateLootSweep(dt);if(!menuShade.hidden||!inventoryShade.hidden)return;
     time+=dt;
     const move=updateInputVector();
     if(Math.abs(move.x)+Math.abs(move.y)>.02){
@@ -1677,7 +1807,7 @@
     if(goldTween.elapsed>=goldTween.duration)settleGoldDisplay();
   }
 
-  function spawnSaleMotes(soldCargo,station=STATIONS.sell){
+  function spawnSaleMotes(soldCargo,station=state.base.sell){
     let moteIndex=0;
     for(const type of Object.keys(soldCargo)){
       const amount=soldCargo[type];if(!amount)continue;
@@ -1707,7 +1837,7 @@
     if(state.discoveredFourth&&!state.starforgeVariant)return{title:'Forge a Starfall Pickaxe',detail:''};
     if(state.discoveredFourth&&state.starforgeVariant)return{title:'Forge all three Starforge styles',detail:''};
     if(Object.values(state.mined).every(value=>value===0))return{title:'Hold MINE near a rock',detail:''};
-    if(state.totalGold===0)return{title:'Sell your haul at the assay cart',detail:''};
+    if(state.totalGold===0)return{title:'Sell your haul at the Sell Chest',detail:''};
     if(state.pickaxeLevel===1)return{title:'Forge an Iron Pickaxe',detail:''};
     if(state.pickaxeLevel===2)return{title:'Forge a Runed Pickaxe',detail:''};
     if(!state.areaUnlocked)return{title:'Open the Moonglass Gate',detail:''};
@@ -1777,11 +1907,12 @@
   }
 
   function renderContext(){
+    const baseContext=activeContext&&activeContext.startsWith('base:')?baseModuleById(activeContext.slice(5)):null;
     contextPanel.hidden=!activeContext;
     contextPanel.classList.toggle('starforge-open',activeContext==='starforge');
-    contextPanel.classList.toggle('chest-context',!!activeContext&&activeContext.startsWith('chest:'));
+    contextPanel.classList.toggle('chest-context',!!activeContext&&(activeContext.startsWith('chest:')||baseContext&&baseContext.kind==='storage'));
     contextPanel.classList.toggle('mine-context',['mineExit','depthEntrance','depthExit','depthSell','drillForge'].includes(activeContext)||!!activeContext&&activeContext.startsWith('mineEntrance:'));
-    contextButton.hidden=activeContext==='starforge';starforgeChoices.hidden=activeContext!=='starforge';
+    contextButton.hidden=false;contextActions.hidden=activeContext==='starforge';contextSecondaryButton.hidden=!baseContext;starforgeChoices.hidden=activeContext!=='starforge';
     if(!activeContext)return;
     if(activeContext.startsWith('mineEntrance:')){
       const mine=MINE_DEFINITIONS[activeContext.slice(13)];
@@ -1793,7 +1924,7 @@
     }else if(activeContext==='depthExit'){
       contextEyebrow.textContent='RETURN SHAFT';contextTitle.textContent='Return to Depth 1';contextDetail.textContent='This is the only passage between the two depths.';contextButton.textContent='CLIMB';contextButton.disabled=false;
     }else if(activeContext==='depthSell'){
-      const value=cargoValueTotal(sellableCargo()),kept=protectedCargoLabel();contextEyebrow.textContent='DEPTH EXCHANGE';contextTitle.textContent=value?value+' gold ready to sell':kept?'Drill materials protected':'Sell Depth 2 Materials';contextDetail.textContent=value?(kept?'Keeping '+kept+' for '+nextDrill().name+'.':'The exchange accepts every mineral.'):kept?'Saved for '+nextDrill().name+'.':'Your satchel is empty.';contextButton.textContent=value?'SELL SAFE':kept?'PROTECTED':'EMPTY';contextButton.disabled=value<=0;
+      const value=cargoValueTotal(sellableCargo()),kept=protectedCargoLabel();contextEyebrow.textContent='DEPTH EXCHANGE';contextTitle.textContent=value?value+' gold ready to sell':kept?'Drill materials protected':'Sell Depth 2 Materials';contextDetail.textContent=value?(kept?'Keeping '+kept+' for '+nextDrill().name+'.':'The exchange accepts every mineral.'):kept?'Saved for '+nextDrill().name+'.':'Your inventory is empty.';contextButton.textContent=value?'SELL SAFE':kept?'PROTECTED':'EMPTY';contextButton.disabled=value<=0;
     }else if(activeContext==='drillForge'){
       const drill=nextDrill(),cost=drillCost();contextEyebrow.textContent='DRILL FORGE · TIER '+state.drillLevel+' / '+(DRILLS.length-1);
       if(!drill){contextTitle.textContent='Deepcore Drill';contextDetail.textContent='Maximum drill speed reached.';contextButton.textContent='MASTERED';contextButton.disabled=true}
@@ -1803,18 +1934,22 @@
         contextTitle.textContent=drill.name;contextDetail.textContent=cost.requirements.map(requirement=>drillRequirementProgress(requirement)).join(' · ')+(missing?' · '+DEPTH_ROUTE_LABELS[missing.scene]:'');
         contextButton.textContent=cost.gold+' GOLD';contextButton.disabled=!drillReady();
       }
+    }else if(baseContext&&baseContext.kind==='storage'){
+      const types=chestTypeCount(baseContext),total=Object.values(baseContext.items).reduce((sum,amount)=>sum+amount,0);
+      contextEyebrow.textContent='STORAGE CHEST · '+types+' / '+STORAGE_CHEST_CAPACITY+' TYPES';contextTitle.textContent=total?total+' resources stored':'Empty Storage Chest';contextDetail.textContent='Open inventory to auto-sort, inspect or take resources.';contextButton.textContent='OPEN';contextButton.disabled=false;contextSecondaryButton.textContent='PACK';contextSecondaryButton.disabled=false;
+    }else if(baseContext&&baseContext.kind==='sell'){
+      const value=cargoValueTotal(sellableCargo()),kept=protectedCargoLabel();contextEyebrow.textContent='MOVABLE SELL CHEST';contextTitle.textContent=value?value+' gold ready to sell':kept?'Drill materials protected':'Sell Resources';contextDetail.textContent=value?(kept?'Keeping '+kept+' for '+nextDrill().name+'.':'Turn carried resources into gold.'):kept?'Saved for '+nextDrill().name+'.':'Your inventory is empty.';contextButton.textContent=value?'SELL SAFE':kept?'PROTECTED':'EMPTY';contextButton.disabled=value<=0;contextSecondaryButton.textContent='PACK';contextSecondaryButton.disabled=false;
     }else if(activeContext.startsWith('chest:')){
       const chest=chestById(activeContext.slice(6)),ready=chest&&chestRequirementMet(chest);
       if(!chest)return;
       contextEyebrow.textContent=ready?'DISCOVERED CACHE':'SEALED CACHE';contextTitle.textContent=chest.name;
       contextDetail.textContent=ready?chestRewardLabel(chest):'Requires '+chest.requires.label+' - return when your pickaxe is stronger.';
       contextButton.textContent=ready?'OPEN':'LOCKED';contextButton.disabled=!ready;
-    }else if(activeContext==='sell'){
-      const value=cargoValueTotal(sellableCargo()),kept=protectedCargoLabel();contextEyebrow.textContent='ASSAY CART';contextTitle.textContent=value?value+' gold ready to sell':kept?'Drill materials protected':'Sell Resources';contextDetail.textContent=value?(kept?'Keeping '+kept+' for '+nextDrill().name+'.':'Turn carried resources into gold.'):kept?'Saved for '+nextDrill().name+'.':'Mine something, then bring it here.';contextButton.textContent=value?'SELL SAFE':kept?'PROTECTED':'EMPTY';contextButton.disabled=value<=0;
     }else if(activeContext==='speedShop'){
       const cost=movementSpeedCost(),current=movementSpeedMultiplier(),next=movementSpeedMultiplier(state.movementSpeedLevel+1);
       contextEyebrow.textContent='WAYFARER SHOP · UPGRADE '+(state.movementSpeedLevel+1);contextTitle.textContent='Movement '+current.toFixed(2)+'x → '+next.toFixed(2)+'x';contextDetail.textContent='Permanent movement speed. Unlimited upgrades with rising prices.';contextButton.textContent=cost+' GOLD';contextButton.disabled=state.gold<cost;
-    }else if(activeContext==='forge'){
+    }else if(baseContext&&baseContext.kind==='forge'){
+      if(baseContext){contextSecondaryButton.textContent='PACK';contextSecondaryButton.disabled=false}
       if(state.pickaxeLevel===4){
         const next=PICKAXES[5],currentHits=hitsRequired('emberstone',currentPickaxe().power),nextHits=hitsRequired('emberstone',next.power);
         contextEyebrow.textContent='FORGE UPGRADE - POWER '+currentPickaxe().power+' -> '+next.power;contextTitle.textContent=next.name;
@@ -1881,7 +2016,7 @@
       if(currentDepth===1)drawMineEntrance(false,currentMine());
       if(currentDepth===2||state.discoveredDepthEntrances[currentScene])drawDepthEntrance();
       if(currentDepth===2)drawDepthStations();
-      drawRocks();drawWorldLabels();drawVisualGuide();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
+      drawBaseModules();drawRocks();drawWorldLabels();drawVisualGuide();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
     }else{
       drawGround();drawBiomeStructure();drawDecorations();drawStations();drawSurfaceMineEntrances();drawGate();drawVeins();drawRocks();drawChests();drawWorldLabels();drawVisualGuide();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
     }
@@ -2150,7 +2285,14 @@
   }
 
   function drawStations(){
-    drawSellStation();drawForge();drawSpeedShop();if(state.fourthUnlocked)drawStarforge();
+    drawBaseModules();drawSpeedShop();if(state.fourthUnlocked)drawStarforge();
+  }
+
+  function drawBaseModules(){
+    for(const module of allBaseModules()){
+      if(!moduleIsHere(module))continue;
+      if(module.kind==='sell')drawSellStation(module);else if(module.kind==='forge')drawForge(module);else drawStorageChest(module);
+    }
   }
 
   function drawDepthStations(){
@@ -2161,21 +2303,29 @@
     ctx.save();ctx.rotate(time*.5);ctx.strokeStyle=currentDrill()?currentDrill().color:mine.detail;ctx.lineWidth=4;for(let i=0;i<6;i++){ctx.rotate(Math.PI/3);ctx.beginPath();ctx.moveTo(13,0);ctx.lineTo(28,0);ctx.stroke()}ctx.restore();ctx.fillStyle='#0c1110';ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.fill();ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 8px Georgia';ctx.fillText('DRILL FORGE',0,44);ctx.restore();
   }
 
-  function drawSellStation(){
-    const p=worldToScreen(STATIONS.sell.x,STATIONS.sell.y);if(p.x<-100||p.y<-100||p.x>viewWidth+100||p.y>viewHeight+100)return;
+  function drawSellStation(station){
+    const p=worldToScreen(station.x,station.y);if(p.x<-100||p.y<-100||p.x>viewWidth+100||p.y>viewHeight+100)return;
     ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(0,32,70,22,0,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#52341f';ctx.fillRect(-45,-15,88,44);ctx.fillStyle='#9f6d35';ctx.fillRect(-52,-22,102,12);ctx.fillStyle='#c7a35d';ctx.fillRect(-33,-7,64,7);
     ctx.fillStyle='#d7c4a0';ctx.beginPath();ctx.arc(-23,-31,13,0,Math.PI*2);ctx.arc(1,-34,16,0,Math.PI*2);ctx.arc(27,-29,11,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#161d17';ctx.font='900 9px Georgia';ctx.textAlign='center';ctx.fillText('ASSAY',0,15);ctx.restore();
   }
 
-  function drawForge(){
-    const p=worldToScreen(STATIONS.forge.x,STATIONS.forge.y);if(p.x<-100||p.y<-100||p.x>viewWidth+100||p.y>viewHeight+100)return;
+  function drawForge(station){
+    const p=worldToScreen(station.x,station.y);if(p.x<-100||p.y<-100||p.x>viewWidth+100||p.y>viewHeight+100)return;
     ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,37,65,20,0,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#3a3f39';ctx.fillRect(-43,-20,86,53);ctx.fillStyle='#222a24';ctx.fillRect(-30,-9,60,30);
     const glow=ctx.createRadialGradient(0,5,2,0,5,35);glow.addColorStop(0,'#fff09b');glow.addColorStop(.35,'#ef7c2f');glow.addColorStop(1,'rgba(190,55,15,0)');ctx.fillStyle=glow;ctx.fillRect(-38,-33,76,76);
     ctx.fillStyle='#f18b35';ctx.beginPath();ctx.moveTo(-20,19);ctx.lineTo(0,-18);ctx.lineTo(22,19);ctx.closePath();ctx.fill();
     ctx.strokeStyle='#d2bb82';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(32,-25);ctx.lineTo(51,22);ctx.stroke();ctx.restore();
+  }
+
+  function drawStorageChest(chest){
+    const p=worldToScreen(chest.x,chest.y);if(p.x<-90||p.y<-90||p.x>viewWidth+90||p.y>viewHeight+90)return;
+    const types=chestTypeCount(chest),selected=activeContext==='base:'+chest.id;
+    ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(0,25,48,15,0,0,Math.PI*2);ctx.fill();
+    if(selected){ctx.strokeStyle='#d7e5b1';ctx.globalAlpha=.7;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,48,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1}
+    ctx.fillStyle='#51371f';ctx.strokeStyle='#d1a85b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(-37,-15,74,40,6);ctx.fill();ctx.stroke();ctx.fillStyle='#9d6a35';ctx.fillRect(-38,-17,76,12);ctx.fillStyle='#e4c16d';ctx.fillRect(-7,-18,14,24);ctx.fillStyle='#161b16';ctx.textAlign='center';ctx.font='900 8px Georgia';ctx.fillText(types+'/'+STORAGE_CHEST_CAPACITY,0,17);ctx.restore();
   }
 
   function drawSpeedShop(){
@@ -2424,7 +2574,8 @@
 
   function drawWorldLabels(){
     const mine=currentMine();
-    const labels=mine?(currentDepth===2?[]:mine.labels.slice()):[['ASSAY CART',STATIONS.sell.x,STATIONS.sell.y-75,'#e9cb82'],['FORGE',STATIONS.forge.x,STATIONS.forge.y-75,'#f2a35d'],['WAYFARER SHOP',STATIONS.speedShop.x,STATIONS.speedShop.y-75,'#a9efb6']];
+    const baseLabels=allBaseModules().filter(module=>moduleIsHere(module)).map(module=>[module.kind==='sell'?'SELL CHEST':module.kind==='forge'?'FORGE':'STORAGE CHEST',module.x,module.y-65,module.kind==='forge'?'#f2a35d':module.kind==='sell'?'#e9cb82':'#a9d7a9']);
+    const labels=(mine?(currentDepth===2?[]:mine.labels.slice()):[['WAYFARER SHOP',STATIONS.speedShop.x,STATIONS.speedShop.y-75,'#a9efb6']]).concat(baseLabels);
     if(mine){
       ctx.save();ctx.textAlign='center';ctx.font='900 10px Georgia';
       for(const label of labels){const p=worldToScreen(label[1],label[2]);if(p.x<0||p.x>viewWidth||p.y<0||p.y>viewHeight)continue;ctx.fillStyle='rgba(5,8,5,.72)';ctx.fillRect(p.x-58,p.y-11,116,20);ctx.fillStyle=label[3];ctx.fillText(label[0],p.x,p.y+3)}ctx.restore();return;
@@ -2487,15 +2638,20 @@
     unlockAudio();input.keys.add(event.code);
     if(event.code==='Space'){input.mineHeld=true;mineButton.classList.add('active');if(!event.repeat)startSwing(true)}
     if(event.code==='KeyE')performContext();
-    if(event.code==='Escape'&&!menuShade.hidden)menuShade.hidden=true;
+    if(event.code==='Escape'){if(!inventoryShade.hidden)closeInventory();else if(!menuShade.hidden)menuShade.hidden=true}
   });
   window.addEventListener('keyup',event=>{input.keys.delete(event.code);if(event.code==='Space'){input.mineHeld=false;mineButton.classList.remove('active')}});
   window.addEventListener('blur',()=>{input.keys.clear();releaseTouchControls()});
   window.addEventListener('pagehide',()=>{releaseTouchControls();saveState(true)});
   document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseTouchControls();saveState(true)}});
   contextButton.addEventListener('click',performContext);
+  contextSecondaryButton.addEventListener('click',performSecondaryContext);
   starforgeChoices.addEventListener('click',event=>{const button=event.target.closest('[data-starforge]');if(button&&!button.disabled){unlockAudio();forgeStarVariant(button.dataset.starforge)}});
-  menuButton.addEventListener('click',()=>{unlockAudio();menuShade.hidden=false;updateLedger()});resumeButton.addEventListener('click',()=>menuShade.hidden=true);
+  inventoryButton.addEventListener('click',()=>{unlockAudio();menuShade.hidden=true;openInventory()});inventoryCloseButton.addEventListener('click',closeInventory);
+  autoSortButton.addEventListener('click',autoSortResources);buyChestButton.addEventListener('click',buyStorageChest);
+  baseModuleList.addEventListener('click',event=>{const place=event.target.closest('[data-base-place]'),pack=event.target.closest('[data-base-pack]'),take=event.target.closest('[data-chest-take]');if(place)placeBaseModule(place.dataset.basePlace);else if(pack)packBaseModule(pack.dataset.basePack);else if(take)takeAllFromChest(take.dataset.chestTake)});
+  inventoryShade.addEventListener('pointerdown',event=>{if(event.target===inventoryShade)closeInventory()});
+  menuButton.addEventListener('click',()=>{unlockAudio();inventoryShade.hidden=true;menuShade.hidden=false;updateLedger()});resumeButton.addEventListener('click',()=>menuShade.hidden=true);
   resetButton.addEventListener('click',()=>{if(window.confirm('Reset all Deepforge prototype progress?'))resetProgress()});
   menuShade.addEventListener('pointerdown',event=>{if(event.target===menuShade)menuShade.hidden=true});
   window.addEventListener('resize',resize,{passive:true});
@@ -2538,6 +2694,12 @@
     grantGold:amount=>{state.gold+=Math.max(0,Number(amount)||0);uiDirty=true},
     buyMovementSpeed:()=>buyMovementSpeed(),
     activateMiningRush:()=>activateMiningRush(),
+    openInventory:()=>openInventory(),
+    autoSort:()=>autoSortResources(),
+    buyStorageChest:()=>buyStorageChest(),
+    placeBaseModule:id=>placeBaseModule(id),
+    packBaseModule:id=>packBaseModule(id),
+    takeAllFromChest:id=>takeAllFromChest(id),
     setPickaxeLevel:level=>{state.pickaxeLevel=clamp(Math.floor(Number(level)||1),1,PICKAXES.length-1);if(state.pickaxeLevel<PICKAXES.length-1)state.emberMastery=0;uiDirty=true},
     unlockAllAreas:()=>{state.areaUnlocked=true;state.discoveredSecond=true;state.emberdeepUnlocked=true;state.discoveredThird=true;uiDirty=true},
     unlockStarfall:()=>{state.fourthUnlocked=true;state.discoveredFourth=true;uiDirty=true},

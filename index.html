@@ -13,13 +13,13 @@
       <div class="brand" aria-label="Deepforge">
         <span class="brand-mark" aria-hidden="true">D</span>
         <div>
-          <div class="brand-heading"><h1>DEEPFORGE</h1><span id="buildVersion">v0.9.2</span></div>
+          <div class="brand-heading"><h1>DEEPFORGE</h1><span id="buildVersion">v0.10.0</span></div>
           <small id="areaName">MOSSVEIN QUARRY</small>
         </div>
       </div>
       <div class="resources" aria-label="Resources">
         <div class="resource gold" title="Gold"><i aria-hidden="true">G</i><b id="goldValue">0</b></div>
-        <div class="resource cargo" title="Carried resources"><i aria-hidden="true"></i><b id="cargoValue">0</b></div>
+        <button id="inventoryButton" class="resource cargo" type="button" title="Resource inventory" aria-label="Open resource inventory"><i aria-hidden="true"></i><b id="cargoValue">0</b></button>
         <button id="menuButton" class="icon-button" type="button" aria-label="Open menu" title="Menu"><span></span></button>
       </div>
     </header>
@@ -51,7 +51,10 @@
           <b id="contextTitle">Copper Pickaxe</b>
           <small id="contextDetail">Mine faster and hit harder.</small>
         </div>
-        <button id="contextButton" type="button">UPGRADE</button>
+        <div id="contextActions" class="context-actions">
+          <button id="contextSecondaryButton" class="secondary" type="button" hidden>PACK</button>
+          <button id="contextButton" type="button">UPGRADE</button>
+        </div>
         <div id="starforgeChoices" class="starforge-choices" hidden aria-label="Starforge pickaxe choices">
           <button type="button" data-starforge="crusher"><b>ASTRAL CRUSHER</b><small>Heavy power</small></button>
           <button type="button" data-starforge="swift"><b>COMET EDGE</b><small>Rapid strikes</small></button>
@@ -90,9 +93,31 @@
       </div>
     </footer>
 
+    <div id="inventoryShade" class="inventory-shade" hidden>
+      <section class="inventory-card" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
+        <header class="inventory-header">
+          <div><span>MINER STORAGE</span><h2 id="inventoryTitle">Resources</h2></div>
+          <button id="inventoryCloseButton" class="inventory-close" type="button" aria-label="Close resource inventory">×</button>
+        </header>
+        <div class="inventory-summary">
+          <div><span>CARRIED</span><b id="inventoryTotal">0</b></div>
+          <div><span>RESOURCE TYPES</span><b id="inventoryTypes">0</b></div>
+          <button id="autoSortButton" type="button"><b>AUTO-SORT</b><small id="autoSortHint">NO CHEST NEARBY</small></button>
+        </div>
+        <div id="inventoryGrid" class="inventory-grid" aria-label="Carried resources"></div>
+        <section class="base-section" aria-labelledby="baseTitle">
+          <div class="base-heading">
+            <div><span>MOVABLE BASE</span><h3 id="baseTitle">Modules &amp; Storage</h3></div>
+            <button id="buyChestButton" type="button"><b>BUY CHEST</b><small id="buyChestCost">250 GOLD</small></button>
+          </div>
+          <div id="baseModuleList" class="base-module-list"></div>
+        </section>
+      </section>
+    </div>
+
     <div id="menuShade" class="menu-shade" hidden>
       <section class="menu-card" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
-        <span id="menuBuildVersion">DEEPFORGE v0.9.2 · VISUAL GUIDANCE</span>
+        <span id="menuBuildVersion">DEEPFORGE v0.10.0 · RESOURCE INVENTORY &amp; MOVABLE BASE</span>
         <h2 id="menuTitle">Miner's Ledger</h2>
         <div class="ledger-grid">
           <div><span>Stone mined</span><b id="stoneMined">0</b></div>

@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.9.2 - Visual Guidance**
+Current build: **Deepforge v0.10.0 - Resource Inventory & Movable Base**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
@@ -11,7 +11,7 @@ A standalone, framework-free HTML5 prototype for the mining loop:
 - Desktop: `WASD` / arrow keys to move, hold `Space` to mine, `E` to interact.
 - Mobile: left joystick to move, hold the `MINE` button to swing.
 - Your latest movement direction aims the pickaxe, so push toward a mine wall while holding mine to carve a tunnel.
-- Walk near the Assay Cart, Forge, or sealed gate to reveal their action.
+- Walk near the Sell Chest, Forge, storage chests, or a sealed gate to reveal their action.
 
 ## Run locally
 
@@ -44,6 +44,9 @@ Open `http://127.0.0.1:4180` on the same computer.
 - Buried chambers remain visually concealed until the player breaks through their perimeter, then permanently reveal their name and rare find.
 - Every buried chamber now contains a persistent reward: a buried cache, crystal cluster, motherlode, or Mining Rush shrine that grants 55% faster mining for 30 seconds.
 - The Wayfarer Shop turns spare gold into permanent movement speed with rising prices and no upgrade cap.
+- A clean resource-only inventory shows every collected material without equipment or character preview.
+- The Forge, Sell Chest and storage chests form a movable base that can be packed without loss and placed in any mine or depth.
+- The first 20-type storage chest is free, more chests cost progressively more gold, and one button auto-sorts nearby storage while protecting active drill materials.
 - Drill terrain hits use indexed reveal lookups instead of scanning every hidden deposit, reducing frame spikes while digging quickly.
 - Stone, copper, Moonglass, armored Emberstone, Astralite, and four valuable rare veins.
 - Five pickaxe tiers with stronger damage and faster swings.

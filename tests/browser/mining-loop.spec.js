@@ -98,7 +98,7 @@ test('Moonglass progression unlocks Emberdeep and its armored ore',async({page},
   await page.keyboard.up('Space');
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.state.mined.emberstone).toBeGreaterThanOrEqual(1);
-  await expect(page.locator('#objectiveText')).toHaveText('Sell your haul at the assay cart');
+  await expect(page.locator('#objectiveText')).toHaveText('Sell your haul at the Sell Chest');
   await useStation(page,205,250);
   await expect(page.locator('#objectiveText')).toContainText('Mine Emberstone');
   await page.evaluate(()=>{
@@ -137,7 +137,7 @@ test('clearing a connected ore vein grants its completion bonus',async({page},te
   let vein=snapshot.veins.find(item=>item.id==='copper_run');
   expect(vein.status).toBe('active');
   expect(vein.broken).toBe(1);
-  await expect(page.locator('#objectiveText')).toHaveText('Sell your haul at the assay cart');
+  await expect(page.locator('#objectiveText')).toHaveText('Sell your haul at the Sell Chest');
 
   await page.evaluate(()=>{
     window.__deepforgeTest.breakVeinRock('copper_run',1);
@@ -928,7 +928,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.9.2',name:'VISUAL GUIDANCE'});
+  expect(snapshot.build).toEqual({version:'0.10.0',name:'RESOURCE INVENTORY & MOVABLE BASE'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -943,9 +943,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.9.2');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.10.0');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.9.2 · VISUAL GUIDANCE');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.10.0 · RESOURCE INVENTORY & MOVABLE BASE');
 });
 
 test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{
@@ -959,7 +959,7 @@ test('one text-free visual guide leads to the next action and fades nearby',asyn
   await page.evaluate(()=>{window.__deepforgeTest.grantMined('stone',1);window.__deepforgeTest.grantCargo('stone',1)});
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.guide).toEqual(expect.objectContaining({kind:'sell',scene:'surface'}));
-  await expect(page.locator('#objectiveText')).toHaveText('Sell your haul at the assay cart');
+  await expect(page.locator('#objectiveText')).toHaveText('Sell your haul at the Sell Chest');
 });
 
 test('each mine hides one persistent random entrance to a contrasting Depth 2',async({page})=>{
@@ -1193,4 +1193,32 @@ test('every hidden pocket contains a persistent useful reward',async({page})=>{
   await page.reload();await page.waitForFunction(()=>window.__deepforgeTest);
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.state.claimedPocketRewards[cache.reward.id]).toBe(true);
+});
+
+test('resource inventory auto-sorts and the base moves between maps without loss',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{window.__deepforgeTest.grantCargo('stone',12);window.__deepforgeTest.grantCargo('copper',7)});
+  await page.locator('#inventoryButton').click();
+  await expect(page.locator('#inventoryShade')).toBeVisible();
+  await expect(page.locator('#inventoryGrid')).toContainText('Stone');
+  await expect(page.locator('#inventoryGrid')).toContainText('Copper');
+  await page.locator('#autoSortButton').click();
+  let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.cargo.stone+snapshot.state.cargo.copper).toBe(0);
+  expect(snapshot.state.base.chests[0].items.stone).toBe(12);
+  expect(snapshot.state.base.chests[0].items.copper).toBe(7);
+  await page.locator('#inventoryCloseButton').click();
+
+  await page.evaluate(()=>window.__deepforgeTest.setPosition(455,250));
+  await expect(page.locator('#contextSecondaryButton')).toBeVisible();
+  await page.locator('#contextSecondaryButton').click();
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());expect(snapshot.state.base.forge.packed).toBe(true);
+  await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
+  await page.locator('#inventoryButton').click();
+  await page.locator('[data-base-place="forge"]').click();
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.base.forge).toMatchObject({scene:'mossMine',depth:1,packed:false});
+  await page.evaluate(()=>window.__deepforgeTest.save());await page.reload();await page.waitForFunction(()=>window.__deepforgeTest);
+  snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.state.base.forge.scene).toBe('mossMine');expect(snapshot.state.base.chests[0].items.stone).toBe(12);
 });
