@@ -133,6 +133,9 @@
   const GROUND_DROP_LIFETIME=300;
   const LOOT_SWEEP_WARNING_SECONDS=30;
   const GROUND_DROP_PICKUP_RADIUS=48;
+  const GROUND_DROP_EDGE_X=56;
+  const GROUND_DROP_EDGE_TOP=76;
+  const GROUND_DROP_EDGE_BOTTOM=64;
   const BASE_MODULE_INTERACT_RADIUS=118;
   const AUTO_SORT_RADIUS=360;
   const STORAGE_CHEST_CAPACITY=20;
@@ -1160,6 +1163,13 @@
   function worldToScreen(x,y){return{x:x-camera.x,y:y-camera.y}}
   function screenToWorld(x,y){return{x:x/viewZoom+camera.x,y:y/viewZoom+camera.y}}
 
+  function updateObjectiveOcclusion(){
+    const p=worldToScreen(player.x,player.y),playerX=p.x*viewZoom,playerY=p.y*viewZoom;
+    const left=(viewport.clientWidth-objective.offsetWidth)/2,top=objective.offsetTop;
+    const overlaps=playerX+40>left&&playerX-40<left+objective.offsetWidth&&playerY+34>top&&playerY-64<top+objective.offsetHeight;
+    objective.classList.toggle('player-overlap',overlaps);
+  }
+
   function updateCamera(immediate){
     const world=currentWorld();
     const targetX=clamp(player.x-viewWidth*.5,0,Math.max(0,world.width-viewWidth));
@@ -1412,7 +1422,8 @@
         discardGroundDrop(oldestIndex);
       }
       const seed=nextDropId++,angle=(seed*2.399963)%6.283,burst=34+(seed%4)*7;
-      groundDrops.push({id:seed,type,amount:1,x,y,z:12,vx:Math.cos(angle)*burst,vy:Math.sin(angle)*burst*.58,vz:92+(seed%5)*9,age:0,settled:false,sourceChest:sourceChest||null,sourcePocket:sourcePocket||null,scene:scene||currentScene,depth:(scene||currentScene)==='surface'?1:depth||currentDepth});
+      const dropScene=scene||currentScene,world=MINE_DEFINITIONS[dropScene]||WORLD;
+      groundDrops.push({id:seed,type,amount:1,x:clamp(x,GROUND_DROP_EDGE_X,world.width-GROUND_DROP_EDGE_X),y:clamp(y,GROUND_DROP_EDGE_TOP,world.height-GROUND_DROP_EDGE_BOTTOM),z:12,vx:Math.cos(angle)*burst,vy:Math.sin(angle)*burst*.58,vz:92+(seed%5)*9,age:0,settled:false,sourceChest:sourceChest||null,sourcePocket:sourcePocket||null,scene:dropScene,depth:dropScene==='surface'?1:depth||currentDepth});
     }
   }
 
@@ -1480,6 +1491,8 @@
         drop.x+=drop.vx*dt;drop.y+=drop.vy*dt;drop.z+=drop.vz*dt;drop.vz-=330*dt;drop.vx*=Math.pow(.11,dt);drop.vy*=Math.pow(.11,dt);
         if(drop.z<=0){drop.z=0;if(Math.abs(drop.vz)>28){drop.vz=-drop.vz*.27;drop.vx*=.62;drop.vy*=.62}else{drop.vz=0;drop.vx=0;drop.vy=0;drop.settled=true}}
       }
+      const world=currentWorld(),safeX=clamp(drop.x,GROUND_DROP_EDGE_X,world.width-GROUND_DROP_EDGE_X),safeY=clamp(drop.y,GROUND_DROP_EDGE_TOP,world.height-GROUND_DROP_EDGE_BOTTOM);
+      if(safeX!==drop.x){drop.x=safeX;drop.vx=0}if(safeY!==drop.y){drop.y=safeY;drop.vy=0}
       if(distance(player.x,player.y,drop.x,drop.y)<=GROUND_DROP_PICKUP_RADIUS){collectGroundDrop(drop);groundDrops.splice(index,1);collected=true}
     }
     if(collected)flushPickupBatch();
@@ -1773,7 +1786,7 @@
     }
     if(currentScene==='surface')updateVeins(dt);else updatePocketRewards();updateGroundDrops(dt);
     if(terrainSaveDelay>0){terrainSaveDelay=Math.max(0,terrainSaveDelay-dt);if(terrainSaveDelay===0)saveState()}
-    updateEffects(dt);updateGoldCount(dt);updateCamera(false);
+    updateEffects(dt);updateGoldCount(dt);updateCamera(false);updateObjectiveOcclusion();
     const region=currentScene==='surface'?regionIndexAt(player.x):-1;
     if(region!==lastRegion){lastRegion=region;game.dataset.biome=currentBiome().id;uiDirty=true}
     const nextContext=contextAtPlayer();
