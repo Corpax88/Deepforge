@@ -541,6 +541,7 @@ test('Starforge crafts and swaps three distinct endgame pickaxes',async({page},t
   });
   await expect(page.locator('#contextPanel')).toBeVisible();
   await expect(page.locator('#contextPanel')).toHaveClass(/starforge-open/);
+  await expect(page.locator('#contextActions')).toBeHidden();
 
   const crusher=page.locator('[data-starforge="crusher"]');
   const swift=page.locator('[data-starforge="swift"]');
