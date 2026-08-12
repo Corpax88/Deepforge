@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.12.0 - Mossvein Visual Rework**
+Current build: **Deepforge v0.13.0 - Mossvein Cave Rebuild**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
@@ -23,7 +23,20 @@ python -m http.server 4180 --bind 0.0.0.0
 
 Open `http://127.0.0.1:4180` on the same computer.
 
-## Mossvein visual rework\n\n- Mossvein Mine and Rootwound Depths now use deterministic rock facets, rough excavated edges, scattered floor detail, richer permanent walls, and a restrained miner-lamp atmosphere.\n- The old square floor grid is removed from Mossvein while all terrain cells, tunnels, hidden deposits, collision, mining HP, and save data remain unchanged.\n- Other biomes keep their existing rendering until their own approved visual pass.\n\n## Visual foundation\n\n- Premium mobile HUD with a framed Deepforge header, clearer resource counters, a stronger goal card, tactile mining controls, directional joystick cues, and a unified tool console.\n- Existing gameplay, world rendering, progression, saves, interaction IDs, and mining logic remain unchanged.\n\n## Prototype scope
+## Mossvein cave rebuild
+
+- Mossvein Mine and Rootwound Depths now render as one continuous rock mass instead of decorating each 48px terrain cell.
+- Dug tunnels use layered, curved fracture edges, corner cuts, restrained strata, and a brighter illustrated cave floor.
+- The renderer caches concealed discovery cells and culls detail to the viewport for mobile performance.
+- Terrain data, mining HP, collision, loot, progression, base placement, and save compatibility remain unchanged.
+- Other biomes keep their existing rendering until their own approved visual pass.
+
+## Visual foundation
+
+- Premium mobile HUD with a framed Deepforge header, clearer resource counters, a stronger goal card, tactile mining controls, directional joystick cues, and a unified tool console.
+- Existing gameplay, world rendering, progression, saves, interaction IDs, and mining logic remain unchanged.
+
+## Prototype scope
 
 - One continuous world with four visually distinct areas.
 - Every mine is now four to five times deeper: aim with movement, hold mine to carve persistent tunnels, and let the camera follow the descent.

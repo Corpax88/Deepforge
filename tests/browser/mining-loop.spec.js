@@ -949,7 +949,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.12.0',name:'MOSSVEIN VISUAL REWORK'});
+  expect(snapshot.build).toEqual({version:'0.13.0',name:'MOSSVEIN CAVE REBUILD'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -964,9 +964,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.12.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.13.0');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.12.0 · MOSSVEIN VISUAL REWORK');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.13.0 · MOSSVEIN CAVE REBUILD');
 });
 
 test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{
@@ -1248,12 +1248,12 @@ test('Mossvein premium rendering preserves the terrain contract',async({page})=>
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.mine.visualPass).toBe('mossvein-premium-v1');
+  expect(snapshot.mine.visualPass).toBe('mossvein-premium-v2');
   expect(snapshot.mine.terrain.tileSize).toBe(48);
   expect(snapshot.mine.terrain.target).not.toBeNull();
   const solidBefore=snapshot.mine.terrain.solidCells;
   await page.evaluate(()=>window.__deepforgeTest.mineTerrainCell(window.__deepforgeTest.snapshot().mine.terrain.target.index));
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.mine.visualPass).toBe('mossvein-premium-v1');
+  expect(snapshot.mine.visualPass).toBe('mossvein-premium-v2');
   expect(snapshot.mine.terrain.solidCells).toBeLessThanOrEqual(solidBefore);
 });
