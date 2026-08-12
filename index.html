@@ -3,22 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <meta name="theme-color" content="#101711">
-  <title>Deepforge - Mining Prototype</title>
+  <meta name="theme-color" content="#07100a">
+  <title>Deepforge</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main id="game" aria-label="Deepforge mining game">
     <header class="topbar">
       <div class="brand" aria-label="Deepforge">
-        <span class="brand-mark" aria-hidden="true">D</span>
+        <span class="brand-mark" aria-hidden="true"><i></i></span>
         <div>
-          <div class="brand-heading"><h1>DEEPFORGE</h1><span id="buildVersion">v0.10.0</span></div>
+          <div class="brand-heading"><h1>DEEPFORGE</h1><span id="buildVersion">v0.11.0</span></div>
           <small id="areaName">MOSSVEIN QUARRY</small>
         </div>
       </div>
       <div class="resources" aria-label="Resources">
-        <div class="resource gold" title="Gold"><i aria-hidden="true">G</i><b id="goldValue">0</b></div>
+        <div class="resource gold" title="Gold"><i aria-hidden="true"></i><b id="goldValue">0</b></div>
         <button id="inventoryButton" class="resource cargo" type="button" title="Resource inventory" aria-label="Open resource inventory"><i aria-hidden="true"></i><b id="cargoValue">0</b></button>
         <button id="menuButton" class="icon-button" type="button" aria-label="Open menu" title="Menu"><span></span></button>
       </div>
@@ -33,6 +33,7 @@
       </div>
 
       <div id="objective" class="objective" aria-live="polite">
+        <i class="objective-gem" aria-hidden="true"></i>
         <span>NEXT GOAL</span>
         <b id="objectiveText">Mine a rock</b>
         <small id="objectiveDetail"></small>
@@ -63,6 +64,7 @@
       </aside>
 
       <div id="joystick" class="joystick" aria-label="Movement joystick">
+        <i class="joystick-arrow up" aria-hidden="true"></i><i class="joystick-arrow right" aria-hidden="true"></i><i class="joystick-arrow down" aria-hidden="true"></i><i class="joystick-arrow left" aria-hidden="true"></i>
         <div id="joystickKnob"></div>
       </div>
 
@@ -117,7 +119,7 @@
 
     <div id="menuShade" class="menu-shade" hidden>
       <section class="menu-card" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
-        <span id="menuBuildVersion">DEEPFORGE v0.10.0 · RESOURCE INVENTORY &amp; MOVABLE BASE</span>
+        <span id="menuBuildVersion">DEEPFORGE v0.11.0 · PREMIUM MOBILE FOUNDATION</span>
         <h2 id="menuTitle">Miner's Ledger</h2>
         <div class="ledger-grid">
           <div><span>Stone mined</span><b id="stoneMined">0</b></div>

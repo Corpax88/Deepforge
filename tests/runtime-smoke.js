@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.10.0');
-assert.equal(api.snapshot().build.name,'RESOURCE INVENTORY & MOVABLE BASE');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.10.0');
+assert.equal(api.snapshot().build.version,'0.11.0');
+assert.equal(api.snapshot().build.name,'PREMIUM MOBILE FOUNDATION');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.11.0');
 let openingGuide=api.snapshot().guide;
 assert.equal(openingGuide.kind,'rock');assert.equal(openingGuide.scene,'surface');assert.equal(openingGuide.visible,true);
 api.setPosition(openingGuide.x,openingGuide.y);assert.equal(api.snapshot().guide.visible,false);

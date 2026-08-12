@@ -51,7 +51,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.10.0',name:'RESOURCE INVENTORY & MOVABLE BASE'};
+  const BUILD={version:'0.11.0',name:'PREMIUM MOBILE FOUNDATION'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 

@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.10.0 - Resource Inventory & Movable Base**
+Current build: **Deepforge v0.11.0 - Premium Mobile Foundation**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
@@ -23,7 +23,7 @@ python -m http.server 4180 --bind 0.0.0.0
 
 Open `http://127.0.0.1:4180` on the same computer.
 
-## Prototype scope
+## Visual foundation\n\n- Premium mobile HUD with a framed Deepforge header, clearer resource counters, a stronger goal card, tactile mining controls, directional joystick cues, and a unified tool console.\n- Existing gameplay, world rendering, progression, saves, interaction IDs, and mining logic remain unchanged.\n\n## Prototype scope
 
 - One continuous world with four visually distinct areas.
 - Every mine is now four to five times deeper: aim with movement, hold mine to carve persistent tunnels, and let the camera follow the descent.
