@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.15.0');
-assert.equal(api.snapshot().build.name,'MOSSVEIN WALL OPTIMIZATION');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.15.0');
+assert.equal(api.snapshot().build.version,'0.15.1');
+assert.equal(api.snapshot().build.name,'DRILL FLOW');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.15.1');
 let openingGuide=api.snapshot().guide;
 assert.equal(openingGuide.kind,'rock');assert.equal(openingGuide.scene,'surface');assert.equal(openingGuide.visible,true);
 api.setPosition(openingGuide.x,openingGuide.y);assert.equal(api.snapshot().guide.visible,false);
@@ -157,6 +157,7 @@ assert.equal(after.guide.kind,'drill-forge');assert.equal(after.guide.scene,'mos
 const drillForge=api.snapshot().mine.depthStations.forge;api.setPosition(drillForge.x,drillForge.y);api.upgradeDrill();after=api.snapshot();
 assert.equal(after.state.drillLevel,1);assert.equal(after.effectivePickaxe.name,'Burrower Drill');assert.ok(after.effectivePickaxe.cooldown<starforgeCooldown);assert.equal(after.toolMode,'drill');assert.equal(after.goal.title,'Mine Burrowsteel for Pulse Drill');
 gatedHit=api.hitDepositRock(mossGate.id,0);assert.notDeepEqual(gatedHit.after,gatedHit.before);
+assert.equal(api.snapshot().feedback.hitStop,0);
 api.grantGold(3200);api.grantCargo('burrowsteel',12);api.grantCargo('copper',2);api.sellCargo();after=api.snapshot();
 assert.equal(after.state.cargo.burrowsteel,12);assert.equal(after.state.cargo.copper,0);assert.equal(after.goal.detail,'READY AT ANY DEPTH 2 DRILL FORGE');
 api.upgradeDrill();after=api.snapshot();assert.equal(after.state.drillLevel,2);assert.equal(after.effectivePickaxe.name,'Pulse Drill');assert.equal(after.goal.title,'Mine Phase Crystal for Deepcore Drill');api.save();

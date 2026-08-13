@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.15.0 - Mossvein Wall Optimization**
+Current build: **Deepforge v0.15.1 - Drill Flow**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 

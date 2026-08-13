@@ -62,7 +62,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.15.0',name:'MOSSVEIN WALL OPTIMIZATION'};
+  const BUILD={version:'0.15.1',name:'DRILL FLOW'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -1118,7 +1118,10 @@
     miningFeedback.shake=0;
     miningFeedback.shakeTime=0;
     miningFeedback.flash=0;
-    miningFeedback.hitStop=Math.max(miningFeedback.hitStop,strength>=7?.065:strength>=4?.038:.016);
+    // Rapid drills need continuous simulation. Repeated hit-stop at drill speed
+    // reads as frame loss even when rendering is holding a steady frame rate.
+    if(currentDrill())miningFeedback.hitStop=0;
+    else miningFeedback.hitStop=Math.max(miningFeedback.hitStop,strength>=7?.065:strength>=4?.038:.016);
     if(hapticDuration&&navigator.vibrate&&time-lastHapticAt>.065){
       try{navigator.vibrate(hapticDuration);lastHapticAt=time}catch(error){}
     }
@@ -2761,8 +2764,10 @@
   }
 
   function drawPlayerDrill(){
-    const drill=currentDrill(),active=!!player.swing,phase=active?clamp(player.swing.elapsed/player.swing.duration,0,1):0;
-    const recoil=active?Math.sin(phase*Math.PI)*4:0,vibration=active?Math.sin(time*95)*.75:0,spin=time*(active?88:3.5);
+    // Holding the drill is one continuous action. Do not visually drop to idle
+    // during the tiny cooldown gap between individual mining hits.
+    const drill=currentDrill(),active=!!player.swing||input.mineHeld;
+    const recoil=active?1.35+Math.sin(time*34)*.7:0,vibration=active?Math.sin(time*72)*.55:0,spin=time*(active?88:3.5);
     ctx.save();ctx.translate(4-recoil,-7+vibration);ctx.rotate(-.07);
     ctx.lineCap='round';
     ctx.strokeStyle='#d6a06d';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(-18,-2);ctx.lineTo(2,7);ctx.moveTo(-3,-9);ctx.lineTo(22,-1);ctx.stroke();
