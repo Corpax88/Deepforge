@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.13.0');
-assert.equal(api.snapshot().build.name,'MOSSVEIN CAVE REBUILD');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.13.0');
+assert.equal(api.snapshot().build.version,'0.14.0');
+assert.equal(api.snapshot().build.name,'MOSSVEIN PRODUCTION ART');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.14.0');
 let openingGuide=api.snapshot().guide;
 assert.equal(openingGuide.kind,'rock');assert.equal(openingGuide.scene,'surface');assert.equal(openingGuide.visible,true);
 api.setPosition(openingGuide.x,openingGuide.y);assert.equal(api.snapshot().guide.visible,false);
@@ -54,7 +54,7 @@ assert.equal(api.snapshot().state.claimedPocketRewards[fallenPocket.reward.id],t
 api.exitMine();
 
 api.enterMine('mossMine');
-assert.equal(api.snapshot().mine.visualPass,'mossvein-premium-v2');
+assert.equal(api.snapshot().mine.visualPass,'mossvein-production-art-v1');
 api.setPosition(180,503);api.setAim(.899,-.438);
 let before=api.snapshot(),target=before.mine.terrain.target;
 assert.ok(target);

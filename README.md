@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.13.0 - Mossvein Cave Rebuild**
+Current build: **Deepforge v0.14.0 - Mossvein Production Art**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
@@ -23,10 +23,10 @@ python -m http.server 4180 --bind 0.0.0.0
 
 Open `http://127.0.0.1:4180` on the same computer.
 
-## Mossvein cave rebuild
+## Mossvein production art
 
-- Mossvein Mine and Rootwound Depths now render as one continuous rock mass instead of decorating each 48px terrain cell.
-- Dug tunnels use layered, curved fracture edges, corner cuts, restrained strata, and a brighter illustrated cave floor.
+- Mossvein Mine and Rootwound Depths now use production PNG artwork for the cave floor and rocky tunnel walls, with a safe procedural fallback while images load.
+- Dug tunnels combine the existing terrain mask with irregular high-detail rock clusters, quieter fracture shadows, and a textured lamp-lit floor.
 - The renderer caches concealed discovery cells and culls detail to the viewport for mobile performance.
 - Terrain data, mining HP, collision, loot, progression, base placement, and save compatibility remain unchanged.
 - Other biomes keep their existing rendering until their own approved visual pass.
