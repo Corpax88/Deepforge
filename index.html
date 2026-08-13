@@ -4,8 +4,26 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#07100a">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Deepforge</title>
-  <link rel="stylesheet" href="style.css?v=0174">
+  <script>
+    (()=>{
+      const checkLatest=()=>fetch('version.json?t='+Date.now(),{cache:'no-store'})
+        .then(response=>response.ok?response.json():null)
+        .then(latest=>{
+          if(!latest||!latest.version)return;
+          const url=new URL(window.location.href);
+          if(url.searchParams.get('v')===latest.version)return;
+          url.searchParams.set('v',latest.version);
+          window.location.replace(url.href);
+        }).catch(()=>{});
+      checkLatest();
+      window.addEventListener('pageshow',event=>{if(event.persisted)checkLatest()});
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css?v=0175">
 </head>
 <body>
   <main id="game" aria-label="Deepforge mining game">
@@ -13,7 +31,7 @@
       <div class="brand" aria-label="Deepforge">
         <span class="brand-mark" aria-hidden="true"><i></i></span>
         <div>
-          <div class="brand-heading"><h1>DEEPFORGE</h1><span id="buildVersion">v0.17.4</span></div>
+          <div class="brand-heading"><h1>DEEPFORGE</h1><span id="buildVersion">v0.17.5</span></div>
           <small id="areaName">MOSSVEIN QUARRY</small>
         </div>
       </div>
@@ -119,7 +137,7 @@
 
     <div id="menuShade" class="menu-shade" hidden>
       <section class="menu-card" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
-        <span id="menuBuildVersion">DEEPFORGE v0.17.4 · REFINED MINERAL NODES</span>
+        <span id="menuBuildVersion">DEEPFORGE v0.17.5 · AUTOMATIC VERSION CHECK</span>
         <h2 id="menuTitle">Miner's Ledger</h2>
         <div class="ledger-grid">
           <div><span>Stone mined</span><b id="stoneMined">0</b></div>
@@ -144,6 +162,6 @@
       </section>
     </div>
   </main>
-  <script src="script.js?v=0174"></script>
+  <script src="script.js?v=0175"></script>
 </body>
 </html>

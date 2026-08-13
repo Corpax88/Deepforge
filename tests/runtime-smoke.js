@@ -4,8 +4,12 @@ const vm=require('node:vm');
 
 const source=fs.readFileSync(require('node:path').join(__dirname,'..','script.js'),'utf8');
 const html=fs.readFileSync(require('node:path').join(__dirname,'..','index.html'),'utf8');
-assert.match(html,/style\.css\?v=0174/);
-assert.match(html,/script\.js\?v=0174/);
+const latest=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'..','version.json'),'utf8'));
+assert.equal(latest.version,'0175');
+assert.match(html,/version\.json\?t=/);
+assert.match(html,/cache:'no-store'/);
+assert.match(html,/style\.css\?v=0175/);
+assert.match(html,/script\.js\?v=0175/);
 const storage=new Map();
 
 function createElement(id){
@@ -39,9 +43,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.17.4');
-assert.equal(api.snapshot().build.name,'REFINED MINERAL NODES');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.17.4');
+assert.equal(api.snapshot().build.version,'0.17.5');
+assert.equal(api.snapshot().build.name,'AUTOMATIC VERSION CHECK');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.17.5');
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({copper:['wall','node'],gold:['wall','node']}));
 assert.equal(api.snapshot().mineralNodeRenderScale,.85);
 let openingGuide=api.snapshot().guide;

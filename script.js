@@ -68,7 +68,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.17.4',name:'REFINED MINERAL NODES'};
+  const BUILD={version:'0.17.5',name:'AUTOMATIC VERSION CHECK'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 

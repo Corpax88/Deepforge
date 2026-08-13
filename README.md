@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.17.4 - Refined Mineral Nodes**
+Current build: **Deepforge v0.17.5 - Automatic Version Check**
 
 Copper and Gold now use dedicated transparent PNGs for both buried wall seams and revealed nodes. Their former canvas-drawn mineral bodies and seams are no longer rendered.
 
