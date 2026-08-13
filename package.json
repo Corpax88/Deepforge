@@ -1,6 +1,6 @@
 {
   "name": "deepforge",
-  "version": "0.17.5",
+  "version": "0.17.6",
   "private": true,
   "description": "A mobile-first fantasy mining game prototype.",
   "scripts": {

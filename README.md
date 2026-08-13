@@ -1,6 +1,8 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.17.5 - Automatic Version Check**
+Current build: **Deepforge v0.17.6 - Stone Node Asset**
+
+Ordinary surface stone now uses a dedicated transparent PNG node instead of the former canvas polygon.
 
 Copper and Gold now use dedicated transparent PNGs for both buried wall seams and revealed nodes. Their former canvas-drawn mineral bodies and seams are no longer rendered.
 
