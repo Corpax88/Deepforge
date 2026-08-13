@@ -4,12 +4,13 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0202';
+  const ASSET_VERSION='0210';
   const MUSIC_PATH='assets/audio/deepforge-drift-loop.mp3?v='+ASSET_VERSION;
   // iOS may ignore HTMLAudioElement volume. The asset itself is mastered at -28 LUFS.
   const MUSIC_VOLUME=1;
   const MOSSVEIN_ART={wall:null,floor:null,floorPattern:null};
   const SURFACE_ART={mossveinGround:null};
+  const DISCOVERY_ART={crystalPocket:null};
   const MINERAL_ART={stone:{wall:null,node:null},copper:{wall:null,node:null},gold:{wall:null,node:null}};
   const MINE_ENTRANCE_ART={mossMine:null};
   const PLAYER_ART={base:null,tools:{},drillCharacters:{}};
@@ -55,6 +56,10 @@
     if(typeof Image==='undefined')return null;
     const image=new Image();image.decoding='async';image.onload=()=>{SURFACE_ART[key]=image};image.src=src+'?v='+ASSET_VERSION;return image;
   }
+  function loadDiscoveryImage(src,key){
+    if(typeof Image==='undefined')return null;
+    const image=new Image();image.decoding='async';image.onload=()=>{DISCOVERY_ART[key]=image};image.src=src+'?v='+ASSET_VERSION;return image;
+  }
   function loadPlayerImage(src,key,kind='base'){
     if(typeof Image==='undefined')return null;
     const image=new Image();image.decoding='async';image.onload=()=>{if(kind==='tool')PLAYER_ART.tools[key]=image;else if(kind==='drillCharacter')PLAYER_ART.drillCharacters[key]=image;else PLAYER_ART.base=image};image.src=src+'?v='+ASSET_VERSION;return image;
@@ -64,6 +69,7 @@
   for(const type of Object.keys(MINERAL_ART)){if(type!=='stone')MINERAL_ART[type].wall=loadMineralImage(type,'wall');MINERAL_ART[type].node=loadMineralImage(type,'node')}
   MINE_ENTRANCE_ART.mossMine=loadMineEntranceImage('mossMine');
   SURFACE_ART.mossveinGround=loadSurfaceImage('assets/surface/mossvein-ground.png','mossveinGround');
+  DISCOVERY_ART.crystalPocket=loadDiscoveryImage('assets/mossvein/magic-crystal-pocket.png','crystalPocket');
   PLAYER_ART.base=loadPlayerImage('assets/characters/miner-b.png','base');
   for(const [key,path] of Object.entries(PLAYER_TOOL_PATHS))PLAYER_ART.tools[key]=loadPlayerImage(path,key,'tool');
   for(const [key,path] of Object.entries(PLAYER_DRILL_CHARACTER_PATHS))PLAYER_ART.drillCharacters[key]=loadPlayerImage(path,key,'drillCharacter');
@@ -114,7 +120,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.20.2',name:'QUIET DRIFT'};
+  const BUILD={version:'0.21.0',name:'CRYSTAL POCKETS'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -2434,9 +2440,12 @@
     for(const cavern of currentTerrain().caverns){
       if(!cavernIsDiscovered(cavern.id))continue;
       const screenX=origin.x+cavern.x,screenY=origin.y+cavern.y;if(screenX+cavern.rx<-50||screenY+cavern.ry<-50||screenX-cavern.rx>viewWidth+50||screenY-cavern.ry>viewHeight+50)continue;
-      ctx.save();ctx.translate(cavern.x,cavern.y);ctx.fillStyle='rgba(4,7,7,.42)';ctx.strokeStyle=mine.detail;ctx.globalAlpha=.82;ctx.lineWidth=3;
-      ctx.beginPath();ctx.ellipse(0,0,cavern.rx,cavern.ry,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.globalAlpha=1;
-      ctx.fillStyle='rgba(5,8,7,.78)';ctx.fillRect(-68,-11,136,22);ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 9px Georgia';ctx.fillText(cavern.name.toUpperCase(),0,3);ctx.restore();
+      ctx.save();ctx.translate(cavern.x,cavern.y);
+      const pocket=DISCOVERY_ART.crystalPocket,claimed=!!state.claimedPocketRewards[cavern.reward.id];let pocketHeight=Math.min(cavern.ry*1.72,cavern.rx*1.84*(pocket&&pocket.naturalHeight?pocket.naturalHeight/pocket.naturalWidth:.559));
+      if(imageReady(pocket)){
+        const pocketWidth=pocketHeight*(pocket.naturalWidth/pocket.naturalHeight);ctx.globalAlpha=claimed?.46:1;ctx.shadowColor=mine.detail;ctx.shadowBlur=claimed?4:13;ctx.drawImage(pocket,-pocketWidth/2,-pocketHeight/2,pocketWidth,pocketHeight);ctx.shadowBlur=0;
+      }
+      ctx.globalAlpha=1;const labelY=-pocketHeight/2-9;ctx.fillStyle='rgba(5,8,7,.84)';ctx.fillRect(-68,labelY-10,136,19);ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 9px Georgia';ctx.fillText(cavern.name.toUpperCase(),0,labelY+3);ctx.restore();
       drawPocketReward(cavern,origin);
     }
     ctx.restore();
@@ -3027,7 +3036,7 @@
 
   window.__deepforgeTest={
     snapshot:()=>JSON.parse(JSON.stringify({
-      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true},surfaceAssetRendering:{mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},characterRendering:{baseAsset:'assets/characters/miner-b.png',activeToolKey:currentPlayerToolKey(),activeRenderAsset:state.drillLevel?PLAYER_DRILL_CHARACTER_PATHS[currentPlayerToolKey()]:PLAYER_TOOL_PATHS[currentPlayerToolKey()],toolLayerCount:Object.keys(PLAYER_TOOL_PATHS).length,drillCompositeCount:Object.keys(PLAYER_DRILL_CHARACTER_PATHS).length,gripCrop:PLAYER_RENDER_CONTRACT.gripCrop,gripPivot:PLAYER_RENDER_CONTRACT.gripPivot,gripPoint:PLAYER_RENDER_CONTRACT.gripPoint,layeredTools:PLAYER_RENDER_CONTRACT.layeredTools,animatedGrip:PLAYER_RENDER_CONTRACT.animatedGrip,bodyReaction:PLAYER_RENDER_CONTRACT.bodyReaction,sharedGripAnchor:PLAYER_RENDER_CONTRACT.sharedGripAnchor,fullDrillComposites:PLAYER_RENDER_CONTRACT.fullDrillComposites,legacyDrillLimbCrops:PLAYER_RENDER_CONTRACT.legacyDrillLimbCrops,legacyCanvasCharacter:PLAYER_RENDER_CONTRACT.legacyCanvasCharacter,legacyCanvasTools:PLAYER_RENDER_CONTRACT.legacyCanvasTools},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
+      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true},surfaceAssetRendering:{mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},discoveryRendering:{crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',legacyCavernRings:false,biomeGlow:true},characterRendering:{baseAsset:'assets/characters/miner-b.png',activeToolKey:currentPlayerToolKey(),activeRenderAsset:state.drillLevel?PLAYER_DRILL_CHARACTER_PATHS[currentPlayerToolKey()]:PLAYER_TOOL_PATHS[currentPlayerToolKey()],toolLayerCount:Object.keys(PLAYER_TOOL_PATHS).length,drillCompositeCount:Object.keys(PLAYER_DRILL_CHARACTER_PATHS).length,gripCrop:PLAYER_RENDER_CONTRACT.gripCrop,gripPivot:PLAYER_RENDER_CONTRACT.gripPivot,gripPoint:PLAYER_RENDER_CONTRACT.gripPoint,layeredTools:PLAYER_RENDER_CONTRACT.layeredTools,animatedGrip:PLAYER_RENDER_CONTRACT.animatedGrip,bodyReaction:PLAYER_RENDER_CONTRACT.bodyReaction,sharedGripAnchor:PLAYER_RENDER_CONTRACT.sharedGripAnchor,fullDrillComposites:PLAYER_RENDER_CONTRACT.fullDrillComposites,legacyDrillLimbCrops:PLAYER_RENDER_CONTRACT.legacyDrillLimbCrops,legacyCanvasCharacter:PLAYER_RENDER_CONTRACT.legacyCanvasCharacter,legacyCanvasTools:PLAYER_RENDER_CONTRACT.legacyCanvasTools},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
       effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower()),depthMainHits:currentMine()&&currentDepth===2?armoredHitsRequired(DEPTH2_RESOURCE_PROFILES[currentScene].main,currentPower(),currentShellPower()):null},
       goal:mainGoal(),guide:(()=>{const guide=visualGuide();return guide?{...guide,distance:distance(player.x,player.y,guide.x,guide.y),visible:distance(player.x,player.y,guide.x,guide.y)>guide.closeRadius}:null})(),markerStyle:{bonusVeinRings:false},toolMode:state.drillLevel?'drill':'pickaxe',protectedCargo:protectedDrillCargo(),sellableCargo:sellableCargo(),movement:{level:state.movementSpeedLevel,multiplier:movementSpeedMultiplier(),nextCost:movementSpeedCost()},miningRush:{...miningRush},lootSweep:{remaining:lootSweepRemaining(),nextAt:state.nextLootSweepAt},
       player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,

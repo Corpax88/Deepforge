@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.20.2 - Quiet Drift**
+Current build: **Deepforge v0.21.0 - Crystal Pockets**
 
 Deepforge Drift now plays as a low background soundtrack after the player's first interaction. Its intro and ending are rebuilt into an 82.38-second crossfade loop, and playback pauses while the game is hidden. The audio master is attenuated by 15 dB to keep iPhone Safari from overriding the intended background level.
 

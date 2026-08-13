@@ -949,10 +949,11 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.20.2',name:'QUIET DRIFT'});
-  expect(snapshot.assetVersion).toBe('0202');
+  expect(snapshot.build).toEqual({version:'0.21.0',name:'CRYSTAL POCKETS'});
+  expect(snapshot.assetVersion).toBe('0210');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
+  expect(snapshot.discoveryRendering).toEqual({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',legacyCavernRings:false,biomeGlow:true});
   expect(snapshot.mineralNodeRenderScale).toBe(.85);
   expect(snapshot.assetRendering).toEqual({copper:['wall','node'],gold:['wall','node']});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
@@ -969,9 +970,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.20.2');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.21.0');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.20.2 · QUIET DRIFT');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.21.0 · CRYSTAL POCKETS');
 });
 
 test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{

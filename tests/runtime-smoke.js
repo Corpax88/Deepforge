@@ -7,11 +7,11 @@ const html=fs.readFileSync(require('node:path').join(__dirname,'..','index.html'
 const latest=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'..','version.json'),'utf8'));
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'0202');
+assert.equal(latest.version,'0210');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0202/);
-assert.match(html,/script\.js\?v=0202/);
+assert.match(html,/style\.css\?v=0210/);
+assert.match(html,/script\.js\?v=0210/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/deepforge-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
 assert.match(source,/backgroundMusic\.volume=MUSIC_VOLUME/);
@@ -19,6 +19,8 @@ const musicAsset=fs.readFileSync(require('node:path').join(__dirname,'..','asset
 assert.ok(musicAsset.length>100000&&musicAsset.length<2000000,'background music must stay within the mobile audio budget');
 const playerAssets=['assets/characters/miner-b.png','assets/characters/miner-b-drill-burrower.png','assets/characters/miner-b-drill-pulse.png','assets/characters/miner-b-drill-deepcore.png','assets/tools/pickaxe-worn.png','assets/tools/pickaxe-iron.png','assets/tools/pickaxe-runed.png','assets/tools/pickaxe-moonglass.png','assets/tools/pickaxe-ember.png','assets/tools/starforge-crusher.png','assets/tools/starforge-swift.png','assets/tools/starforge-prospector.png'];
 for(const relative of playerAssets){const path=require('node:path').join(__dirname,'..',relative),png=fs.readFileSync(path);assert.equal(png.toString('ascii',1,4),'PNG');assert.equal(png[25],6,relative+' must use RGBA');assert.ok(png.length<250000,relative+' exceeds mobile asset budget')}
+const pocketAsset=fs.readFileSync(require('node:path').join(__dirname,'..','assets/mossvein/magic-crystal-pocket.png'));
+assert.equal(pocketAsset.toString('ascii',1,4),'PNG');assert.ok([4,6].includes(pocketAsset[25])||pocketAsset.includes(Buffer.from('tRNS')),'crystal pocket must preserve alpha');assert.ok(pocketAsset.length<250000,'crystal pocket exceeds mobile asset budget');
 const storage=new Map();
 
 function createElement(id){
@@ -41,7 +43,7 @@ function createRuntime(){
   const document={hidden:false,getElementById:element,addEventListener(){}};
   const window={devicePixelRatio:2,addEventListener(){},confirm:()=>true};
   class TestAudio{constructor(src){this.src=src;this.volume=1;this.loop=false;this.paused=true;this.preload='';this.playsInline=false}play(){this.paused=false;return Promise.resolve()}pause(){this.paused=true}}
-  class TestImage{constructor(){this.complete=true;this.naturalWidth=512;this.naturalHeight=512;this.decoding='async';this.onload=null;this._src=''}set src(value){this._src=value;if(value.includes('miner-b-drill-burrower')){this.naturalWidth=348;this.naturalHeight=512}else if(value.includes('miner-b-drill-pulse')){this.naturalWidth=361;this.naturalHeight=512}else if(value.includes('miner-b-drill-deepcore')){this.naturalWidth=354;this.naturalHeight=512}else if(value.includes('miner-b')){this.naturalWidth=315;this.naturalHeight=512}else this.naturalWidth=512;queueMicrotask(()=>this.onload&&this.onload())}get src(){return this._src}}
+  class TestImage{constructor(){this.complete=true;this.naturalWidth=512;this.naturalHeight=512;this.decoding='async';this.onload=null;this._src=''}set src(value){this._src=value;if(value.includes('magic-crystal-pocket')){this.naturalWidth=640;this.naturalHeight=358}else if(value.includes('miner-b-drill-burrower')){this.naturalWidth=348;this.naturalHeight=512}else if(value.includes('miner-b-drill-pulse')){this.naturalWidth=361;this.naturalHeight=512}else if(value.includes('miner-b-drill-deepcore')){this.naturalWidth=354;this.naturalHeight=512}else if(value.includes('miner-b')){this.naturalWidth=315;this.naturalHeight=512}else this.naturalWidth=512;queueMicrotask(()=>this.onload&&this.onload())}get src(){return this._src}}
   const context={
     window,document,console,
     localStorage:{getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)},
@@ -55,15 +57,16 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.20.2');
-assert.equal(api.snapshot().build.name,'QUIET DRIFT');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.20.2');
-assert.equal(api.snapshot().assetVersion,'0202');
+assert.equal(api.snapshot().build.version,'0.21.0');
+assert.equal(api.snapshot().build.name,'CRYSTAL POCKETS');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.21.0');
+assert.equal(api.snapshot().assetVersion,'0210');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/deepforge-drift-loop.mp3',volume:1,loop:true,started:false}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/deepforge-drift-loop.mp3?v=0202',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/deepforge-drift-loop.mp3?v=0210',volume:1,loop:true,paused:false}));
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
+assert.equal(JSON.stringify(api.snapshot().discoveryRendering),JSON.stringify({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',legacyCavernRings:false,biomeGlow:true}));
 assert.equal(JSON.stringify(api.snapshot().characterRendering),JSON.stringify({baseAsset:'assets/characters/miner-b.png',activeToolKey:'pickaxe-worn',activeRenderAsset:'assets/tools/pickaxe-worn.png',toolLayerCount:8,drillCompositeCount:3,gripCrop:{x:246,y:307,w:69,h:101},gripPivot:{x:14,y:24},gripPoint:{x:42,y:50},layeredTools:true,animatedGrip:true,bodyReaction:true,sharedGripAnchor:true,fullDrillComposites:true,legacyDrillLimbCrops:false,legacyCanvasCharacter:false,legacyCanvasTools:false}));
 const pickaxeKeys=['pickaxe-worn','pickaxe-iron','pickaxe-runed','pickaxe-moonglass','pickaxe-ember'];
 function assertPickaxeLayers(key){runtime.drawCalls.length=0;api.renderOnce();assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b.png')).length,5);const tools=runtime.drawCalls.filter(call=>call.src.includes('assets/tools/'));assert.equal(tools.length,1);assert.ok(tools[0].src.includes(key+'.png'))}
@@ -88,7 +91,8 @@ api.unlockAllAreas();api.unlockStarfall();api.enterMine('starMine');
 let fallenPocket=api.snapshot().mine.discovery.caverns.find(item=>item.name==='Fallen Pocket');
 api.mineTerrainCell(fallenPocket.boundaryIndex);api.mineTerrainCell(fallenPocket.boundaryIndex);
 api.setPosition(fallenPocket.x,fallenPocket.y);
-assert.doesNotThrow(()=>api.renderOnce());
+runtime.drawCalls.length=0;assert.doesNotThrow(()=>api.renderOnce());
+assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/mossvein/magic-crystal-pocket.png')).length,1);
 api.claimPocketReward(fallenPocket.reward.id);
 assert.equal(api.snapshot().state.claimedPocketRewards[fallenPocket.reward.id],true);
 api.exitMine();
