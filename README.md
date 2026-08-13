@@ -1,6 +1,8 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.17.6 - Stone Node Asset**
+Current build: **Deepforge v0.18.0 - Mossvein Entrance Asset**
+
+The Mossvein mine entrance now uses one dedicated transparent production PNG. The former canvas portal is no longer drawn for Mossvein.
 
 Ordinary surface stone now uses a dedicated transparent PNG node instead of the former canvas polygon.
 
