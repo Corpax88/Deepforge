@@ -949,7 +949,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.17.1',name:'BURIED ASSET SEAMS'});
+  expect(snapshot.build).toEqual({version:'0.17.2',name:'MINERAL RENDER HOTFIX'});
   expect(snapshot.assetRendering).toEqual({copper:['wall','node'],gold:['wall','node']});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
@@ -965,9 +965,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.17.1');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.17.2');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.17.1 · BURIED ASSET SEAMS');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.17.2 · MINERAL RENDER HOTFIX');
 });
 
 test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{
