@@ -62,7 +62,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.16.1',name:'NATURAL MINERAL SEAMS'};
+  const BUILD={version:'0.16.2',name:'SUBTLE MINERAL SEAMS'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -2255,17 +2255,17 @@
 
   function drawMossveinMineralHint(x,y,side,rock){
     const data=ROCK_TYPES[rock.type],rare=!!data.rare,seed=visualNoise(rock.id,side,211),bend=(seed-.5)*5;
-    ctx.save();ctx.translate(x+MINE_TILE_SIZE*.5,y+MINE_TILE_SIZE*.5);ctx.rotate(side*Math.PI*.5);
+    ctx.save();ctx.translate(x+MINE_TILE_SIZE*.5,y+MINE_TILE_SIZE*.5);ctx.rotate(side*Math.PI*.5);ctx.scale(.8,.8);
     ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
     ctx.moveTo(-17,-24);ctx.bezierCurveTo(-15+bend,-20,-12,-15,-7,-13);ctx.bezierCurveTo(-2,-11,0,-7,6,-6);ctx.quadraticCurveTo(10,-5,14,-1);
     ctx.moveTo(-8,-13);ctx.quadraticCurveTo(-3,-19,4+bend*.4,-19);ctx.moveTo(3,-7);ctx.quadraticCurveTo(8,-12,14,-10+bend*.25);
     ctx.strokeStyle='rgba(3,5,4,.92)';ctx.lineWidth=rare?8:7;ctx.stroke();
-    ctx.strokeStyle=data.edge;ctx.lineWidth=rare?3.6:3;ctx.shadowColor=data.edge;ctx.shadowBlur=rare?11:5;ctx.globalAlpha=rare?.94:.82;ctx.stroke();ctx.shadowBlur=0;
+    ctx.strokeStyle=data.edge;ctx.lineWidth=rare?3.2:2.65;ctx.shadowColor=data.edge;ctx.shadowBlur=rare?7:3;ctx.globalAlpha=rare?.78:.66;ctx.stroke();ctx.shadowBlur=0;
     const pockets=[[-14,-21,4.2],[-8,-14,3.5],[-1,-10,4.4],[5,-7,3.4],[4,-18,3.2],[12,-9,2.8]];
     for(let chip=0;chip<pockets.length;chip++){
       const pocket=pockets[chip],noise=visualNoise(rock.id+chip*19,side,227),size=pocket[2]*(.82+noise*.38);
       ctx.save();ctx.translate(pocket[0]+(noise-.5)*3,pocket[1]+(visualNoise(chip,rock.id,229)-.5)*2);ctx.rotate((noise-.5)*1.1);
-      ctx.fillStyle=data.color;ctx.strokeStyle=data.edge;ctx.lineWidth=rare?1.8:1.35;ctx.globalAlpha=rare?.98:.9;
+      ctx.fillStyle=data.accent;ctx.strokeStyle=data.edge;ctx.lineWidth=rare?1.55:1.15;ctx.globalAlpha=rare?.86:.7;
       ctx.beginPath();ctx.moveTo(-size*.75,-size*.42);ctx.lineTo(-size*.12,-size);ctx.lineTo(size*.82,-size*.28);ctx.lineTo(size*.62,size*.68);ctx.lineTo(-size*.38,size*.88);ctx.lineTo(-size,size*.15);ctx.closePath();ctx.fill();ctx.stroke();
       ctx.strokeStyle=data.edge;ctx.globalAlpha=.58;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(-size*.18,-size*.72);ctx.lineTo(size*.18,size*.48);ctx.stroke();ctx.restore();
     }
