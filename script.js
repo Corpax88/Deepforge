@@ -68,7 +68,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.17.2',name:'MINERAL RENDER HOTFIX'};
+  const BUILD={version:'0.17.3',name:'SAFARI CACHE HOTFIX'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
