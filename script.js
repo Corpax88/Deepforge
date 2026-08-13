@@ -4,24 +4,15 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const MOSSVEIN_ART={wall:null,floor:null};
-  function removeGeneratedBackdrop(image){
-    if(!image||typeof document.createElement!=='function')return image;
-    const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
-    const assetContext=canvas.getContext('2d',{willReadFrequently:true});if(!assetContext)return image;
-    assetContext.drawImage(image,0,0);const pixels=assetContext.getImageData(0,0,canvas.width,canvas.height),data=pixels.data;
-    for(let index=0;index<data.length;index+=4){
-      const red=data[index],green=data[index+1],blue=data[index+2],low=Math.min(red,green,blue),high=Math.max(red,green,blue);
-      if(low>218&&high-low<18)data[index+3]=0;
-      else if(low>190&&high-low<12)data[index+3]=Math.round(data[index+3]*(218-low)/28);
-    }
-    assetContext.clearRect(0,0,canvas.width,canvas.height);assetContext.putImageData(pixels,0,0);return canvas;
-  }
+  const MOSSVEIN_ART={wall:null,floor:null,floorPattern:null};
   function loadGameImage(src,key){
     if(typeof Image==='undefined')return null;
-    const image=new Image();image.decoding='async';image.onload=()=>{MOSSVEIN_ART[key]=removeGeneratedBackdrop(image)};image.src=src;return image;
+    const image=new Image();image.decoding='async';image.onload=()=>{
+      MOSSVEIN_ART[key]=image;
+      if(key==='floor'&&typeof ctx.createPattern==='function')MOSSVEIN_ART.floorPattern=ctx.createPattern(image,'repeat');
+    };image.src=src;return image;
   }
-  function imageReady(image){return !!image&&((image.complete&&image.naturalWidth>0)||(typeof image.getContext==='function'&&image.width>0&&image.height>0))}
+  function imageReady(image){return !!image&&image.complete&&image.naturalWidth>0}
   MOSSVEIN_ART.wall=loadGameImage('assets/mossvein/cave-wall.png','wall');
   MOSSVEIN_ART.floor=loadGameImage('assets/mossvein/cave-floor.png','floor');
   const viewport=document.getElementById('viewport');
@@ -71,7 +62,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.14.0',name:'MOSSVEIN PRODUCTION ART'};
+  const BUILD={version:'0.15.0',name:'MOSSVEIN WALL OPTIMIZATION'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -2089,14 +2080,9 @@
 
   function drawMossveinFloorArt(mine,deep){
     const image=MOSSVEIN_ART.floor;if(!imageReady(image))return false;
-    const step=410,size=590,startCol=Math.floor((camera.x-size)/step),endCol=Math.ceil((camera.x+viewWidth+size)/step);
-    const startRow=Math.floor((camera.y-size)/step),endRow=Math.ceil((camera.y+viewHeight+size)/step);
-    ctx.save();ctx.globalAlpha=deep?.54:.68;
-    for(let row=startRow;row<=endRow;row++)for(let col=startCol;col<=endCol;col++){
-      const noise=visualNoise(col,row,113),scale=.86+noise*.18,x=col*step+step*.5+(visualNoise(row,col,127)-.5)*92,y=row*step+step*.5+(visualNoise(col,row,131)-.5)*88;
-      ctx.save();ctx.translate(x,y);ctx.rotate(((col+row)%4)*Math.PI*.5+(noise-.5)*.16);ctx.drawImage(image,-size*scale*.5,-size*scale*.5,size*scale,size*scale);ctx.restore();
-    }
-    ctx.restore();return true;
+    const pattern=MOSSVEIN_ART.floorPattern||(typeof ctx.createPattern==='function'?ctx.createPattern(image,'repeat'):null);if(!pattern)return false;
+    MOSSVEIN_ART.floorPattern=pattern;ctx.save();ctx.globalAlpha=deep?.58:.72;ctx.fillStyle=pattern;
+    ctx.fillRect(camera.x-8,camera.y-8,viewWidth+16,viewHeight+16);ctx.restore();return true;
   }
 
   function drawMossveinFloorBase(mine){
@@ -2184,18 +2170,17 @@
 
   function drawMossveinEdge(x,y,side,noise,deep){
     const bend=(noise-.5)*12;ctx.beginPath();
-    if(side==='top'){ctx.moveTo(x-2,y+2);ctx.quadraticCurveTo(x+MINE_TILE_SIZE*.5,y+bend,x+MINE_TILE_SIZE+2,y+2)}
-    else if(side==='right'){ctx.moveTo(x+MINE_TILE_SIZE-2,y-2);ctx.quadraticCurveTo(x+MINE_TILE_SIZE+bend,y+MINE_TILE_SIZE*.5,x+MINE_TILE_SIZE-2,y+MINE_TILE_SIZE+2)}
-    else if(side==='bottom'){ctx.moveTo(x+MINE_TILE_SIZE+2,y+MINE_TILE_SIZE-2);ctx.quadraticCurveTo(x+MINE_TILE_SIZE*.5,y+MINE_TILE_SIZE-bend,x-2,y+MINE_TILE_SIZE-2)}
-    else{ctx.moveTo(x+2,y+MINE_TILE_SIZE+2);ctx.quadraticCurveTo(x-bend,y+MINE_TILE_SIZE*.5,x+2,y-2)}
-    ctx.lineCap='butt';ctx.lineJoin='round';ctx.strokeStyle='rgba(0,2,1,.76)';ctx.lineWidth=18;ctx.stroke();
-    ctx.strokeStyle=deep?'rgba(70,44,29,.96)':'rgba(37,42,35,.96)';ctx.lineWidth=6;ctx.stroke();
-    ctx.strokeStyle=deep?'rgba(170,108,57,.56)':'rgba(123,119,86,.45)';ctx.lineWidth=1.4;ctx.stroke();
+    if(side==='top'){ctx.moveTo(x-3,y+1);ctx.quadraticCurveTo(x+MINE_TILE_SIZE*.5,y+bend,x+MINE_TILE_SIZE+3,y+1)}
+    else if(side==='right'){ctx.moveTo(x+MINE_TILE_SIZE-1,y-3);ctx.quadraticCurveTo(x+MINE_TILE_SIZE+bend,y+MINE_TILE_SIZE*.5,x+MINE_TILE_SIZE-1,y+MINE_TILE_SIZE+3)}
+    else if(side==='bottom'){ctx.moveTo(x+MINE_TILE_SIZE+3,y+MINE_TILE_SIZE-1);ctx.quadraticCurveTo(x+MINE_TILE_SIZE*.5,y+MINE_TILE_SIZE-bend,x-3,y+MINE_TILE_SIZE-1)}
+    else{ctx.moveTo(x+1,y+MINE_TILE_SIZE+3);ctx.quadraticCurveTo(x-bend,y+MINE_TILE_SIZE*.5,x+1,y-3)}
+    ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='rgba(0,2,1,.68)';ctx.lineWidth=15;ctx.stroke();
+    ctx.strokeStyle=deep?'rgba(48,30,20,.72)':'rgba(25,30,25,.7)';ctx.lineWidth=3;ctx.stroke();
   }
 
   function drawMossveinWallArt(terrain,concealed,visible,deep){
     const image=MOSSVEIN_ART.wall;if(!imageReady(image))return false;
-    const placements=[];
+    const placements=[],used=new Set();
     for(const cell of visible){
       if(!cell.actual)continue;
       const {col,row}=cell,open=[
@@ -2205,20 +2190,22 @@
         !mossveinVisualSolidAt(terrain,concealed,col-1,row)
       ];
       for(let side=0;side<4;side++){
-        if(!open[side]||visualNoise(col,row,149+side*17)<.63)continue;
-        const near=placements.some(item=>Math.hypot(item.col-col,item.row-row)<2.15);if(near)continue;
-        placements.push({col,row,side});
+        if(!open[side])continue;
+        const key=side%2===0?side+':'+row+':'+Math.floor(col/2):side+':'+col+':'+Math.floor(row/2);
+        if(used.has(key))continue;used.add(key);placements.push({col,row,side});
       }
     }
-    ctx.save();ctx.globalAlpha=deep?.88:.96;
+    ctx.save();ctx.beginPath();
+    for(const cell of visible){if(!cell.actual)continue;const x=cell.col*MINE_TILE_SIZE-camera.x,y=cell.row*MINE_TILE_SIZE-camera.y;ctx.rect(x-10,y-10,MINE_TILE_SIZE+20,MINE_TILE_SIZE+20)}
+    ctx.clip();ctx.globalAlpha=deep?.9:.98;
     for(const item of placements){
-      const n=visualNoise(item.col,item.row,181),width=132+n*38,height=104+n*30;
+      const n=visualNoise(item.col,item.row,181),width=164+n*22,height=116+n*16;
       let x=(item.col+.5)*MINE_TILE_SIZE-camera.x,y=(item.row+.5)*MINE_TILE_SIZE-camera.y,rotation=0;
-      if(item.side===0){y-=MINE_TILE_SIZE*.38;rotation=Math.PI}
-      else if(item.side===1){x+=MINE_TILE_SIZE*.38;rotation=-Math.PI*.5}
-      else if(item.side===2){y+=MINE_TILE_SIZE*.38}
-      else{x-=MINE_TILE_SIZE*.38;rotation=Math.PI*.5}
-      ctx.save();ctx.translate(x,y);ctx.rotate(rotation+(n-.5)*.08);ctx.drawImage(image,-width*.5,-height*.48,width,height);ctx.restore();
+      if(item.side===0){y-=MINE_TILE_SIZE*.36;rotation=Math.PI}
+      else if(item.side===1){x+=MINE_TILE_SIZE*.36;rotation=-Math.PI*.5}
+      else if(item.side===2){y+=MINE_TILE_SIZE*.36}
+      else{x-=MINE_TILE_SIZE*.36;rotation=Math.PI*.5}
+      ctx.save();ctx.translate(x,y);ctx.rotate(rotation+(n-.5)*.05);if(n>.52)ctx.scale(-1,1);ctx.drawImage(image,-width*.5,-height*.48,width,height);ctx.restore();
     }
     ctx.restore();return true;
   }
@@ -2907,7 +2894,7 @@
       goal:mainGoal(),guide:(()=>{const guide=visualGuide();return guide?{...guide,distance:distance(player.x,player.y,guide.x,guide.y),visible:distance(player.x,player.y,guide.x,guide.y)>guide.closeRadius}:null})(),markerStyle:{bonusVeinRings:false},toolMode:state.drillLevel?'drill':'pickaxe',protectedCargo:protectedDrillCargo(),sellableCargo:sellableCargo(),movement:{level:state.movementSpeedLevel,multiplier:movementSpeedMultiplier(),nextCost:movementSpeedCost()},miningRush:{...miningRush},lootSweep:{remaining:lootSweepRemaining(),nextAt:state.nextLootSweepAt},
       player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,
       mine:currentMine()?{
-        id:currentMine().id,name:currentMineVisual().name,depth:currentDepth,width:currentMine().width,height:currentMine().height,style:currentMineVisual().style,visualPass:isMossveinVisual(currentMineVisual())?'mossvein-production-art-v1':'legacy',dirt:currentMineVisual().dirt,floor:currentMineVisual().floor,solids:currentDepth===1?currentMine().solids:[],solidCount:currentDepth===1?currentMine().solids.length:0,barrierIds:currentDepth===1?currentMine().barriers.map(barrier=>barrier.id):[],labels:currentDepth===1?currentMine().labels.map(label=>label[0]):[],
+        id:currentMine().id,name:currentMineVisual().name,depth:currentDepth,width:currentMine().width,height:currentMine().height,style:currentMineVisual().style,visualPass:isMossveinVisual(currentMineVisual())?'mossvein-production-art-v2':'legacy',dirt:currentMineVisual().dirt,floor:currentMineVisual().floor,solids:currentDepth===1?currentMine().solids:[],solidCount:currentDepth===1?currentMine().solids.length:0,barrierIds:currentDepth===1?currentMine().barriers.map(barrier=>barrier.id):[],labels:currentDepth===1?currentMine().labels.map(label=>label[0]):[],
         depthEntrance:{...depthEntrances[currentScene],discovered:!!state.discoveredDepthEntrances[currentScene],boundaryIndex:mineTerrain[currentScene][1].depthEntrance?[...mineTerrain[currentScene][1].depthEntrance.boundary][0]:null},depthStations:currentDepth===2?depthStations():null,depthResources:currentDepth===2?{...DEPTH2_RESOURCE_PROFILES[currentScene]}:null,
         terrain:{tileSize:MINE_TILE_SIZE,chunkCells:MINE_CHUNK_CELLS,maxHp:currentTerrain().maxHp,totalChunks:Math.ceil(currentTerrain().cols/MINE_CHUNK_CELLS)*Math.ceil(currentTerrain().rows/MINE_CHUNK_CELLS),activeChunks:currentTerrain().chunks.size,cellCount:currentTerrain().cols*currentTerrain().rows,solidCells:terrainSolidCellCount(currentTerrain()),dugCells:state.terrainDug[currentTerrain().stateKey].length,target:nearestTerrainCell(MINING_RANGE)},
         discovery:{caverns:currentTerrain().caverns.map(cavern=>({id:cavern.id,name:cavern.name,x:cavern.x,y:cavern.y,rx:cavern.rx,ry:cavern.ry,cellCount:cavern.cells.length,boundaryIndex:[...cavern.boundary][0],discovered:cavernIsDiscovered(cavern.id),reward:{...cavern.reward,claimed:!!state.claimedPocketRewards[cavern.reward.id]}})),deposits:discoveriesFor(currentScene,currentDepth).deposits.map(deposit=>({id:deposit.id,type:deposit.type,size:deposit.positions.length,rareFind:!!deposit.rareFind,cavernId:deposit.cavernId||null,pocketRewardId:deposit.pocketRewardId||null,requiresDrillLevel:deposit.requiresDrillLevel||0,drillGated:!!deposit.drillGated}))}

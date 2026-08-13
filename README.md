@@ -1,6 +1,6 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.14.0 - Mossvein Production Art**
+Current build: **Deepforge v0.15.0 - Mossvein Wall Optimization**
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 
@@ -22,6 +22,13 @@ python -m http.server 4180 --bind 0.0.0.0
 ```
 
 Open `http://127.0.0.1:4180` on the same computer.
+
+## Mossvein wall optimization
+
+- Production PNGs are pre-cleaned, resized, and compressed from roughly 4.3 MB to under 300 KB total.
+- The floor now uses one cached repeating pattern instead of many large rotated image draws per frame.
+- Rocky wall art is clipped into a continuous terrain mass with deterministic overlapping placements; the old bright pipe-like bevel is removed.
+- Mining, collision, loot, progression, saves, and mobile controls remain unchanged.
 
 ## Mossvein production art
 

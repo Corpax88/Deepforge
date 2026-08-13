@@ -949,7 +949,7 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.14.0',name:'MOSSVEIN PRODUCTION ART'});
+  expect(snapshot.build).toEqual({version:'0.15.0',name:'MOSSVEIN WALL OPTIMIZATION'});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -964,9 +964,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.14.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.15.0');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.14.0 · MOSSVEIN PRODUCTION ART');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.15.0 · MOSSVEIN WALL OPTIMIZATION');
 });
 
 test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{
@@ -1248,7 +1248,7 @@ test('Mossvein premium rendering preserves the terrain contract',async({page})=>
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.mine.visualPass).toBe('mossvein-production-art-v1');
+  expect(snapshot.mine.visualPass).toBe('mossvein-production-art-v2');
   const art=await page.evaluate(()=>Promise.all(['assets/mossvein/cave-wall.png','assets/mossvein/cave-floor.png'].map(src=>new Promise(resolve=>{const image=new Image();image.onload=()=>resolve({src,width:image.naturalWidth,height:image.naturalHeight});image.onerror=()=>resolve({src,width:0,height:0});image.src=src}))));
   expect(art.every(asset=>asset.width>=1200&&asset.height>=1100)).toBe(true);
   expect(snapshot.mine.terrain.tileSize).toBe(48);
@@ -1256,6 +1256,6 @@ test('Mossvein premium rendering preserves the terrain contract',async({page})=>
   const solidBefore=snapshot.mine.terrain.solidCells;
   await page.evaluate(()=>window.__deepforgeTest.mineTerrainCell(window.__deepforgeTest.snapshot().mine.terrain.target.index));
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.mine.visualPass).toBe('mossvein-production-art-v1');
+  expect(snapshot.mine.visualPass).toBe('mossvein-production-art-v2');
   expect(snapshot.mine.terrain.solidCells).toBeLessThanOrEqual(solidBefore);
 });
