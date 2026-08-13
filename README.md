@@ -1,10 +1,10 @@
-# Deepforge prototype
+# Ever Deeper
 
-Current build: **Deepforge v0.22.0 - Rootwound Depths**
+Current build: **Ever Deeper v0.23.0 - Rootwound Depths**
 
 Mossvein Depth 2 now uses its complete Rootwound production set: seamless deep-earth floor, root-bound terrain walls, Rootiron/Deepstone/Ambercore/Burrowsteel nodes, a buried Rootiron wall vein, the amber-lit shaft, ore exchange, and drill forge. Their former canvas-drawn Depth 2 counterparts no longer render in Rootwound.
 
-Deepforge Drift now plays as a low background soundtrack after the player's first interaction. Its intro and ending are rebuilt into an 82.38-second crossfade loop, and playback pauses while the game is hidden. The audio master is attenuated by 15 dB to keep iPhone Safari from overriding the intended background level.
+Ever Deeper Drift now plays as a low background soundtrack after the player's first interaction. Its intro and ending are rebuilt into an 82.38-second crossfade loop, and playback pauses while the game is hidden. The audio master is attenuated by 15 dB to keep iPhone Safari from overriding the intended background level.
 
 Burrower, Pulse, and Deepcore now use complete production character assets with both hands permanently drawn around the correct grips. Drill rendering swaps the entire character as one clean unit, so facing changes and recoil can never separate hands, body, and tool.
 
@@ -64,7 +64,7 @@ Open `http://127.0.0.1:4180` on the same computer.
 
 ## Visual foundation
 
-- Premium mobile HUD with a framed Deepforge header, clearer resource counters, a stronger goal card, tactile mining controls, directional joystick cues, and a unified tool console.
+- Premium mobile HUD with an Ever Deeper logo header, clearer resource counters, a stronger goal card, tactile mining controls, directional joystick cues, and a unified tool console.
 - Existing gameplay, world rendering, progression, saves, interaction IDs, and mining logic remain unchanged.
 
 ## Prototype scope

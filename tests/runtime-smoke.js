@@ -7,16 +7,20 @@ const html=fs.readFileSync(require('node:path').join(__dirname,'..','index.html'
 const latest=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'..','version.json'),'utf8'));
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'0220');
+assert.equal(latest.version,'0230');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0220/);
-assert.match(html,/script\.js\?v=0220/);
-assert.match(source,/MUSIC_PATH='assets\/audio\/deepforge-drift-loop\.mp3\?v='/);
+assert.match(html,/style\.css\?v=0230/);
+assert.match(html,/script\.js\?v=0230/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0230/);
+assert.match(html,/<title>Ever Deeper<\/title>/);
+assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
 assert.match(source,/backgroundMusic\.volume=MUSIC_VOLUME/);
-const musicAsset=fs.readFileSync(require('node:path').join(__dirname,'..','assets/audio/deepforge-drift-loop.mp3'));
+const musicAsset=fs.readFileSync(require('node:path').join(__dirname,'..','assets/audio/ever-deeper-drift-loop.mp3'));
 assert.ok(musicAsset.length>100000&&musicAsset.length<2000000,'background music must stay within the mobile audio budget');
+const logoAsset=fs.readFileSync(require('node:path').join(__dirname,'..','assets/branding/ever-deeper-logo.png'));
+assert.equal(logoAsset.toString('ascii',1,4),'PNG');assert.equal(logoAsset[25],6,'logo must use RGBA');assert.ok(logoAsset.length<300000,'logo exceeds mobile asset budget');
 const playerAssets=['assets/characters/miner-b.png','assets/characters/miner-b-drill-burrower.png','assets/characters/miner-b-drill-pulse.png','assets/characters/miner-b-drill-deepcore.png','assets/tools/pickaxe-worn.png','assets/tools/pickaxe-iron.png','assets/tools/pickaxe-runed.png','assets/tools/pickaxe-moonglass.png','assets/tools/pickaxe-ember.png','assets/tools/starforge-crusher.png','assets/tools/starforge-swift.png','assets/tools/starforge-prospector.png'];
 for(const relative of playerAssets){const path=require('node:path').join(__dirname,'..',relative),png=fs.readFileSync(path);assert.equal(png.toString('ascii',1,4),'PNG');assert.equal(png[25],6,relative+' must use RGBA');assert.ok(png.length<250000,relative+' exceeds mobile asset budget')}
 const pocketAsset=fs.readFileSync(require('node:path').join(__dirname,'..','assets/mossvein/magic-crystal-pocket.png'));
@@ -46,25 +50,29 @@ function createRuntime(){
   const window={devicePixelRatio:2,addEventListener(){},confirm:()=>true};
   class TestAudio{constructor(src){this.src=src;this.volume=1;this.loop=false;this.paused=true;this.preload='';this.playsInline=false}play(){this.paused=false;return Promise.resolve()}pause(){this.paused=true}}
   class TestImage{constructor(){this.complete=true;this.naturalWidth=512;this.naturalHeight=512;this.decoding='async';this.onload=null;this._src=''}set src(value){this._src=value;if(value.includes('magic-crystal-pocket')){this.naturalWidth=640;this.naturalHeight=358}else if(value.includes('miner-b-drill-burrower')){this.naturalWidth=348;this.naturalHeight=512}else if(value.includes('miner-b-drill-pulse')){this.naturalWidth=361;this.naturalHeight=512}else if(value.includes('miner-b-drill-deepcore')){this.naturalWidth=354;this.naturalHeight=512}else if(value.includes('miner-b')){this.naturalWidth=315;this.naturalHeight=512}else this.naturalWidth=512;queueMicrotask(()=>this.onload&&this.onload())}get src(){return this._src}}
+  const browserStorage={
+    get length(){return storage.size},key:index=>Array.from(storage.keys())[index]??null,
+    getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)
+  };
   const context={
     window,document,console,
-    localStorage:{getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)},
+    localStorage:browserStorage,
     requestAnimationFrame(){},setTimeout(){return 1},clearTimeout(){},
     navigator:{vibrate:()=>true},Image:TestImage,Audio:TestAudio
   };
   window.window=window;window.document=document;window.localStorage=context.localStorage;window.requestAnimationFrame=context.requestAnimationFrame;
   vm.runInContext(source,vm.createContext(context),{filename:'script.js'});
-  return{api:window.__deepforgeTest,elements,drawCalls};
+  return{api:window.__everDeeperTest,elements,drawCalls};
 }
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.22.0');
+assert.equal(api.snapshot().build.version,'0.23.0');
 assert.equal(api.snapshot().build.name,'ROOTWOUND DEPTHS');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.22.0');
-assert.equal(api.snapshot().assetVersion,'0220');
-assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/deepforge-drift-loop.mp3',volume:1,loop:true,started:false}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/deepforge-drift-loop.mp3?v=0220',volume:1,loop:true,paused:false}));
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.23.0');
+assert.equal(api.snapshot().assetVersion,'0230');
+assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0230',volume:1,loop:true,paused:false}));
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
@@ -279,4 +287,7 @@ const secondChest=after.state.base.chests[1];assert.equal(secondChest.packed,tru
 const forge={...after.state.base.forge};api.setPosition(forge.x,forge.y);assert.equal(api.packBaseModule('forge'),true);api.enterMine('mossMine');assert.equal(api.placeBaseModule('forge'),true);after=api.snapshot();assert.equal(after.state.base.forge.scene,'mossMine');assert.equal(after.state.base.forge.packed,false);
 const movedChest={...after.state.base.chests[1]};api.exitMine();api.setPosition(movedChest.x,movedChest.y);assert.equal(api.packBaseModule(movedChest.id),true);api.enterMine('mossMine');assert.equal(api.placeBaseModule(movedChest.id),true);api.save();
 runtime=createRuntime();after=runtime.api.snapshot();assert.equal(after.state.base.forge.scene,'mossMine');assert.equal(after.state.base.chests.find(chest=>chest.id===movedChest.id).scene,'mossMine');assert.equal(Object.values(after.state.base.chests[0].items).reduce((total,amount)=>total+amount,0),20);
-console.log('Runtime smoke passed: progression, guidance, movable base, 20-type storage, auto-sort, Mining Rush, global loot cleanup, rendering, and save reload.');
+const migrationState={...after.state,gold:424242};
+storage.clear();storage.set('retiredMiningPrototypeSave',JSON.stringify(migrationState));runtime=createRuntime();after=runtime.api.snapshot();
+assert.equal(after.state.gold,424242);assert.equal(storage.has('retiredMiningPrototypeSave'),false);assert.equal(storage.has('everDeeperPrototypeV2'),true);
+console.log('Runtime smoke passed: Ever Deeper branding, save migration, progression, guidance, movable base, rendering, and reload.');

@@ -1,4 +1,4 @@
-name: Deploy Deepforge to GitHub Pages
+name: Deploy Ever Deeper to GitHub Pages
 
 on:
   push:
@@ -15,7 +15,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Runtime smoke test
+        run: npm run test:smoke
+
+      - name: Browser tests
+        run: |
+          python3 -m http.server 4180 --bind 127.0.0.1 > /tmp/ever-deeper-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          npm test
+
   deploy:
+    needs: test
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -32,11 +61,11 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          name: deepforge-pages-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ever-deeper-pages-${{ github.run_id }}-${{ github.run_attempt }}
           path: "."
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
         with:
-          artifact_name: deepforge-pages-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact_name: ever-deeper-pages-${{ github.run_id }}-${{ github.run_attempt }}

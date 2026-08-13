@@ -4,8 +4,8 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0220';
-  const MUSIC_PATH='assets/audio/deepforge-drift-loop.mp3?v='+ASSET_VERSION;
+  const ASSET_VERSION='0230';
+  const MUSIC_PATH='assets/audio/ever-deeper-drift-loop.mp3?v='+ASSET_VERSION;
   // iOS may ignore HTMLAudioElement volume. The asset itself is mastered at -28 LUFS.
   const MUSIC_VOLUME=1;
   const MOSSVEIN_ART={wall:null,floor:null,floorPattern:null};
@@ -133,9 +133,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.22.0',name:'ROOTWOUND DEPTHS'};
+  const BUILD={version:'0.23.0',name:'ROOTWOUND DEPTHS'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
-  document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
+  document.getElementById('menuBuildVersion').textContent='EVER DEEPER v'+BUILD.version+' · '+BUILD.name;
 
   const WORLD={width:4480,height:1280,gateX:1110,emberGateX:2240,starfallGateX:3360,gateY:650,gateHalfGap:118};
   const MINE_DEFINITIONS={
@@ -208,7 +208,7 @@
     furnaceheart:{shape:'ember',gravity:180,spread:1.25},voidglass:{shape:'shard',gravity:95,spread:1.2},singularity:{shape:'star',gravity:45,spread:1.3},
     burrowsteel:{shape:'spark',gravity:360,spread:1.16},phasecrystal:{shape:'shard',gravity:150,spread:1.24},infernium:{shape:'ember',gravity:180,spread:1.28}
   };
-  const SAVE_KEY='deepforgePrototypeV2';
+  const SAVE_KEY='everDeeperPrototypeV2';
   const GATE_COST=120;
   const EMBER_GATE_COST=360;
   const EMBER_PICKAXE_ORE_REQUIRED=12;
@@ -229,7 +229,7 @@
     {rank:2,power:46,cooldown:.20,gold:850,sunslag:3,label:'Kindled',shellPower:1,bonusYield:.32,precisionDelay:.92},
     {rank:3,power:66,cooldown:.185,gold:1450,sunslag:6,label:'Blazing',shellPower:1.15,bonusYield:.38,precisionDelay:.88},
     {rank:4,power:92,cooldown:.17,gold:2300,sunslag:10,label:'Infernal',shellPower:1.3,bonusYield:.45,precisionDelay:.82},
-    {rank:5,power:128,cooldown:.155,gold:3600,sunslag:15,label:'Deepforge Master',shellPower:1.5,bonusYield:.55,precisionDelay:.75}
+    {rank:5,power:128,cooldown:.155,gold:3600,sunslag:15,label:'Depth Master',shellPower:1.5,bonusYield:.55,precisionDelay:.75}
   ];
   const MINING_RANGE=116;
   const MINE_TILE_SIZE=48;
@@ -556,9 +556,33 @@
     };
   }
 
+  function parseStoredState(serialized){
+    try{return JSON.parse(serialized||'null')}catch(error){return null}
+  }
+
+  function isCompatibleLegacySave(candidate){
+    return !!candidate&&typeof candidate==='object'&&Number(candidate.pickaxeLevel)>=1&&candidate.cargo&&candidate.mined&&candidate.terrainDug&&candidate.discoveredMines&&candidate.base;
+  }
+
+  function readStoredState(){
+    const current=parseStoredState(localStorage.getItem(SAVE_KEY));
+    if(current&&typeof current==='object')return current;
+    if(typeof localStorage.key!=='function')return null;
+    for(let index=0,count=Math.max(0,Number(localStorage.length)||0);index<count;index++){
+      const key=localStorage.key(index);
+      if(!key||key===SAVE_KEY)continue;
+      const serialized=localStorage.getItem(key),candidate=parseStoredState(serialized);
+      if(!isCompatibleLegacySave(candidate))continue;
+      localStorage.setItem(SAVE_KEY,serialized);
+      localStorage.removeItem(key);
+      return candidate;
+    }
+    return null;
+  }
+
   function loadState(){
     try{
-      const raw=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');
+      const raw=readStoredState();
       if(!raw||typeof raw!=='object')return defaultState();
       const base=defaultState();
       base.worldSeed=Number.isInteger(raw.worldSeed)&&raw.worldSeed>0?raw.worldSeed>>>0:base.worldSeed;
@@ -1710,7 +1734,7 @@
     for(let i=floaters.length-1;i>=0;i--)if(floaters[i].source==='starforge')floaters.splice(i,1);
     if(!masteredBefore&&starforgeMastered()){
       rings.push({x:STATIONS.starforge.x,y:STATIONS.starforge.y,age:0,life:1.45,radius:38,color:'#fff0ad'});
-      floaters.push({x:player.x,y:player.y+65,text:'DEEPFORGE MASTERED',color:'#fff2b5',age:0,life:2.1,size:21,source:'starforge'});
+      floaters.push({x:player.x,y:player.y+65,text:'DEPTH MASTERED',color:'#fff2b5',age:0,life:2.1,size:21,source:'starforge'});
       showToast('All three Starforge forms mastered.');
     }else{
       floaters.push({x:player.x,y:player.y+65,text:variant.name.toUpperCase(),color:variant.color,age:0,life:1.6,size:18,source:'starforge'});
@@ -1798,7 +1822,7 @@
   }
 
   function unlockStarfall(){
-    if(state.emberMastery<5){showToast('Deepforge Mastery 5 is required.');sound('empty');return}
+    if(state.emberMastery<5){showToast('Depth Mastery 5 is required.');sound('empty');return}
     state.fourthUnlocked=true;
     sound('unlock');rings.push({x:WORLD.starfallGateX,y:WORLD.gateY,age:0,life:1.15,radius:42,color:'#c3c9ff'});
     floaters.push({x:WORLD.starfallGateX,y:WORLD.gateY-55,text:'STARFALL OPEN',color:'#efe5ff',age:0,life:1.8,size:19});
@@ -1982,7 +2006,7 @@
     game.dataset.rushActive=miningRush.timer>0?'true':'false';
     speedValue.textContent=(PICKAXES[1].cooldown/currentCooldown()).toFixed(1)+'x';
     const biome=currentBiome();areaName.textContent=biome.name;game.dataset.biome=biome.id;
-    let progress=1,label='DEEPFORGE MASTERED';
+    let progress=1,label='DEPTH MASTERED';
     if(currentMine()){
       const mine=currentMine(),cleared=mine.barriers.filter(barrier=>mineBarrierCleared(barrier.id)).length;
       if(currentDepth===2){
@@ -2076,7 +2100,7 @@
       }
       if(state.pickaxeLevel>=PICKAXES.length-1){
         const next=nextMastery();
-        if(!next){contextEyebrow.textContent='EMBER MASTERY 5 / 5';contextTitle.textContent='Deepforge Master';contextDetail.textContent=state.fourthUnlocked?'Starfall Depths is open. Astralite now yields to your pickaxe.':'The Starfall Master Seal waits east of Emberdeep.';contextButton.textContent='MASTERED';contextButton.disabled=true}
+        if(!next){contextEyebrow.textContent='EMBER MASTERY 5 / 5';contextTitle.textContent='Depth Master';contextDetail.textContent=state.fourthUnlocked?'Starfall Depths is open. Astralite now yields to your pickaxe.':'The Starfall Master Seal waits east of Emberdeep.';contextButton.textContent='MASTERED';contextButton.disabled=true}
         else{
           const oldHits=armoredHitsRequired('sunslag',currentPower(),currentShellPower()),newHits=armoredHitsRequired('sunslag',next.power,next.shellPower);
           contextEyebrow.textContent='REFORGE '+state.emberMastery+' / 5 - POWER '+currentPower()+' -> '+next.power;contextTitle.textContent=next.label;
@@ -3082,11 +3106,11 @@
   baseModuleList.addEventListener('click',event=>{const place=event.target.closest('[data-base-place]'),pack=event.target.closest('[data-base-pack]'),take=event.target.closest('[data-chest-take]');if(place)placeBaseModule(place.dataset.basePlace);else if(pack)packBaseModule(pack.dataset.basePack);else if(take)takeAllFromChest(take.dataset.chestTake)});
   inventoryShade.addEventListener('pointerdown',event=>{if(event.target===inventoryShade)closeInventory()});
   menuButton.addEventListener('click',()=>{unlockAudio();inventoryShade.hidden=true;menuShade.hidden=false;updateLedger()});resumeButton.addEventListener('click',()=>menuShade.hidden=true);
-  resetButton.addEventListener('click',()=>{if(window.confirm('Reset all Deepforge prototype progress?'))resetProgress()});
+  resetButton.addEventListener('click',()=>{if(window.confirm('Reset all Ever Deeper progress?'))resetProgress()});
   menuShade.addEventListener('pointerdown',event=>{if(event.target===menuShade)menuShade.hidden=true});
   window.addEventListener('resize',resize,{passive:true});
 
-  window.__deepforgeTest={
+  window.__everDeeperTest={
     snapshot:()=>JSON.parse(JSON.stringify({
       build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true},surfaceAssetRendering:{mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},discoveryRendering:{crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',legacyCavernRings:false,biomeGlow:true},characterRendering:{baseAsset:'assets/characters/miner-b.png',activeToolKey:currentPlayerToolKey(),activeRenderAsset:state.drillLevel?PLAYER_DRILL_CHARACTER_PATHS[currentPlayerToolKey()]:PLAYER_TOOL_PATHS[currentPlayerToolKey()],toolLayerCount:Object.keys(PLAYER_TOOL_PATHS).length,drillCompositeCount:Object.keys(PLAYER_DRILL_CHARACTER_PATHS).length,gripCrop:PLAYER_RENDER_CONTRACT.gripCrop,gripPivot:PLAYER_RENDER_CONTRACT.gripPivot,gripPoint:PLAYER_RENDER_CONTRACT.gripPoint,layeredTools:PLAYER_RENDER_CONTRACT.layeredTools,animatedGrip:PLAYER_RENDER_CONTRACT.animatedGrip,bodyReaction:PLAYER_RENDER_CONTRACT.bodyReaction,sharedGripAnchor:PLAYER_RENDER_CONTRACT.sharedGripAnchor,fullDrillComposites:PLAYER_RENDER_CONTRACT.fullDrillComposites,legacyDrillLimbCrops:PLAYER_RENDER_CONTRACT.legacyDrillLimbCrops,legacyCanvasCharacter:PLAYER_RENDER_CONTRACT.legacyCanvasCharacter,legacyCanvasTools:PLAYER_RENDER_CONTRACT.legacyCanvasTools},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
       effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower()),depthMainHits:currentMine()&&currentDepth===2?armoredHitsRequired(DEPTH2_RESOURCE_PROFILES[currentScene].main,currentPower(),currentShellPower()):null},

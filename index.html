@@ -7,7 +7,10 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Deepforge</title>
+  <meta name="application-name" content="Ever Deeper">
+  <meta name="apple-mobile-web-app-title" content="Ever Deeper">
+  <meta name="description" content="Ever Deeper is a mobile-first fantasy mining adventure.">
+  <title>Ever Deeper</title>
   <script>
     (()=>{
       const checkLatest=()=>fetch('version.json?t='+Date.now(),{cache:'no-store'})
@@ -23,15 +26,16 @@
       window.addEventListener('pageshow',event=>{if(event.persisted)checkLatest()});
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=0220">
+  <link rel="preload" as="image" href="assets/branding/ever-deeper-logo.png?v=0230">
+  <link rel="stylesheet" href="style.css?v=0230">
 </head>
 <body>
-  <main id="game" aria-label="Deepforge mining game">
+  <main id="game" aria-label="Ever Deeper mining game">
     <header class="topbar">
-      <div class="brand" aria-label="Deepforge">
-        <span class="brand-mark" aria-hidden="true"><i></i></span>
-        <div>
-          <div class="brand-heading"><h1>DEEPFORGE</h1><span id="buildVersion">v0.22.0</span></div>
+      <div class="brand" aria-label="Ever Deeper">
+        <img class="brand-logo" src="assets/branding/ever-deeper-logo.png?v=0230" alt="Ever Deeper">
+        <div class="brand-meta">
+          <span id="buildVersion">v0.23.0</span>
           <small id="areaName">MOSSVEIN QUARRY</small>
         </div>
       </div>
@@ -137,7 +141,7 @@
 
     <div id="menuShade" class="menu-shade" hidden>
       <section class="menu-card" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
-        <span id="menuBuildVersion">DEEPFORGE v0.22.0 · ROOTWOUND DEPTHS</span>
+        <span id="menuBuildVersion">EVER DEEPER v0.23.0 · ROOTWOUND DEPTHS</span>
         <h2 id="menuTitle">Miner's Ledger</h2>
         <div class="ledger-grid">
           <div><span>Stone mined</span><b id="stoneMined">0</b></div>
@@ -162,6 +166,6 @@
       </section>
     </div>
   </main>
-  <script src="script.js?v=0220"></script>
+  <script src="script.js?v=0230"></script>
 </body>
 </html>
