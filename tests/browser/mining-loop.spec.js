@@ -949,13 +949,13 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.21.0',name:'CRYSTAL POCKETS'});
-  expect(snapshot.assetVersion).toBe('0210');
+  expect(snapshot.build).toEqual({version:'0.22.0',name:'ROOTWOUND DEPTHS'});
+  expect(snapshot.assetVersion).toBe('0220');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.discoveryRendering).toEqual({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',legacyCavernRings:false,biomeGlow:true});
   expect(snapshot.mineralNodeRenderScale).toBe(.85);
-  expect(snapshot.assetRendering).toEqual({copper:['wall','node'],gold:['wall','node']});
+  expect(snapshot.assetRendering).toEqual({stone:['node'],copper:['wall','node'],gold:['wall','node']});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
   expect(snapshot.mine.terrain.activeChunks).toBeLessThan(snapshot.mine.terrain.totalChunks);
@@ -970,9 +970,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.21.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.22.0');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.21.0 · CRYSTAL POCKETS');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.22.0 · ROOTWOUND DEPTHS');
 });
 
 test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{
@@ -1256,7 +1256,8 @@ test('Mossvein premium rendering preserves the terrain contract',async({page})=>
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.mine.visualPass).toBe('mossvein-production-art-v2');
   const art=await page.evaluate(()=>Promise.all(['assets/mossvein/cave-wall.png','assets/mossvein/cave-floor.png'].map(src=>new Promise(resolve=>{const image=new Image();image.onload=()=>resolve({src,width:image.naturalWidth,height:image.naturalHeight});image.onerror=()=>resolve({src,width:0,height:0});image.src=src}))));
-  expect(art.every(asset=>asset.width>=1200&&asset.height>=1100)).toBe(true);
+  expect(art[0]).toMatchObject({width:396,height:283});
+  expect(art[1]).toMatchObject({width:512,height:512});
   expect(snapshot.mine.terrain.tileSize).toBe(48);
   expect(snapshot.mine.terrain.target).not.toBeNull();
   const solidBefore=snapshot.mine.terrain.solidCells;
@@ -1264,4 +1265,17 @@ test('Mossvein premium rendering preserves the terrain contract',async({page})=>
   snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
   expect(snapshot.mine.visualPass).toBe('mossvein-production-art-v2');
   expect(snapshot.mine.terrain.solidCells).toBeLessThanOrEqual(solidBefore);
+});
+
+test('Rootwound Depth 2 uses the complete production asset set',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{window.__deepforgeTest.enterMine('mossMine');window.__deepforgeTest.discoverDepthEntrance();window.__deepforgeTest.enterDepth()});
+  const snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
+  expect(snapshot.mine.name).toBe('ROOTWOUND DEPTHS');
+  expect(snapshot.mine.visualPass).toBe('rootwound-production-assets-v1');
+  expect(snapshot.rootwoundRendering).toEqual({floor:'assets/rootwound/floor.png',wall:'assets/rootwound/wall.png',nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:'assets/rootwound/rootiron-wall.png',shaft:'assets/rootwound/depth-shaft.png',sellStation:'assets/rootwound/sell-station.png',drillForge:'assets/rootwound/drill-forge.png',legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false});
+  const paths=Object.values(snapshot.rootwoundRendering).flat().filter(value=>typeof value==='string'&&value.endsWith('.png'));
+  const art=await page.evaluate(paths=>Promise.all(paths.map(src=>new Promise(resolve=>{const image=new Image();image.onload=()=>resolve({src,width:image.naturalWidth,height:image.naturalHeight});image.onerror=()=>resolve({src,width:0,height:0});image.src=src}))),paths);
+  expect(art).toHaveLength(6);
+  expect(art.every(asset=>asset.width>=300&&asset.height>=300)).toBe(true);
 });

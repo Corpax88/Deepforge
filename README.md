@@ -1,6 +1,8 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.21.0 - Crystal Pockets**
+Current build: **Deepforge v0.22.0 - Rootwound Depths**
+
+Mossvein Depth 2 now uses its complete Rootwound production set: seamless deep-earth floor, root-bound terrain walls, Rootiron/Deepstone/Ambercore/Burrowsteel nodes, a buried Rootiron wall vein, the amber-lit shaft, ore exchange, and drill forge. Their former canvas-drawn Depth 2 counterparts no longer render in Rootwound.
 
 Deepforge Drift now plays as a low background soundtrack after the player's first interaction. Its intro and ending are rebuilt into an 82.38-second crossfade loop, and playback pauses while the game is hidden. The audio master is attenuated by 15 dB to keep iPhone Safari from overriding the intended background level.
 
