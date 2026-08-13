@@ -4,8 +4,8 @@ const vm=require('node:vm');
 
 const source=fs.readFileSync(require('node:path').join(__dirname,'..','script.js'),'utf8');
 const html=fs.readFileSync(require('node:path').join(__dirname,'..','index.html'),'utf8');
-assert.match(html,/style\.css\?v=0173/);
-assert.match(html,/script\.js\?v=0173/);
+assert.match(html,/style\.css\?v=0174/);
+assert.match(html,/script\.js\?v=0174/);
 const storage=new Map();
 
 function createElement(id){
@@ -39,10 +39,11 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.17.3');
-assert.equal(api.snapshot().build.name,'SAFARI CACHE HOTFIX');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.17.3');
+assert.equal(api.snapshot().build.version,'0.17.4');
+assert.equal(api.snapshot().build.name,'REFINED MINERAL NODES');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.17.4');
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({copper:['wall','node'],gold:['wall','node']}));
+assert.equal(api.snapshot().mineralNodeRenderScale,.85);
 let openingGuide=api.snapshot().guide;
 assert.equal(openingGuide.kind,'rock');assert.equal(openingGuide.scene,'surface');assert.equal(openingGuide.visible,true);
 api.setPosition(openingGuide.x,openingGuide.y);assert.equal(api.snapshot().guide.visible,false);

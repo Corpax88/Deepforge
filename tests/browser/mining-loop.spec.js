@@ -949,7 +949,8 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.17.3',name:'SAFARI CACHE HOTFIX'});
+  expect(snapshot.build).toEqual({version:'0.17.4',name:'REFINED MINERAL NODES'});
+  expect(snapshot.mineralNodeRenderScale).toBe(.85);
   expect(snapshot.assetRendering).toEqual({copper:['wall','node'],gold:['wall','node']});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
   expect(snapshot.mine.terrain.chunkCells).toBe(16);
@@ -965,9 +966,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.17.3');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.17.4');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.17.3 · SAFARI CACHE HOTFIX');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.17.4 · REFINED MINERAL NODES');
 });
 
 test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{
