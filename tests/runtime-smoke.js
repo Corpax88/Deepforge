@@ -5,11 +5,11 @@ const vm=require('node:vm');
 const source=fs.readFileSync(require('node:path').join(__dirname,'..','script.js'),'utf8');
 const html=fs.readFileSync(require('node:path').join(__dirname,'..','index.html'),'utf8');
 const latest=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'..','version.json'),'utf8'));
-assert.equal(latest.version,'0180');
+assert.equal(latest.version,'0181');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0180/);
-assert.match(html,/script\.js\?v=0180/);
+assert.match(html,/style\.css\?v=0181/);
+assert.match(html,/script\.js\?v=0181/);
 const storage=new Map();
 
 function createElement(id){
@@ -43,12 +43,13 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.18.0');
-assert.equal(api.snapshot().build.name,'MOSSVEIN ENTRANCE ASSET');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.18.0');
-assert.equal(api.snapshot().assetVersion,'0180');
+assert.equal(api.snapshot().build.version,'0.18.1');
+assert.equal(api.snapshot().build.name,'MOSSVEIN SURFACE ASSET');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.18.1');
+assert.equal(api.snapshot().assetVersion,'0181');
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true}));
+assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
 assert.equal(api.snapshot().mineralNodeRenderScale,.85);
 let openingGuide=api.snapshot().guide;
 assert.equal(openingGuide.kind,'rock');assert.equal(openingGuide.scene,'surface');assert.equal(openingGuide.visible,true);

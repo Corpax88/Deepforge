@@ -4,8 +4,9 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0180';
+  const ASSET_VERSION='0181';
   const MOSSVEIN_ART={wall:null,floor:null,floorPattern:null};
+  const SURFACE_ART={mossveinGround:null};
   const MINERAL_ART={stone:{wall:null,node:null},copper:{wall:null,node:null},gold:{wall:null,node:null}};
   const MINE_ENTRANCE_ART={mossMine:null};
   function loadGameImage(src,key){
@@ -24,10 +25,15 @@
     if(typeof Image==='undefined')return null;
     const image=new Image();image.decoding='async';image.onload=()=>{MINE_ENTRANCE_ART[scene]=image};image.src='assets/entrances/mossvein-entrance.png?v='+ASSET_VERSION;return image;
   }
+  function loadSurfaceImage(src,key){
+    if(typeof Image==='undefined')return null;
+    const image=new Image();image.decoding='async';image.onload=()=>{SURFACE_ART[key]=image};image.src=src+'?v='+ASSET_VERSION;return image;
+  }
   MOSSVEIN_ART.wall=loadGameImage('assets/mossvein/cave-wall.png','wall');
   MOSSVEIN_ART.floor=loadGameImage('assets/mossvein/cave-floor.png','floor');
   for(const type of Object.keys(MINERAL_ART)){if(type!=='stone')MINERAL_ART[type].wall=loadMineralImage(type,'wall');MINERAL_ART[type].node=loadMineralImage(type,'node')}
   MINE_ENTRANCE_ART.mossMine=loadMineEntranceImage('mossMine');
+  SURFACE_ART.mossveinGround=loadSurfaceImage('assets/surface/mossvein-ground.png','mossveinGround');
   const viewport=document.getElementById('viewport');
   const goldValue=document.getElementById('goldValue');
   const cargoValue=document.getElementById('cargoValue');
@@ -75,7 +81,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.18.0',name:'MOSSVEIN ENTRANCE ASSET'};
+  const BUILD={version:'0.18.1',name:'MOSSVEIN SURFACE ASSET'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -2507,13 +2513,15 @@
   function drawGround(){
     ctx.fillStyle='#273228';ctx.fillRect(0,0,viewWidth,viewHeight);
     const cavernStart=worldToScreen(WORLD.gateX,0).x,emberStart=worldToScreen(WORLD.emberGateX,0).x,starfallStart=worldToScreen(WORLD.starfallGateX,0).x;
+    if(imageReady(SURFACE_ART.mossveinGround)){
+      const origin=worldToScreen(0,0);ctx.drawImage(SURFACE_ART.mossveinGround,origin.x,origin.y,WORLD.gateX,WORLD.height);
+    }
     ctx.fillStyle='#14282b';ctx.fillRect(cavernStart,0,emberStart-cavernStart,viewHeight);
     ctx.fillStyle='#261817';ctx.fillRect(emberStart,0,starfallStart-emberStart,viewHeight);
     ctx.fillStyle='#17172a';ctx.fillRect(starfallStart,0,viewWidth-starfallStart,viewHeight);
-    const cavernBlend=ctx.createLinearGradient(cavernStart-95,0,cavernStart+95,0);cavernBlend.addColorStop(0,'#273228');cavernBlend.addColorStop(1,'#14282b');ctx.fillStyle=cavernBlend;ctx.fillRect(cavernStart-95,0,190,viewHeight);
     const emberBlend=ctx.createLinearGradient(emberStart-110,0,emberStart+110,0);emberBlend.addColorStop(0,'#14282b');emberBlend.addColorStop(1,'#261817');ctx.fillStyle=emberBlend;ctx.fillRect(emberStart-110,0,220,viewHeight);
     const starfallBlend=ctx.createLinearGradient(starfallStart-120,0,starfallStart+120,0);starfallBlend.addColorStop(0,'#261817');starfallBlend.addColorStop(1,'#17172a');ctx.fillStyle=starfallBlend;ctx.fillRect(starfallStart-120,0,240,viewHeight);
-    ctx.save();ctx.translate(-camera.x%80,-camera.y%80);ctx.strokeStyle='rgba(190,205,165,.045)';ctx.lineWidth=1;
+    ctx.save();ctx.beginPath();ctx.rect(cavernStart,0,viewWidth-cavernStart,viewHeight);ctx.clip();ctx.translate(-camera.x%80,-camera.y%80);ctx.strokeStyle='rgba(190,205,165,.045)';ctx.lineWidth=1;
     for(let x=-80;x<viewWidth+80;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,viewHeight+80);ctx.stroke()}
     for(let y=-80;y<viewHeight+80;y+=80){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(viewWidth+80,y);ctx.stroke()}
     ctx.restore();
@@ -2524,10 +2532,6 @@
 
   function drawBiomeStructure(){
     ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
-    const quarryPath=[[80,760],[360,705],[690,760],[1010,660]].map(point=>worldToScreen(point[0],point[1]));
-    ctx.strokeStyle='rgba(125,103,64,.2)';ctx.lineWidth=94;ctx.beginPath();quarryPath.forEach((point,index)=>index?ctx.lineTo(point.x,point.y):ctx.moveTo(point.x,point.y));ctx.stroke();
-    ctx.strokeStyle='rgba(204,183,123,.09)';ctx.lineWidth=3;ctx.setLineDash([15,20]);ctx.stroke();ctx.setLineDash([]);
-
     const moonCenter=worldToScreen(1650,670),moonGlow=ctx.createRadialGradient(moonCenter.x,moonCenter.y,20,moonCenter.x,moonCenter.y,360);
     moonGlow.addColorStop(0,'rgba(87,224,221,.12)');moonGlow.addColorStop(.58,'rgba(74,132,146,.055)');moonGlow.addColorStop(1,'rgba(44,82,90,0)');ctx.fillStyle=moonGlow;ctx.fillRect(moonCenter.x-370,moonCenter.y-370,740,740);
     ctx.strokeStyle='rgba(138,231,229,.15)';ctx.lineWidth=3;for(const radius of [190,285]){ctx.beginPath();ctx.arc(moonCenter.x,moonCenter.y,radius,Math.PI*.1,Math.PI*.9);ctx.stroke()}
@@ -2564,6 +2568,7 @@
     ctx.restore();
     for(let i=0;i<30;i++){
       const wx=80+(i*227)%2100,wy=90+(i*163)%1090,p=worldToScreen(wx,wy);
+      if(wx<WORLD.gateX)continue;
       if(p.x<-30||p.y<-30||p.x>viewWidth+30||p.y>viewHeight+30)continue;
       ctx.fillStyle=i%3?'rgba(18,24,18,.48)':'rgba(111,127,92,.17)';ctx.beginPath();ctx.ellipse(p.x,p.y,18+(i%4)*6,7+(i%3)*3,(i*.7)%3,0,Math.PI*2);ctx.fill();
     }
@@ -2572,12 +2577,6 @@
 
   function drawBiomeDetails(){
     ctx.save();
-    for(let i=0;i<18;i++){
-      const wx=95+(i*181)%900,wy=150+(i*239)%990,p=worldToScreen(wx,wy);
-      if(p.x<-35||p.y<-35||p.x>viewWidth+35||p.y>viewHeight+35)continue;
-      ctx.save();ctx.translate(p.x,p.y);ctx.rotate((i%7)*.31);ctx.strokeStyle='rgba(116,158,91,.34)';ctx.lineWidth=2;
-      ctx.beginPath();ctx.moveTo(0,8);ctx.quadraticCurveTo(-3,-2,0,-13);ctx.moveTo(0,-4);ctx.lineTo(-8,-10);ctx.moveTo(0,0);ctx.lineTo(9,-7);ctx.stroke();ctx.restore();
-    }
     for(let i=0;i<15;i++){
       const wx=1190+(i*173)%940,wy=110+(i*211)%1050,p=worldToScreen(wx,wy);
       if(p.x<-35||p.y<-35||p.x>viewWidth+35||p.y>viewHeight+35)continue;
@@ -2981,7 +2980,7 @@
 
   window.__deepforgeTest={
     snapshot:()=>JSON.parse(JSON.stringify({
-      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
+      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true},surfaceAssetRendering:{mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
       effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower()),depthMainHits:currentMine()&&currentDepth===2?armoredHitsRequired(DEPTH2_RESOURCE_PROFILES[currentScene].main,currentPower(),currentShellPower()):null},
       goal:mainGoal(),guide:(()=>{const guide=visualGuide();return guide?{...guide,distance:distance(player.x,player.y,guide.x,guide.y),visible:distance(player.x,player.y,guide.x,guide.y)>guide.closeRadius}:null})(),markerStyle:{bonusVeinRings:false},toolMode:state.drillLevel?'drill':'pickaxe',protectedCargo:protectedDrillCargo(),sellableCargo:sellableCargo(),movement:{level:state.movementSpeedLevel,multiplier:movementSpeedMultiplier(),nextCost:movementSpeedCost()},miningRush:{...miningRush},lootSweep:{remaining:lootSweepRemaining(),nextAt:state.nextLootSweepAt},
       player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,

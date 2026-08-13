@@ -1,6 +1,8 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.18.0 - Mossvein Entrance Asset**
+Current build: **Deepforge v0.18.1 - Mossvein Surface Asset**
+
+Mossvein's entire surface now uses one opaque production PNG with a continuous dirt path from the mine entrance to the Moonglass gate. The former canvas grid, path, and ground decorations are no longer rendered in Mossvein.
 
 The Mossvein mine entrance now uses one dedicated transparent production PNG. The former canvas portal is no longer drawn for Mossvein.
 
