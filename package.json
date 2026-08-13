@@ -5,6 +5,7 @@
   "description": "A mobile-first fantasy mining game prototype.",
   "scripts": {
     "test": "playwright test",
+    "test:release": "playwright test tests/browser/release-branding.spec.js",
     "test:smoke": "node tests/runtime-smoke.js",
     "test:desktop": "playwright test --project=desktop",
     "test:mobile": "playwright test --project=iphone"

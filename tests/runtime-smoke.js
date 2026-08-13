@@ -5,6 +5,19 @@ const vm=require('node:vm');
 const source=fs.readFileSync(require('node:path').join(__dirname,'..','script.js'),'utf8');
 const html=fs.readFileSync(require('node:path').join(__dirname,'..','index.html'),'utf8');
 const latest=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'..','version.json'),'utf8'));
+const repositoryRoot=require('node:path').join(__dirname,'..');
+const retiredBrand=['deep','forge'].join('');
+const excludedAuditDirectories=new Set(['.git','node_modules','playwright-report','test-results']);
+function auditBrandRemoval(directory){
+  for(const entry of fs.readdirSync(directory,{withFileTypes:true})){
+    if(entry.isDirectory()&&excludedAuditDirectories.has(entry.name))continue;
+    const absolute=require('node:path').join(directory,entry.name),relative=require('node:path').relative(repositoryRoot,absolute);
+    assert.ok(!relative.toLowerCase().includes(retiredBrand),'retired brand remains in path: '+relative);
+    if(entry.isDirectory())auditBrandRemoval(absolute);
+    else if(entry.isFile())assert.ok(!fs.readFileSync(absolute).toString('latin1').toLowerCase().includes(retiredBrand),'retired brand remains in file: '+relative);
+  }
+}
+auditBrandRemoval(repositoryRoot);
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
 assert.equal(latest.version,'0230');

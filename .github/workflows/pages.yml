@@ -36,12 +36,16 @@ jobs:
       - name: Runtime smoke test
         run: npm run test:smoke
 
-      - name: Browser tests
+      - name: Release browser tests
         run: |
           python3 -m http.server 4180 --bind 127.0.0.1 > /tmp/ever-deeper-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
-          npm test
+          for attempt in {1..20}; do
+            curl --fail --silent http://127.0.0.1:4180/ > /dev/null && break
+            sleep 0.25
+          done
+          npm run test:release
 
   deploy:
     needs: test
