@@ -1,6 +1,8 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.16.2 - Subtle Mineral Seams**
+Current build: **Deepforge v0.16.3 - True Mineral Colors**
+
+The Mossvein wall asset is now neutral charcoal stone without baked amber patches, so colored seams always indicate a real buried mineral.
 
 Buried ore now bleeds through the final terrain block as irregular colored veins and embedded mineral pockets on the open tunnel face. The full resource remains hidden until that last block is mined.
 

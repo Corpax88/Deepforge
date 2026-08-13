@@ -62,7 +62,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.16.2',name:'SUBTLE MINERAL SEAMS'};
+  const BUILD={version:'0.16.3',name:'TRUE MINERAL COLORS'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
