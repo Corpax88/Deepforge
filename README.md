@@ -1,8 +1,8 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.16.0 - Buried Mineral Seams**
+Current build: **Deepforge v0.16.1 - Natural Mineral Seams**
 
-Buried ore now bleeds through the final terrain block as small colored seams on the open tunnel face. The full resource remains hidden until that last block is mined.
+Buried ore now bleeds through the final terrain block as irregular colored veins and embedded mineral pockets on the open tunnel face. The full resource remains hidden until that last block is mined.
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 

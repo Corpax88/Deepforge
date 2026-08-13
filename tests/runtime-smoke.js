@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.16.0');
-assert.equal(api.snapshot().build.name,'BURIED MINERAL SEAMS');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.16.0');
+assert.equal(api.snapshot().build.version,'0.16.1');
+assert.equal(api.snapshot().build.name,'NATURAL MINERAL SEAMS');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.16.1');
 let openingGuide=api.snapshot().guide;
 assert.equal(openingGuide.kind,'rock');assert.equal(openingGuide.scene,'surface');assert.equal(openingGuide.visible,true);
 api.setPosition(openingGuide.x,openingGuide.y);assert.equal(api.snapshot().guide.visible,false);
