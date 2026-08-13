@@ -1,12 +1,12 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.19.2 - Two-Hand Drills**
+Current build: **Deepforge v0.20.0 - Drill Character Assets**
 
-Burrower, Pulse, and Deepcore now use individual rear-trigger and front-support grip maps. Both original Character B hands are composited over each drill and move with one shared recoil group in either facing direction.
+Burrower, Pulse, and Deepcore now use complete production character assets with both hands permanently drawn around the correct grips. Drill rendering swaps the entire character as one clean unit, so facing changes and recoil can never separate hands, body, and tool.
 
-Character B now keeps its exact production PNG while the original grip arm is split at render time and animated together with the active tool. Pickaxes use a wind-up, impact, and recovery motion; drills share the same hand anchor with synchronized recoil and vibration.
+The failed drill limb-crop renderer has been removed completely. Pickaxes retain the proven Character B layered swing, while drills use a subtle whole-character recoil with no independent limb or tool transforms.
 
-Character B is now the production player character. The miner is one fixed tool-free PNG, while five pickaxes, three Starforge forms, and three drills render as mutually exclusive equipment layers on one shared hand anchor. The former canvas-drawn player and tools have been removed completely.
+Character B is the production player character. Five pickaxes and three Starforge forms remain mutually exclusive equipment layers on the proven hand anchor; the three drills are complete mutually exclusive character composites. The former canvas-drawn player and tools remain fully removed.
 
 Mossvein's entire surface now uses one opaque production PNG with a continuous dirt path from the mine entrance to the Moonglass gate. The former canvas grid, path, and ground decorations are no longer rendered in Mossvein.
 

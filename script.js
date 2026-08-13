@@ -4,35 +4,32 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0192';
+  const ASSET_VERSION='0200';
   const MOSSVEIN_ART={wall:null,floor:null,floorPattern:null};
   const SURFACE_ART={mossveinGround:null};
   const MINERAL_ART={stone:{wall:null,node:null},copper:{wall:null,node:null},gold:{wall:null,node:null}};
   const MINE_ENTRANCE_ART={mossMine:null};
-  const PLAYER_ART={base:null,tools:{}};
+  const PLAYER_ART={base:null,tools:{},drillCharacters:{}};
   const PLAYER_TOOL_PATHS=Object.freeze({
     'pickaxe-worn':'assets/tools/pickaxe-worn.png','pickaxe-iron':'assets/tools/pickaxe-iron.png','pickaxe-runed':'assets/tools/pickaxe-runed.png','pickaxe-moonglass':'assets/tools/pickaxe-moonglass.png','pickaxe-ember':'assets/tools/pickaxe-ember.png',
-    'starforge-crusher':'assets/tools/starforge-crusher.png','starforge-swift':'assets/tools/starforge-swift.png','starforge-prospector':'assets/tools/starforge-prospector.png',
-    'drill-burrower':'assets/tools/drill-burrower.png','drill-pulse':'assets/tools/drill-pulse.png','drill-deepcore':'assets/tools/drill-deepcore.png'
+    'starforge-crusher':'assets/tools/starforge-crusher.png','starforge-swift':'assets/tools/starforge-swift.png','starforge-prospector':'assets/tools/starforge-prospector.png'
+  });
+  const PLAYER_DRILL_CHARACTER_PATHS=Object.freeze({
+    'drill-burrower':'assets/characters/miner-b-drill-burrower.png',
+    'drill-pulse':'assets/characters/miner-b-drill-pulse.png',
+    'drill-deepcore':'assets/characters/miner-b-drill-deepcore.png'
   });
   const PLAYER_TOOL_RENDER=Object.freeze({
     'pickaxe-worn':{width:82,pivotX:.32,pivotY:.5},'pickaxe-iron':{width:82,pivotX:.32,pivotY:.5},'pickaxe-runed':{width:82,pivotX:.32,pivotY:.5},'pickaxe-moonglass':{width:82,pivotX:.32,pivotY:.5},'pickaxe-ember':{width:82,pivotX:.32,pivotY:.5},
-    'starforge-crusher':{width:80,pivotX:.32,pivotY:.5},'starforge-swift':{width:84,pivotX:.32,pivotY:.5},'starforge-prospector':{width:84,pivotX:.32,pivotY:.5},
-    'drill-burrower':{width:94,rearX:.24,rearY:.74,supportX:.62,supportY:.62,angle:.035},
-    'drill-pulse':{width:98,rearX:.29,rearY:.75,supportX:.65,supportY:.64,angle:.025},
-    'drill-deepcore':{width:102,rearX:.29,rearY:.75,supportX:.64,supportY:.63,angle:.02}
+    'starforge-crusher':{width:80,pivotX:.32,pivotY:.5},'starforge-swift':{width:84,pivotX:.32,pivotY:.5},'starforge-prospector':{width:84,pivotX:.32,pivotY:.5}
   });
   const PLAYER_RENDER_CONTRACT=Object.freeze({
     bodyHeight:112,bodyBottom:34,
     gripCrop:Object.freeze({x:246,y:307,w:69,h:101}),
     gripPivot:Object.freeze({x:14,y:24}),
     gripPoint:Object.freeze({x:42,y:50}),
-    offhandCrop:Object.freeze({x:22,y:335,w:70,h:90}),
-    offhandPivot:Object.freeze({x:35,y:4}),
-    offhandGrip:Object.freeze({x:30,y:55}),
-    drillSupportGrip:Object.freeze({x:45,y:50}),
-    drillRearAnchor:Object.freeze({x:-15,y:13}),
-    layeredTools:true,animatedGrip:true,bodyReaction:true,sharedGripAnchor:true,twoHandDrills:true,
+    drillCompositeHeight:112,
+    layeredTools:true,animatedGrip:true,bodyReaction:true,sharedGripAnchor:true,fullDrillComposites:true,legacyDrillLimbCrops:false,
     legacyCanvasCharacter:false,legacyCanvasTools:false
   });
   function loadGameImage(src,key){
@@ -55,9 +52,9 @@
     if(typeof Image==='undefined')return null;
     const image=new Image();image.decoding='async';image.onload=()=>{SURFACE_ART[key]=image};image.src=src+'?v='+ASSET_VERSION;return image;
   }
-  function loadPlayerImage(src,key,tool=false){
+  function loadPlayerImage(src,key,kind='base'){
     if(typeof Image==='undefined')return null;
-    const image=new Image();image.decoding='async';image.onload=()=>{if(tool)PLAYER_ART.tools[key]=image;else PLAYER_ART.base=image};image.src=src+'?v='+ASSET_VERSION;return image;
+    const image=new Image();image.decoding='async';image.onload=()=>{if(kind==='tool')PLAYER_ART.tools[key]=image;else if(kind==='drillCharacter')PLAYER_ART.drillCharacters[key]=image;else PLAYER_ART.base=image};image.src=src+'?v='+ASSET_VERSION;return image;
   }
   MOSSVEIN_ART.wall=loadGameImage('assets/mossvein/cave-wall.png','wall');
   MOSSVEIN_ART.floor=loadGameImage('assets/mossvein/cave-floor.png','floor');
@@ -65,7 +62,8 @@
   MINE_ENTRANCE_ART.mossMine=loadMineEntranceImage('mossMine');
   SURFACE_ART.mossveinGround=loadSurfaceImage('assets/surface/mossvein-ground.png','mossveinGround');
   PLAYER_ART.base=loadPlayerImage('assets/characters/miner-b.png','base');
-  for(const [key,path] of Object.entries(PLAYER_TOOL_PATHS))PLAYER_ART.tools[key]=loadPlayerImage(path,key,true);
+  for(const [key,path] of Object.entries(PLAYER_TOOL_PATHS))PLAYER_ART.tools[key]=loadPlayerImage(path,key,'tool');
+  for(const [key,path] of Object.entries(PLAYER_DRILL_CHARACTER_PATHS))PLAYER_ART.drillCharacters[key]=loadPlayerImage(path,key,'drillCharacter');
   const viewport=document.getElementById('viewport');
   const goldValue=document.getElementById('goldValue');
   const cargoValue=document.getElementById('cargoValue');
@@ -113,7 +111,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.19.2',name:'TWO-HAND DRILLS'};
+  const BUILD={version:'0.20.0',name:'DRILL CHARACTER ASSETS'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -2849,8 +2847,8 @@
   function playerRenderPose(){
     const drilling=state.drillLevel>0,activeDrill=drilling&&(!!player.swing||input.mineHeld);
     if(drilling){
-      const pulse=activeDrill?Math.sin(time*72):0,recoil=activeDrill?1.25+Math.sin(time*34)*.55:0,config=PLAYER_TOOL_RENDER[currentPlayerToolKey()];
-      return{toolAngle:config?.angle||0,armAngle:0,armX:-recoil,armY:pulse*.48,bodyAngle:activeDrill?-.012+Math.sin(time*34)*.004:0,bodyY:0,active:activeDrill};
+      const pulse=activeDrill?Math.sin(time*72):0,recoil=activeDrill?.55+Math.sin(time*34)*.22:0;
+      return{toolAngle:0,armAngle:0,armX:-recoil,armY:pulse*.18,bodyAngle:activeDrill?-.006+Math.sin(time*34)*.002:0,bodyY:0,active:activeDrill};
     }
     if(!player.swing)return{toolAngle:-.2,armAngle:0,armX:0,armY:0,bodyAngle:0,bodyY:0,active:false};
     const t=clamp(player.swing.elapsed/player.swing.duration,0,1),idle=-.2,windup=-1.08,strike=.58;
@@ -2861,44 +2859,37 @@
     return{toolAngle,armAngle:(toolAngle-idle)*.16,armX:drive*1.6,armY:-Math.abs(drive)*.55,bodyAngle:drive*.034,bodyY:-Math.sin(t*Math.PI)*.7,active:true};
   }
 
-  function drawPlayerBaseWithoutCrops(body,bodyX,bodyY,scale,crops){
-    const sourceWidth=body.naturalWidth,sourceHeight=body.naturalHeight,yCuts=[0,sourceHeight];
-    for(const crop of crops)yCuts.push(crop.y,crop.y+crop.h);
-    const bands=[...new Set(yCuts)].sort((a,b)=>a-b);
-    for(let index=0;index<bands.length-1;index++){
-      const top=bands[index],height=bands[index+1]-top;if(height<=0)continue;
-      const exclusions=crops.filter(crop=>crop.y<top+height&&crop.y+crop.h>top).map(crop=>[crop.x,crop.x+crop.w]).sort((a,b)=>a[0]-b[0]);
-      let cursor=0;
-      for(const [left,right] of exclusions){if(left>cursor)ctx.drawImage(body,cursor,top,left-cursor,height,bodyX+cursor*scale,bodyY+top*scale,(left-cursor)*scale,height*scale);cursor=Math.max(cursor,right)}
-      if(cursor<sourceWidth)ctx.drawImage(body,cursor,top,sourceWidth-cursor,height,bodyX+cursor*scale,bodyY+top*scale,(sourceWidth-cursor)*scale,height*scale);
-    }
-  }
-
-  function drawPlayerCropAtGrip(body,crop,pivot,grip,scale,targetX,targetY,angle=0){
-    const dx=(grip.x-pivot.x)*scale,dy=(grip.y-pivot.y)*scale,cos=Math.cos(angle),sin=Math.sin(angle),pivotX=targetX-(dx*cos-dy*sin),pivotY=targetY-(dx*sin+dy*cos);
-    ctx.save();ctx.translate(pivotX,pivotY);ctx.rotate(angle);
-    ctx.drawImage(body,crop.x,crop.y,crop.w,crop.h,-pivot.x*scale,-pivot.y*scale,crop.w*scale,crop.h*scale);
-    ctx.restore();
+  function drawPlayerBaseWithoutGrip(body,bodyX,bodyY,scale,crop){
+    ctx.drawImage(body,0,0,body.naturalWidth,crop.y,bodyX,bodyY,body.naturalWidth*scale,crop.y*scale);
+    ctx.drawImage(body,0,crop.y,crop.x,crop.h,bodyX,bodyY+crop.y*scale,crop.x*scale,crop.h*scale);
+    const rightX=crop.x+crop.w,rightWidth=body.naturalWidth-rightX;
+    ctx.drawImage(body,rightX,crop.y,rightWidth,crop.h,bodyX+rightX*scale,bodyY+crop.y*scale,rightWidth*scale,crop.h*scale);
+    const lowerY=crop.y+crop.h,lowerHeight=body.naturalHeight-lowerY;
+    ctx.drawImage(body,0,lowerY,body.naturalWidth,lowerHeight,bodyX,bodyY+lowerY*scale,body.naturalWidth*scale,lowerHeight*scale);
   }
 
   function drawPlayer(){
     const p=worldToScreen(player.x,player.y),moving=Math.abs(updateInputVector().x)+Math.abs(updateInputVector().y)>.02,bob=moving?Math.sin(player.walk)*2:Math.sin(time*2.4)*1.2,pose=playerRenderPose();
     ctx.save();ctx.translate(p.x,p.y+bob);ctx.scale(player.facing,1);
     ctx.fillStyle='rgba(0,0,0,.34)';ctx.beginPath();ctx.ellipse(0,29,34,12,0,0,Math.PI*2);ctx.fill();
+    if(state.drillLevel>0){
+      const body=PLAYER_ART.drillCharacters[currentPlayerToolKey()];
+      if(imageReady(body)){
+        const height=PLAYER_RENDER_CONTRACT.drillCompositeHeight,width=height*(body.naturalWidth/body.naturalHeight),bottom=PLAYER_RENDER_CONTRACT.bodyBottom;
+        ctx.save();ctx.translate(pose.armX,pose.armY);ctx.translate(0,bottom-2);ctx.rotate(pose.bodyAngle);ctx.translate(0,-(bottom-2));ctx.drawImage(body,-width*.5,bottom-height,width,height);ctx.restore();
+      }
+      ctx.restore();return;
+    }
     const body=PLAYER_ART.base;
     if(imageReady(body)){
-      const bodyHeight=PLAYER_RENDER_CONTRACT.bodyHeight,scale=bodyHeight/body.naturalHeight,bodyWidth=body.naturalWidth*scale,bodyX=-bodyWidth*.5,bodyY=PLAYER_RENDER_CONTRACT.bodyBottom-bodyHeight,crop=PLAYER_RENDER_CONTRACT.gripCrop,pivot=PLAYER_RENDER_CONTRACT.gripPivot,grip=PLAYER_RENDER_CONTRACT.gripPoint,drilling=state.drillLevel>0;
+      const bodyHeight=PLAYER_RENDER_CONTRACT.bodyHeight,scale=bodyHeight/body.naturalHeight,bodyWidth=body.naturalWidth*scale,bodyX=-bodyWidth*.5,bodyY=PLAYER_RENDER_CONTRACT.bodyBottom-bodyHeight,crop=PLAYER_RENDER_CONTRACT.gripCrop,pivot=PLAYER_RENDER_CONTRACT.gripPivot,grip=PLAYER_RENDER_CONTRACT.gripPoint;
       ctx.save();ctx.translate(0,PLAYER_RENDER_CONTRACT.bodyBottom-2);ctx.rotate(pose.bodyAngle);ctx.translate(0,-(PLAYER_RENDER_CONTRACT.bodyBottom-2)+pose.bodyY);
-      drawPlayerBaseWithoutCrops(body,bodyX,bodyY,scale,drilling?[crop,PLAYER_RENDER_CONTRACT.offhandCrop]:[crop]);
-      if(drilling)drawPlayerDrillLayer(body,scale,pose);
-      else{
-        const pivotX=bodyX+(crop.x+pivot.x)*scale,pivotY=bodyY+(crop.y+pivot.y)*scale,gripX=(grip.x-pivot.x)*scale,gripY=(grip.y-pivot.y)*scale;
-        ctx.save();ctx.translate(pivotX+pose.armX,pivotY+pose.armY);ctx.rotate(pose.armAngle);
-        drawPlayerToolLayer(pose,gripX,gripY);
-        ctx.drawImage(body,crop.x,crop.y,crop.w,crop.h,-pivot.x*scale,-pivot.y*scale,crop.w*scale,crop.h*scale);
-        ctx.restore();
-      }
-      ctx.restore();
+      drawPlayerBaseWithoutGrip(body,bodyX,bodyY,scale,crop);
+      const pivotX=bodyX+(crop.x+pivot.x)*scale,pivotY=bodyY+(crop.y+pivot.y)*scale,gripX=(grip.x-pivot.x)*scale,gripY=(grip.y-pivot.y)*scale;
+      ctx.save();ctx.translate(pivotX+pose.armX,pivotY+pose.armY);ctx.rotate(pose.armAngle);
+      drawPlayerToolLayer(pose,gripX,gripY);
+      ctx.drawImage(body,crop.x,crop.y,crop.w,crop.h,-pivot.x*scale,-pivot.y*scale,crop.w*scale,crop.h*scale);
+      ctx.restore();ctx.restore();
     }
     ctx.restore();
   }
@@ -2909,19 +2900,6 @@
     const width=config.width,height=width*(asset.naturalHeight/asset.naturalWidth);
     ctx.save();ctx.translate(gripX,gripY);ctx.rotate(pose.toolAngle-pose.armAngle);
     ctx.drawImage(asset,-width*config.pivotX,-height*config.pivotY,width,height);
-    if(state.drillLevel&&pose.active){const drill=currentDrill();ctx.save();ctx.globalAlpha=.35+.18*Math.sin(time*38);ctx.fillStyle=drill.color;ctx.shadowBlur=7;ctx.shadowColor=drill.color;ctx.beginPath();ctx.arc(width*(1-config.pivotX)-2,0,2.1,0,Math.PI*2);ctx.fill();ctx.restore()}
-    ctx.restore();
-  }
-
-  function drawPlayerDrillLayer(body,scale,pose){
-    const key=currentPlayerToolKey(),asset=PLAYER_ART.tools[key],config=PLAYER_TOOL_RENDER[key];
-    if(!config||!imageReady(asset))return;
-    const width=config.width,height=width*(asset.naturalHeight/asset.naturalWidth),anchor=PLAYER_RENDER_CONTRACT.drillRearAnchor,supportX=width*(config.supportX-config.rearX),supportY=height*(config.supportY-config.rearY);
-    ctx.save();ctx.translate(anchor.x+pose.armX,anchor.y+pose.armY);ctx.rotate(pose.toolAngle);
-    ctx.drawImage(asset,-width*config.rearX,-height*config.rearY,width,height);
-    if(pose.active){const drill=currentDrill();ctx.save();ctx.globalAlpha=.35+.18*Math.sin(time*38);ctx.fillStyle=drill.color;ctx.shadowBlur=7;ctx.shadowColor=drill.color;ctx.beginPath();ctx.arc(width*(.98-config.rearX),height*(.5-config.rearY),2.1,0,Math.PI*2);ctx.fill();ctx.restore()}
-    drawPlayerCropAtGrip(body,PLAYER_RENDER_CONTRACT.offhandCrop,PLAYER_RENDER_CONTRACT.offhandPivot,PLAYER_RENDER_CONTRACT.offhandGrip,scale,0,0,.015);
-    drawPlayerCropAtGrip(body,PLAYER_RENDER_CONTRACT.gripCrop,PLAYER_RENDER_CONTRACT.gripPivot,PLAYER_RENDER_CONTRACT.drillSupportGrip,scale,supportX,supportY,-.025);
     ctx.restore();
   }
 
@@ -3032,7 +3010,7 @@
 
   window.__deepforgeTest={
     snapshot:()=>JSON.parse(JSON.stringify({
-      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true},surfaceAssetRendering:{mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},characterRendering:{baseAsset:'assets/characters/miner-b.png',activeToolKey:currentPlayerToolKey(),activeToolAsset:PLAYER_TOOL_PATHS[currentPlayerToolKey()],toolAssetCount:Object.keys(PLAYER_TOOL_PATHS).length,gripCrop:PLAYER_RENDER_CONTRACT.gripCrop,gripPivot:PLAYER_RENDER_CONTRACT.gripPivot,gripPoint:PLAYER_RENDER_CONTRACT.gripPoint,offhandCrop:PLAYER_RENDER_CONTRACT.offhandCrop,drillRearAnchor:PLAYER_RENDER_CONTRACT.drillRearAnchor,drillGripCount:Object.keys(PLAYER_TOOL_RENDER).filter(key=>key.startsWith('drill-')&&Number.isFinite(PLAYER_TOOL_RENDER[key].rearX)&&Number.isFinite(PLAYER_TOOL_RENDER[key].supportX)).length,layeredTools:PLAYER_RENDER_CONTRACT.layeredTools,animatedGrip:PLAYER_RENDER_CONTRACT.animatedGrip,bodyReaction:PLAYER_RENDER_CONTRACT.bodyReaction,sharedGripAnchor:PLAYER_RENDER_CONTRACT.sharedGripAnchor,twoHandDrills:PLAYER_RENDER_CONTRACT.twoHandDrills,legacyCanvasCharacter:PLAYER_RENDER_CONTRACT.legacyCanvasCharacter,legacyCanvasTools:PLAYER_RENDER_CONTRACT.legacyCanvasTools},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
+      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true},surfaceAssetRendering:{mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},characterRendering:{baseAsset:'assets/characters/miner-b.png',activeToolKey:currentPlayerToolKey(),activeRenderAsset:state.drillLevel?PLAYER_DRILL_CHARACTER_PATHS[currentPlayerToolKey()]:PLAYER_TOOL_PATHS[currentPlayerToolKey()],toolLayerCount:Object.keys(PLAYER_TOOL_PATHS).length,drillCompositeCount:Object.keys(PLAYER_DRILL_CHARACTER_PATHS).length,gripCrop:PLAYER_RENDER_CONTRACT.gripCrop,gripPivot:PLAYER_RENDER_CONTRACT.gripPivot,gripPoint:PLAYER_RENDER_CONTRACT.gripPoint,layeredTools:PLAYER_RENDER_CONTRACT.layeredTools,animatedGrip:PLAYER_RENDER_CONTRACT.animatedGrip,bodyReaction:PLAYER_RENDER_CONTRACT.bodyReaction,sharedGripAnchor:PLAYER_RENDER_CONTRACT.sharedGripAnchor,fullDrillComposites:PLAYER_RENDER_CONTRACT.fullDrillComposites,legacyDrillLimbCrops:PLAYER_RENDER_CONTRACT.legacyDrillLimbCrops,legacyCanvasCharacter:PLAYER_RENDER_CONTRACT.legacyCanvasCharacter,legacyCanvasTools:PLAYER_RENDER_CONTRACT.legacyCanvasTools},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
       effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower()),depthMainHits:currentMine()&&currentDepth===2?armoredHitsRequired(DEPTH2_RESOURCE_PROFILES[currentScene].main,currentPower(),currentShellPower()):null},
       goal:mainGoal(),guide:(()=>{const guide=visualGuide();return guide?{...guide,distance:distance(player.x,player.y,guide.x,guide.y),visible:distance(player.x,player.y,guide.x,guide.y)>guide.closeRadius}:null})(),markerStyle:{bonusVeinRings:false},toolMode:state.drillLevel?'drill':'pickaxe',protectedCargo:protectedDrillCargo(),sellableCargo:sellableCargo(),movement:{level:state.movementSpeedLevel,multiplier:movementSpeedMultiplier(),nextCost:movementSpeedCost()},miningRush:{...miningRush},lootSweep:{remaining:lootSweepRemaining(),nextAt:state.nextLootSweepAt},
       player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,

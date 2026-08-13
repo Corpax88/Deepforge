@@ -5,12 +5,14 @@ const vm=require('node:vm');
 const source=fs.readFileSync(require('node:path').join(__dirname,'..','script.js'),'utf8');
 const html=fs.readFileSync(require('node:path').join(__dirname,'..','index.html'),'utf8');
 const latest=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'..','version.json'),'utf8'));
-assert.equal(latest.version,'0192');
+assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
+assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
+assert.equal(latest.version,'0200');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0192/);
-assert.match(html,/script\.js\?v=0192/);
-const playerAssets=['assets/characters/miner-b.png','assets/tools/pickaxe-worn.png','assets/tools/pickaxe-iron.png','assets/tools/pickaxe-runed.png','assets/tools/pickaxe-moonglass.png','assets/tools/pickaxe-ember.png','assets/tools/starforge-crusher.png','assets/tools/starforge-swift.png','assets/tools/starforge-prospector.png','assets/tools/drill-burrower.png','assets/tools/drill-pulse.png','assets/tools/drill-deepcore.png'];
+assert.match(html,/style\.css\?v=0200/);
+assert.match(html,/script\.js\?v=0200/);
+const playerAssets=['assets/characters/miner-b.png','assets/characters/miner-b-drill-burrower.png','assets/characters/miner-b-drill-pulse.png','assets/characters/miner-b-drill-deepcore.png','assets/tools/pickaxe-worn.png','assets/tools/pickaxe-iron.png','assets/tools/pickaxe-runed.png','assets/tools/pickaxe-moonglass.png','assets/tools/pickaxe-ember.png','assets/tools/starforge-crusher.png','assets/tools/starforge-swift.png','assets/tools/starforge-prospector.png'];
 for(const relative of playerAssets){const path=require('node:path').join(__dirname,'..',relative),png=fs.readFileSync(path);assert.equal(png.toString('ascii',1,4),'PNG');assert.equal(png[25],6,relative+' must use RGBA');assert.ok(png.length<250000,relative+' exceeds mobile asset budget')}
 const storage=new Map();
 
@@ -33,7 +35,7 @@ function createRuntime(){
   element('gameCanvas').getContext=()=>canvasContext;
   const document={hidden:false,getElementById:element,addEventListener(){}};
   const window={devicePixelRatio:2,addEventListener(){},confirm:()=>true};
-  class TestImage{constructor(){this.complete=true;this.naturalWidth=512;this.naturalHeight=512;this.decoding='async';this.onload=null;this._src=''}set src(value){this._src=value;if(value.includes('miner-b')){this.naturalWidth=315;this.naturalHeight=512}else if(value.includes('drill-')){this.naturalWidth=512;this.naturalHeight=283}else this.naturalWidth=512;queueMicrotask(()=>this.onload&&this.onload())}get src(){return this._src}}
+  class TestImage{constructor(){this.complete=true;this.naturalWidth=512;this.naturalHeight=512;this.decoding='async';this.onload=null;this._src=''}set src(value){this._src=value;if(value.includes('miner-b-drill-burrower')){this.naturalWidth=348;this.naturalHeight=512}else if(value.includes('miner-b-drill-pulse')){this.naturalWidth=361;this.naturalHeight=512}else if(value.includes('miner-b-drill-deepcore')){this.naturalWidth=354;this.naturalHeight=512}else if(value.includes('miner-b')){this.naturalWidth=315;this.naturalHeight=512}else this.naturalWidth=512;queueMicrotask(()=>this.onload&&this.onload())}get src(){return this._src}}
   const context={
     window,document,console,
     localStorage:{getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)},
@@ -47,24 +49,25 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.19.2');
-assert.equal(api.snapshot().build.name,'TWO-HAND DRILLS');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.19.2');
-assert.equal(api.snapshot().assetVersion,'0192');
+assert.equal(api.snapshot().build.version,'0.20.0');
+assert.equal(api.snapshot().build.name,'DRILL CHARACTER ASSETS');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.20.0');
+assert.equal(api.snapshot().assetVersion,'0200');
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
-assert.equal(JSON.stringify(api.snapshot().characterRendering),JSON.stringify({baseAsset:'assets/characters/miner-b.png',activeToolKey:'pickaxe-worn',activeToolAsset:'assets/tools/pickaxe-worn.png',toolAssetCount:11,gripCrop:{x:246,y:307,w:69,h:101},gripPivot:{x:14,y:24},gripPoint:{x:42,y:50},offhandCrop:{x:22,y:335,w:70,h:90},drillRearAnchor:{x:-15,y:13},drillGripCount:3,layeredTools:true,animatedGrip:true,bodyReaction:true,sharedGripAnchor:true,twoHandDrills:true,legacyCanvasCharacter:false,legacyCanvasTools:false}));
+assert.equal(JSON.stringify(api.snapshot().characterRendering),JSON.stringify({baseAsset:'assets/characters/miner-b.png',activeToolKey:'pickaxe-worn',activeRenderAsset:'assets/tools/pickaxe-worn.png',toolLayerCount:8,drillCompositeCount:3,gripCrop:{x:246,y:307,w:69,h:101},gripPivot:{x:14,y:24},gripPoint:{x:42,y:50},layeredTools:true,animatedGrip:true,bodyReaction:true,sharedGripAnchor:true,fullDrillComposites:true,legacyDrillLimbCrops:false,legacyCanvasCharacter:false,legacyCanvasTools:false}));
 const pickaxeKeys=['pickaxe-worn','pickaxe-iron','pickaxe-runed','pickaxe-moonglass','pickaxe-ember'];
-function assertPlayerLayers(key){runtime.drawCalls.length=0;api.renderOnce();assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b.png')).length,key.startsWith('drill-')?9:4);const tools=runtime.drawCalls.filter(call=>call.src.includes('assets/tools/'));assert.equal(tools.length,1);assert.ok(tools[0].src.includes(key+'.png'))}
-for(let level=1;level<=5;level++){api.setDrillLevel(0);api.setPickaxeLevel(level);assert.equal(api.snapshot().characterRendering.activeToolKey,pickaxeKeys[level-1]);assertPlayerLayers(pickaxeKeys[level-1])}
-for(const variant of ['crusher','swift','prospector']){api.setDrillLevel(0);api.setStarforgeVariant(variant);assert.equal(api.snapshot().characterRendering.activeToolKey,'starforge-'+variant);assertPlayerLayers('starforge-'+variant)}
-for(const [level,key] of [[1,'drill-burrower'],[2,'drill-pulse'],[3,'drill-deepcore']]){api.setDrillLevel(level);assert.equal(api.snapshot().characterRendering.activeToolKey,key);assertPlayerLayers(key)}
+function assertPickaxeLayers(key){runtime.drawCalls.length=0;api.renderOnce();assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b.png')).length,5);const tools=runtime.drawCalls.filter(call=>call.src.includes('assets/tools/'));assert.equal(tools.length,1);assert.ok(tools[0].src.includes(key+'.png'))}
+function assertDrillComposite(key){runtime.drawCalls.length=0;api.renderOnce();const composites=runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b-drill-'));assert.equal(composites.length,1);assert.ok(composites[0].src.includes(key+'.png'));assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b.png')).length,0);assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/tools/')).length,0)}
+for(let level=1;level<=5;level++){api.setDrillLevel(0);api.setPickaxeLevel(level);assert.equal(api.snapshot().characterRendering.activeToolKey,pickaxeKeys[level-1]);assertPickaxeLayers(pickaxeKeys[level-1])}
+for(const variant of ['crusher','swift','prospector']){api.setDrillLevel(0);api.setStarforgeVariant(variant);assert.equal(api.snapshot().characterRendering.activeToolKey,'starforge-'+variant);assertPickaxeLayers('starforge-'+variant)}
+for(const [level,key] of [[1,'drill-burrower'],[2,'drill-pulse'],[3,'drill-deepcore']]){api.setDrillLevel(level);assert.equal(api.snapshot().characterRendering.activeToolKey,key);assert.equal(api.snapshot().characterRendering.activeRenderAsset,'assets/characters/miner-b-'+key+'.png');assertDrillComposite(key)}
 api.setDrillLevel(0);api.setPickaxeLevel(1);
 let pose=api.clearSwing();assert.equal(JSON.stringify(pose),JSON.stringify({toolAngle:-.2,armAngle:0,armX:0,armY:0,bodyAngle:0,bodyY:0,active:false}));
-pose=api.setSwingProgress(.18);assert.ok(pose.toolAngle<-.99);assert.ok(pose.armAngle<-.12);assert.ok(pose.armX<0);assert.ok(pose.bodyAngle<0);assertPlayerLayers('pickaxe-worn');
-pose=api.setSwingProgress(.38);assert.ok(pose.toolAngle>.5);assert.ok(pose.armAngle>.1);assert.ok(pose.armX>0);assert.ok(pose.bodyAngle>0);assertPlayerLayers('pickaxe-worn');
-api.setDrillLevel(3);pose=api.setSwingProgress(.2);assert.equal(pose.toolAngle,.02);assert.ok(pose.armX<0);assert.equal(pose.active,true);assertPlayerLayers('drill-deepcore');
+pose=api.setSwingProgress(.18);assert.ok(pose.toolAngle<-.99);assert.ok(pose.armAngle<-.12);assert.ok(pose.armX<0);assert.ok(pose.bodyAngle<0);assertPickaxeLayers('pickaxe-worn');
+pose=api.setSwingProgress(.38);assert.ok(pose.toolAngle>.5);assert.ok(pose.armAngle>.1);assert.ok(pose.armX>0);assert.ok(pose.bodyAngle>0);assertPickaxeLayers('pickaxe-worn');
+api.setDrillLevel(3);pose=api.setSwingProgress(.2);assert.equal(pose.toolAngle,0);assert.ok(pose.armX<0);assert.equal(pose.active,true);assertDrillComposite('drill-deepcore');
 api.clearSwing();api.setDrillLevel(0);
 api.reset();
 assert.equal(api.snapshot().mineralNodeRenderScale,.85);
