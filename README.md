@@ -1,6 +1,8 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.15.1 - Drill Flow**
+Current build: **Deepforge v0.16.0 - Buried Mineral Seams**
+
+Buried ore now bleeds through the final terrain block as small colored seams on the open tunnel face. The full resource remains hidden until that last block is mined.
 
 A standalone, framework-free HTML5 prototype for the mining loop:
 

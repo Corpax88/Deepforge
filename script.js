@@ -62,7 +62,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.15.1',name:'DRILL FLOW'};
+  const BUILD={version:'0.16.0',name:'BURIED MINERAL SEAMS'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -2144,6 +2144,32 @@
     return !!terrainTypeAt(terrain,col,row)||concealed.has(row*terrain.cols+col);
   }
 
+  function mineralHintAtTerrainCell(terrain,concealed,col,row){
+    if(!terrainTypeAt(terrain,col,row))return null;
+    const index=row*terrain.cols+col,key=terrain.scene+':'+terrain.depth+':'+index;
+    const candidates=(mineRocksByTerrainCell.get(key)||[]).filter(rock=>!rock.broken&&!rock.barrierId&&!rockIsExposed(rock));
+    if(!candidates.length)return null;
+    const sides=[
+      !mossveinVisualSolidAt(terrain,concealed,col,row-1),
+      !mossveinVisualSolidAt(terrain,concealed,col+1,row),
+      !mossveinVisualSolidAt(terrain,concealed,col,row+1),
+      !mossveinVisualSolidAt(terrain,concealed,col-1,row)
+    ].map((open,side)=>open?side:-1).filter(side=>side>=0);
+    if(!sides.length)return null;
+    const rock=candidates.find(item=>ROCK_TYPES[item.type].rare)||candidates[0];return{index,rock,sides};
+  }
+
+  function currentMineralHints(){
+    const terrain=currentTerrain(),mine=currentMine();if(!terrain||!isMossveinVisual(mine))return[];
+    const concealed=mossveinConcealedCells(terrain),hints=[];
+    for(const rock of currentRocks()){
+      if(rock.broken||rock.barrierId||rockIsExposed(rock))continue;
+      const cell=terrainCellAt(terrain,rock.x,rock.y),hint=cell&&mineralHintAtTerrainCell(terrain,concealed,cell.col,cell.row);
+      if(hint&&hint.rock.id===rock.id)hints.push(hint);
+    }
+    return hints;
+  }
+
   function drawMossveinTerrainTexture(deep){
     const spacing=126,startX=Math.floor(camera.x/spacing-1)*spacing,endX=camera.x+viewWidth+spacing;
     const startY=Math.floor(camera.y/spacing-1)*spacing,endY=camera.y+viewHeight+spacing;
@@ -2227,6 +2253,23 @@
     ctx.beginPath();ctx.moveTo(-13,-5);ctx.lineTo(-4,-10);ctx.lineTo(2,-2);ctx.lineTo(12,-8);ctx.moveTo(-5,12);ctx.lineTo(1,3);ctx.lineTo(11,7);ctx.stroke();ctx.restore();
   }
 
+  function drawMossveinMineralHint(x,y,side,rock){
+    const data=ROCK_TYPES[rock.type],rare=!!data.rare,seed=visualNoise(rock.id,side,211);
+    ctx.save();ctx.translate(x+MINE_TILE_SIZE*.5,y+MINE_TILE_SIZE*.5);ctx.rotate(side*Math.PI*.5);
+    ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
+    ctx.moveTo(-13,-23);ctx.lineTo(-7,-15);ctx.lineTo(-10+seed*7,-7);
+    ctx.moveTo(-7,-15);ctx.lineTo(1,-18);ctx.lineTo(7,-10);
+    ctx.moveTo(7,-10);ctx.lineTo(13,-14);ctx.lineTo(16,-6);
+    ctx.strokeStyle='rgba(5,7,5,.88)';ctx.lineWidth=rare?6:5;ctx.stroke();
+    ctx.strokeStyle=data.edge;ctx.lineWidth=rare?2.8:2.2;ctx.shadowColor=data.edge;ctx.shadowBlur=rare?10:5;ctx.globalAlpha=rare?.94:.8;ctx.stroke();
+    ctx.fillStyle=data.edge;ctx.globalAlpha=rare?.9:.72;
+    for(let chip=0;chip<3;chip++){
+      const chipX=-10+chip*10+(seed-.5)*4,chipY=-20+(chip%2)*7,size=(rare?2.8:2.2)+(chip===1?1:0);
+      ctx.beginPath();ctx.moveTo(chipX,chipY-size);ctx.lineTo(chipX+size,chipY);ctx.lineTo(chipX,chipY+size);ctx.lineTo(chipX-size,chipY);ctx.closePath();ctx.fill();
+    }
+    ctx.restore();
+  }
+
   function drawMossveinTerrain(mine,terrain,startCol,endCol,startRow,endRow,target){
     const deep=currentDepth===2,concealed=mossveinConcealedCells(terrain),visible=[];
     for(let row=startRow;row<=endRow;row++)for(let col=startCol;col<=endCol;col++){
@@ -2246,6 +2289,11 @@
       if(target&&target.index===index)drawMossveinTarget(x,y);
     }
     drawMossveinWallArt(terrain,concealed,visible,deep);
+    for(const cell of visible){
+      if(!cell.actual)continue;const hint=mineralHintAtTerrainCell(terrain,concealed,cell.col,cell.row);if(!hint)continue;
+      const x=cell.col*MINE_TILE_SIZE-camera.x,y=cell.row*MINE_TILE_SIZE-camera.y;
+      for(const side of hint.sides)drawMossveinMineralHint(x,y,side,hint.rock);
+    }
   }
 
   function drawMossveinSolidWall(mine,wall,p){
@@ -2901,7 +2949,7 @@
       mine:currentMine()?{
         id:currentMine().id,name:currentMineVisual().name,depth:currentDepth,width:currentMine().width,height:currentMine().height,style:currentMineVisual().style,visualPass:isMossveinVisual(currentMineVisual())?'mossvein-production-art-v2':'legacy',dirt:currentMineVisual().dirt,floor:currentMineVisual().floor,solids:currentDepth===1?currentMine().solids:[],solidCount:currentDepth===1?currentMine().solids.length:0,barrierIds:currentDepth===1?currentMine().barriers.map(barrier=>barrier.id):[],labels:currentDepth===1?currentMine().labels.map(label=>label[0]):[],
         depthEntrance:{...depthEntrances[currentScene],discovered:!!state.discoveredDepthEntrances[currentScene],boundaryIndex:mineTerrain[currentScene][1].depthEntrance?[...mineTerrain[currentScene][1].depthEntrance.boundary][0]:null},depthStations:currentDepth===2?depthStations():null,depthResources:currentDepth===2?{...DEPTH2_RESOURCE_PROFILES[currentScene]}:null,
-        terrain:{tileSize:MINE_TILE_SIZE,chunkCells:MINE_CHUNK_CELLS,maxHp:currentTerrain().maxHp,totalChunks:Math.ceil(currentTerrain().cols/MINE_CHUNK_CELLS)*Math.ceil(currentTerrain().rows/MINE_CHUNK_CELLS),activeChunks:currentTerrain().chunks.size,cellCount:currentTerrain().cols*currentTerrain().rows,solidCells:terrainSolidCellCount(currentTerrain()),dugCells:state.terrainDug[currentTerrain().stateKey].length,target:nearestTerrainCell(MINING_RANGE)},
+        terrain:{tileSize:MINE_TILE_SIZE,chunkCells:MINE_CHUNK_CELLS,maxHp:currentTerrain().maxHp,totalChunks:Math.ceil(currentTerrain().cols/MINE_CHUNK_CELLS)*Math.ceil(currentTerrain().rows/MINE_CHUNK_CELLS),activeChunks:currentTerrain().chunks.size,cellCount:currentTerrain().cols*currentTerrain().rows,solidCells:terrainSolidCellCount(currentTerrain()),dugCells:state.terrainDug[currentTerrain().stateKey].length,target:nearestTerrainCell(MINING_RANGE),mineralHints:currentMineralHints().map(hint=>({rockId:hint.rock.id,type:hint.rock.type,index:hint.index,sides:hint.sides.slice()}))},
         discovery:{caverns:currentTerrain().caverns.map(cavern=>({id:cavern.id,name:cavern.name,x:cavern.x,y:cavern.y,rx:cavern.rx,ry:cavern.ry,cellCount:cavern.cells.length,boundaryIndex:[...cavern.boundary][0],discovered:cavernIsDiscovered(cavern.id),reward:{...cavern.reward,claimed:!!state.claimedPocketRewards[cavern.reward.id]}})),deposits:discoveriesFor(currentScene,currentDepth).deposits.map(deposit=>({id:deposit.id,type:deposit.type,size:deposit.positions.length,rareFind:!!deposit.rareFind,cavernId:deposit.cavernId||null,pocketRewardId:deposit.pocketRewardId||null,requiresDrillLevel:deposit.requiresDrillLevel||0,drillGated:!!deposit.drillGated}))}
       }:null,
       focus:miningFocus,

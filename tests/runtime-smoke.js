@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.15.1');
-assert.equal(api.snapshot().build.name,'DRILL FLOW');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.15.1');
+assert.equal(api.snapshot().build.version,'0.16.0');
+assert.equal(api.snapshot().build.name,'BURIED MINERAL SEAMS');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.16.0');
 let openingGuide=api.snapshot().guide;
 assert.equal(openingGuide.kind,'rock');assert.equal(openingGuide.scene,'surface');assert.equal(openingGuide.visible,true);
 api.setPosition(openingGuide.x,openingGuide.y);assert.equal(api.snapshot().guide.visible,false);
@@ -66,6 +66,16 @@ assert.equal(after.feedback.terrainHitIndex,target.index);
 assert.equal(after.feedback.shake,0);
 assert.equal(after.feedback.flash,0);
 assert.ok(after.feedback.particleCount>0&&after.feedback.particleCount<=260);
+
+const buriedMineral=after.rocks.find(rock=>rock.scene==='mossMine'&&rock.depth===1&&rock.depositId&&!rock.cavernId&&!rock.exposed);
+assert.ok(buriedMineral);
+const buriedCol=Math.floor(buriedMineral.x/48),buriedRow=Math.floor(buriedMineral.y/48),buriedIndex=buriedRow*after.mine.terrain.cellCount/(Math.ceil(after.mine.height/48))+buriedCol;
+for(const neighbor of [buriedIndex-1,buriedIndex+1,buriedIndex-Math.ceil(after.mine.width/48),buriedIndex+Math.ceil(after.mine.width/48)]){
+  api.mineTerrainCell(neighbor);api.mineTerrainCell(neighbor);
+  if(api.snapshot().mine.terrain.mineralHints.some(hint=>hint.rockId===buriedMineral.id))break;
+}
+after=api.snapshot();const seam=after.mine.terrain.mineralHints.find(hint=>hint.rockId===buriedMineral.id);
+assert.ok(seam);assert.equal(seam.type,buriedMineral.type);assert.ok(seam.sides.length>=1);assert.equal(after.rocks.find(rock=>rock.id===buriedMineral.id).exposed,false);
 
 const deposit=after.mine.discovery.deposits.find(item=>!item.rareFind);
 for(let index=0;index<deposit.size;index++)api.breakDepositRock(deposit.id,index);
