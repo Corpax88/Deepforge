@@ -4,11 +4,23 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0181';
+  const ASSET_VERSION='0190';
   const MOSSVEIN_ART={wall:null,floor:null,floorPattern:null};
   const SURFACE_ART={mossveinGround:null};
   const MINERAL_ART={stone:{wall:null,node:null},copper:{wall:null,node:null},gold:{wall:null,node:null}};
   const MINE_ENTRANCE_ART={mossMine:null};
+  const PLAYER_ART={base:null,tools:{}};
+  const PLAYER_TOOL_PATHS=Object.freeze({
+    'pickaxe-worn':'assets/tools/pickaxe-worn.png','pickaxe-iron':'assets/tools/pickaxe-iron.png','pickaxe-runed':'assets/tools/pickaxe-runed.png','pickaxe-moonglass':'assets/tools/pickaxe-moonglass.png','pickaxe-ember':'assets/tools/pickaxe-ember.png',
+    'starforge-crusher':'assets/tools/starforge-crusher.png','starforge-swift':'assets/tools/starforge-swift.png','starforge-prospector':'assets/tools/starforge-prospector.png',
+    'drill-burrower':'assets/tools/drill-burrower.png','drill-pulse':'assets/tools/drill-pulse.png','drill-deepcore':'assets/tools/drill-deepcore.png'
+  });
+  const PLAYER_TOOL_RENDER=Object.freeze({
+    'pickaxe-worn':{width:82,pivotX:.32,pivotY:.5},'pickaxe-iron':{width:82,pivotX:.32,pivotY:.5},'pickaxe-runed':{width:82,pivotX:.32,pivotY:.5},'pickaxe-moonglass':{width:82,pivotX:.32,pivotY:.5},'pickaxe-ember':{width:82,pivotX:.32,pivotY:.5},
+    'starforge-crusher':{width:80,pivotX:.32,pivotY:.5},'starforge-swift':{width:84,pivotX:.32,pivotY:.5},'starforge-prospector':{width:84,pivotX:.32,pivotY:.5},
+    'drill-burrower':{width:94,pivotX:.34,pivotY:.54},'drill-pulse':{width:98,pivotX:.32,pivotY:.54},'drill-deepcore':{width:102,pivotX:.31,pivotY:.54}
+  });
+  const PLAYER_RENDER_CONTRACT=Object.freeze({bodyHeight:112,bodyBottom:34,handX:27,handY:-6,handCrop:Object.freeze({x:228,y:292,w:87,h:116}),layeredTools:true,legacyCanvasCharacter:false,legacyCanvasTools:false});
   function loadGameImage(src,key){
     if(typeof Image==='undefined')return null;
     const image=new Image();image.decoding='async';image.onload=()=>{
@@ -29,11 +41,17 @@
     if(typeof Image==='undefined')return null;
     const image=new Image();image.decoding='async';image.onload=()=>{SURFACE_ART[key]=image};image.src=src+'?v='+ASSET_VERSION;return image;
   }
+  function loadPlayerImage(src,key,tool=false){
+    if(typeof Image==='undefined')return null;
+    const image=new Image();image.decoding='async';image.onload=()=>{if(tool)PLAYER_ART.tools[key]=image;else PLAYER_ART.base=image};image.src=src+'?v='+ASSET_VERSION;return image;
+  }
   MOSSVEIN_ART.wall=loadGameImage('assets/mossvein/cave-wall.png','wall');
   MOSSVEIN_ART.floor=loadGameImage('assets/mossvein/cave-floor.png','floor');
   for(const type of Object.keys(MINERAL_ART)){if(type!=='stone')MINERAL_ART[type].wall=loadMineralImage(type,'wall');MINERAL_ART[type].node=loadMineralImage(type,'node')}
   MINE_ENTRANCE_ART.mossMine=loadMineEntranceImage('mossMine');
   SURFACE_ART.mossveinGround=loadSurfaceImage('assets/surface/mossvein-ground.png','mossveinGround');
+  PLAYER_ART.base=loadPlayerImage('assets/characters/miner-b.png','base');
+  for(const [key,path] of Object.entries(PLAYER_TOOL_PATHS))PLAYER_ART.tools[key]=loadPlayerImage(path,key,true);
   const viewport=document.getElementById('viewport');
   const goldValue=document.getElementById('goldValue');
   const cargoValue=document.getElementById('cargoValue');
@@ -81,7 +99,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.18.1',name:'MOSSVEIN SURFACE ASSET'};
+  const BUILD={version:'0.19.0',name:'LAYERED MINER'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
@@ -621,6 +639,11 @@
   function currentMastery(){return EMBER_MASTERY[state.emberMastery]}
   function currentDrill(){return DRILLS[state.drillLevel]||null}
   function currentStarforge(){return !state.drillLevel&&state.starforgeVariant?STARFORGE_VARIANTS[state.starforgeVariant]:null}
+  function currentPlayerToolKey(){
+    if(state.drillLevel)return['','drill-burrower','drill-pulse','drill-deepcore'][state.drillLevel];
+    if(state.starforgeVariant)return'starforge-'+state.starforgeVariant;
+    return['','pickaxe-worn','pickaxe-iron','pickaxe-runed','pickaxe-moonglass','pickaxe-ember'][state.pickaxeLevel];
+  }
   function hasDeepTool(){return state.drillLevel>0||!!state.starforgeVariant}
   function currentPickaxeName(){const drill=currentDrill(),variant=currentStarforge();return drill?drill.name:variant?variant.name:currentPickaxe().name+(state.emberMastery?' +'+state.emberMastery:'')}
   function currentPower(){const drill=currentDrill();if(drill)return drill.power;const base=state.pickaxeLevel===PICKAXES.length-1?currentMastery().power:currentPickaxe().power,variant=currentStarforge();return variant?Math.round(base*variant.powerMultiplier):base}
@@ -2812,65 +2835,30 @@
   function drawPlayer(){
     const p=worldToScreen(player.x,player.y),moving=Math.abs(updateInputVector().x)+Math.abs(updateInputVector().y)>.02,bob=moving?Math.sin(player.walk)*2:Math.sin(time*2.4)*1.2;
     ctx.save();ctx.translate(p.x,p.y+bob);ctx.scale(player.facing,1);
-    ctx.fillStyle='rgba(0,0,0,.34)';ctx.beginPath();ctx.ellipse(0,25,34,12,0,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle='#30352f';ctx.lineWidth=11;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-11,8);ctx.lineTo(-14,25);ctx.moveTo(11,8);ctx.lineTo(14,25);ctx.stroke();
-    ctx.strokeStyle='#b06d34';ctx.lineWidth=13;ctx.beginPath();ctx.moveTo(-14,23);ctx.lineTo(-24,27);ctx.moveTo(14,23);ctx.lineTo(24,27);ctx.stroke();
-    ctx.fillStyle='#3f7051';ctx.beginPath();ctx.moveTo(-24,-23);ctx.quadraticCurveTo(0,-39,24,-23);ctx.lineTo(19,9);ctx.quadraticCurveTo(0,19,-19,9);ctx.closePath();ctx.fill();ctx.strokeStyle='#d4aa55';ctx.lineWidth=2;ctx.stroke();
-    ctx.fillStyle='#d7a274';ctx.beginPath();ctx.arc(0,-37,17,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#4b2e20';ctx.beginPath();ctx.arc(-1,-32,15,.05,Math.PI-.05);ctx.quadraticCurveTo(0,-10,14,-32);ctx.fill();
-    ctx.fillStyle='#1d251e';ctx.beginPath();ctx.arc(0,-48,19,Math.PI,Math.PI*2);ctx.lineTo(25,-45);ctx.lineTo(-22,-45);ctx.closePath();ctx.fill();ctx.strokeStyle='#d3a44b';ctx.lineWidth=2;ctx.stroke();
-    ctx.fillStyle='#f5d7a1';ctx.beginPath();ctx.arc(7,-38,2.2,0,Math.PI*2);ctx.fill();
-    drawPlayerPickaxe();ctx.restore();
-  }
-
-  function drawPlayerPickaxe(){
-    if(state.drillLevel){drawPlayerDrill();return}
-    let angle=-.25;
-    if(player.swing){const t=player.swing.elapsed/player.swing.duration;angle=-1.45+easeInOut(Math.min(1,t*1.35))*2.25}
-    const styles=[null,{handle:'#8b562c',head:'#b8c0ba',accent:'#7e8982'},{handle:'#754728',head:'#e2e8e5',accent:'#8fa8a1'},{handle:'#594628',head:'#d5b057',accent:'#76d29b'},{handle:'#315968',head:'#a9f3ee',accent:'#5fe6df'},{handle:'#542c22',head:'#ffc06d',accent:'#ff6638'}],starStyles={crusher:{handle:'#292b48',head:'#c8ceff',accent:'#858cff'},swift:{handle:'#214a54',head:'#e5ffff',accent:'#71f1ff'},prospector:{handle:'#5d4528',head:'#fff0b5',accent:'#e9b852'}},style=currentStarforge()?starStyles[state.starforgeVariant]:styles[state.pickaxeLevel];
-    ctx.save();ctx.translate(7,-6);ctx.rotate(angle);ctx.strokeStyle=style.handle;ctx.lineWidth=6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-24,0);ctx.lineTo(38,0);ctx.stroke();ctx.strokeStyle=style.head;ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(28,-17);ctx.quadraticCurveTo(45,-4,38,14);ctx.stroke();ctx.fillStyle='#c98a57';ctx.beginPath();ctx.arc(-5,0,7,0,Math.PI*2);ctx.fill();
-    if(state.pickaxeLevel>=3){ctx.strokeStyle=style.accent;ctx.lineWidth=2;ctx.shadowBlur=state.pickaxeLevel>=4?7:3;ctx.shadowColor=style.accent;ctx.beginPath();ctx.moveTo(13,-1);ctx.lineTo(20,-1);ctx.moveTo(17,-5);ctx.lineTo(17,3);ctx.stroke()}
-    if(state.emberMastery){
-      ctx.strokeStyle=state.emberMastery===5?'#fff0a5':'#ff8a42';ctx.lineWidth=1.5;ctx.shadowBlur=3+state.emberMastery;ctx.shadowColor=ctx.strokeStyle;
-      for(let notch=0;notch<state.emberMastery;notch++){const x=-17+notch*8;ctx.beginPath();ctx.moveTo(x,-4);ctx.lineTo(x+3,3);ctx.stroke()}
-      ctx.globalAlpha=.45+.25*Math.sin(time*4);ctx.beginPath();ctx.arc(35,-1,5+state.emberMastery*.45,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
-    }
-    if(state.starforgeVariant){
-      ctx.strokeStyle=style.accent;ctx.fillStyle=style.accent;ctx.shadowBlur=9;ctx.shadowColor=style.accent;ctx.globalAlpha=.75+.2*Math.sin(time*5);
-      if(state.starforgeVariant==='crusher'){
-        ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(30,-22);ctx.lineTo(45,-11);ctx.lineTo(43,17);ctx.stroke();ctx.strokeRect(28,-17,14,31);
-      }else if(state.starforgeVariant==='swift'){
-        ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(24,-20);ctx.lineTo(47,-4);ctx.lineTo(29,19);ctx.moveTo(37,-13);ctx.lineTo(42,10);ctx.stroke();
-      }else{
-        ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(31,-18);ctx.lineTo(45,-4);ctx.lineTo(37,0);ctx.lineTo(46,13);ctx.stroke();ctx.beginPath();ctx.arc(35,0,7,0,Math.PI*2);ctx.stroke();
-      }
-      ctx.globalAlpha=1;ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(0,0,0,.34)';ctx.beginPath();ctx.ellipse(0,29,34,12,0,0,Math.PI*2);ctx.fill();
+    const body=PLAYER_ART.base;
+    if(imageReady(body)){
+      const bodyHeight=PLAYER_RENDER_CONTRACT.bodyHeight,bodyWidth=bodyHeight*(body.naturalWidth/body.naturalHeight),bodyX=-bodyWidth*.5,bodyY=PLAYER_RENDER_CONTRACT.bodyBottom-bodyHeight;
+      ctx.drawImage(body,bodyX,bodyY,bodyWidth,bodyHeight);
+      drawPlayerToolLayer();
+      const crop=PLAYER_RENDER_CONTRACT.handCrop,scale=bodyHeight/body.naturalHeight;
+      ctx.drawImage(body,crop.x,crop.y,crop.w,crop.h,bodyX+crop.x*scale,bodyY+crop.y*scale,crop.w*scale,crop.h*scale);
     }
     ctx.restore();
   }
 
-  function drawPlayerDrill(){
-    // Holding the drill is one continuous action. Do not visually drop to idle
-    // during the tiny cooldown gap between individual mining hits.
-    const drill=currentDrill(),active=!!player.swing||input.mineHeld;
-    const recoil=active?1.35+Math.sin(time*34)*.7:0,vibration=active?Math.sin(time*72)*.55:0,spin=time*(active?88:3.5);
-    ctx.save();ctx.translate(4-recoil,-7+vibration);ctx.rotate(-.07);
-    ctx.lineCap='round';
-    ctx.strokeStyle='#d6a06d';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(-18,-2);ctx.lineTo(2,7);ctx.moveTo(-3,-9);ctx.lineTo(22,-1);ctx.stroke();
-    ctx.fillStyle='#172321';ctx.strokeStyle=drill.color;ctx.lineWidth=2;
-    ctx.beginPath();ctx.roundRect(-28,-14,16,28,5);ctx.fill();ctx.stroke();
-    ctx.fillStyle='#263735';ctx.beginPath();ctx.roundRect(-17,-17,45,31,8);ctx.fill();ctx.stroke();
-    ctx.fillStyle='#101918';ctx.beginPath();ctx.roundRect(-8,11,13,22,[2,2,6,6]);ctx.fill();ctx.stroke();
-    ctx.fillStyle=drill.color;ctx.globalAlpha=.26+.16*Math.sin(time*5);ctx.fillRect(-11,-12,31,5);ctx.globalAlpha=1;
-    ctx.fillStyle='#78928c';ctx.strokeStyle='#b9d9d1';ctx.beginPath();ctx.moveTo(27,-11);ctx.lineTo(39,-7);ctx.lineTo(39,7);ctx.lineTo(27,11);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.fillStyle='#d39b63';ctx.beginPath();ctx.arc(-2,12,6,0,Math.PI*2);ctx.arc(18,2,6,0,Math.PI*2);ctx.fill();
-    ctx.save();ctx.translate(39,0);ctx.shadowBlur=active?10:4;ctx.shadowColor=drill.color;
-    ctx.fillStyle='#cbd8d4';ctx.strokeStyle=drill.color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(27,-1.5);ctx.lineTo(35,0);ctx.lineTo(27,1.5);ctx.lineTo(0,7);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.strokeStyle=drill.color;ctx.lineWidth=2.2;
-    for(let band=0;band<4;band++){
-      const x=5+band*7,wave=Math.sin(spin+band*1.7)*4.5;ctx.beginPath();ctx.moveTo(x,-5+wave*.35);ctx.lineTo(x+5,5-wave*.35);ctx.stroke();
-    }
-    ctx.fillStyle='#fff3c2';ctx.beginPath();ctx.arc(35,0,active?2.8:1.4,0,Math.PI*2);ctx.fill();ctx.restore();ctx.restore();
+  function drawPlayerToolLayer(){
+    const key=currentPlayerToolKey(),asset=PLAYER_ART.tools[key],config=PLAYER_TOOL_RENDER[key];
+    if(!config||!imageReady(asset))return;
+    const drilling=state.drillLevel>0,active=drilling&&(!!player.swing||input.mineHeld);
+    let angle=drilling?-.07:-.25;
+    if(!drilling&&player.swing){const t=player.swing.elapsed/player.swing.duration;angle=-1.45+easeInOut(Math.min(1,t*1.35))*2.25}
+    const recoil=active?1.35+Math.sin(time*34)*.7:0,vibration=active?Math.sin(time*72)*.55:0;
+    const width=config.width,height=width*(asset.naturalHeight/asset.naturalWidth);
+    ctx.save();ctx.translate(PLAYER_RENDER_CONTRACT.handX-recoil,PLAYER_RENDER_CONTRACT.handY+vibration);ctx.rotate(angle);
+    ctx.drawImage(asset,-width*config.pivotX,-height*config.pivotY,width,height);
+    if(active){const drill=currentDrill();ctx.save();ctx.globalAlpha=.35+.18*Math.sin(time*38);ctx.fillStyle=drill.color;ctx.shadowBlur=7;ctx.shadowColor=drill.color;ctx.beginPath();ctx.arc(width*(1-config.pivotX)-2,0,2.1,0,Math.PI*2);ctx.fill();ctx.restore()}
+    ctx.restore();
   }
 
   function drawEffects(front){
@@ -2980,7 +2968,7 @@
 
   window.__deepforgeTest={
     snapshot:()=>JSON.parse(JSON.stringify({
-      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true},surfaceAssetRendering:{mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
+      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true},surfaceAssetRendering:{mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},characterRendering:{baseAsset:'assets/characters/miner-b.png',activeToolKey:currentPlayerToolKey(),activeToolAsset:PLAYER_TOOL_PATHS[currentPlayerToolKey()],toolAssetCount:Object.keys(PLAYER_TOOL_PATHS).length,handAnchor:{x:PLAYER_RENDER_CONTRACT.handX,y:PLAYER_RENDER_CONTRACT.handY},layeredTools:PLAYER_RENDER_CONTRACT.layeredTools,legacyCanvasCharacter:PLAYER_RENDER_CONTRACT.legacyCanvasCharacter,legacyCanvasTools:PLAYER_RENDER_CONTRACT.legacyCanvasTools},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
       effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower()),depthMainHits:currentMine()&&currentDepth===2?armoredHitsRequired(DEPTH2_RESOURCE_PROFILES[currentScene].main,currentPower(),currentShellPower()):null},
       goal:mainGoal(),guide:(()=>{const guide=visualGuide();return guide?{...guide,distance:distance(player.x,player.y,guide.x,guide.y),visible:distance(player.x,player.y,guide.x,guide.y)>guide.closeRadius}:null})(),markerStyle:{bonusVeinRings:false},toolMode:state.drillLevel?'drill':'pickaxe',protectedCargo:protectedDrillCargo(),sellableCargo:sellableCargo(),movement:{level:state.movementSpeedLevel,multiplier:movementSpeedMultiplier(),nextCost:movementSpeedCost()},miningRush:{...miningRush},lootSweep:{remaining:lootSweepRemaining(),nextAt:state.nextLootSweepAt},
       player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,
@@ -3022,7 +3010,8 @@
     placeBaseModule:id=>placeBaseModule(id),
     packBaseModule:id=>packBaseModule(id),
     takeAllFromChest:id=>takeAllFromChest(id),
-    setPickaxeLevel:level=>{state.pickaxeLevel=clamp(Math.floor(Number(level)||1),1,PICKAXES.length-1);if(state.pickaxeLevel<PICKAXES.length-1)state.emberMastery=0;uiDirty=true},
+    setPickaxeLevel:level=>{state.pickaxeLevel=clamp(Math.floor(Number(level)||1),1,PICKAXES.length-1);if(state.pickaxeLevel<PICKAXES.length-1){state.emberMastery=0;state.starforgeVariant=null}uiDirty=true},
+    setDrillLevel:level=>{state.drillLevel=clamp(Math.floor(Number(level)||0),0,DRILLS.length-1);uiDirty=true},
     unlockAllAreas:()=>{state.areaUnlocked=true;state.discoveredSecond=true;state.emberdeepUnlocked=true;state.discoveredThird=true;uiDirty=true},
     unlockStarfall:()=>{state.fourthUnlocked=true;state.discoveredFourth=true;uiDirty=true},
     spawnGroundDrops:(type,amount,x=player.x+80,y=player.y)=>spawnGroundDrop(type,amount,x,y),

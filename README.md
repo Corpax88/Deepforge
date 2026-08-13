@@ -1,6 +1,8 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.18.1 - Mossvein Surface Asset**
+Current build: **Deepforge v0.19.0 - Layered Miner**
+
+Character B is now the production player character. The miner is one fixed tool-free PNG, while five pickaxes, three Starforge forms, and three drills render as mutually exclusive equipment layers on one shared hand anchor. The former canvas-drawn player and tools have been removed completely.
 
 Mossvein's entire surface now uses one opaque production PNG with a continuous dirt path from the mine entrance to the Moonglass gate. The former canvas grid, path, and ground decorations are no longer rendered in Mossvein.
 

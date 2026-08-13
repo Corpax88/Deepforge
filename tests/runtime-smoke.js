@@ -5,11 +5,13 @@ const vm=require('node:vm');
 const source=fs.readFileSync(require('node:path').join(__dirname,'..','script.js'),'utf8');
 const html=fs.readFileSync(require('node:path').join(__dirname,'..','index.html'),'utf8');
 const latest=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'..','version.json'),'utf8'));
-assert.equal(latest.version,'0181');
+assert.equal(latest.version,'0190');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0181/);
-assert.match(html,/script\.js\?v=0181/);
+assert.match(html,/style\.css\?v=0190/);
+assert.match(html,/script\.js\?v=0190/);
+const playerAssets=['assets/characters/miner-b.png','assets/tools/pickaxe-worn.png','assets/tools/pickaxe-iron.png','assets/tools/pickaxe-runed.png','assets/tools/pickaxe-moonglass.png','assets/tools/pickaxe-ember.png','assets/tools/starforge-crusher.png','assets/tools/starforge-swift.png','assets/tools/starforge-prospector.png','assets/tools/drill-burrower.png','assets/tools/drill-pulse.png','assets/tools/drill-deepcore.png'];
+for(const relative of playerAssets){const path=require('node:path').join(__dirname,'..',relative),png=fs.readFileSync(path);assert.equal(png.toString('ascii',1,4),'PNG');assert.equal(png[25],6,relative+' must use RGBA');assert.ok(png.length<250000,relative+' exceeds mobile asset budget')}
 const storage=new Map();
 
 function createElement(id){
@@ -26,30 +28,42 @@ function createRuntime(){
   const elements=new Map();
   const element=id=>{if(!elements.has(id))elements.set(id,createElement(id));return elements.get(id)};
   const gradient={addColorStop(){}};
-  const canvasContext=new Proxy({}, {get:(_target,key)=>key==='createLinearGradient'||key==='createRadialGradient'?()=>gradient:key==='measureText'?()=>({width:0}):()=>{},set:()=>true});
+  const drawCalls=[];
+  const canvasContext=new Proxy({}, {get:(_target,key)=>key==='createLinearGradient'||key==='createRadialGradient'?()=>gradient:key==='measureText'?()=>({width:0}):key==='drawImage'?(image,...args)=>drawCalls.push({src:image.src,args}):()=>{},set:()=>true});
   element('gameCanvas').getContext=()=>canvasContext;
   const document={hidden:false,getElementById:element,addEventListener(){}};
   const window={devicePixelRatio:2,addEventListener(){},confirm:()=>true};
+  class TestImage{constructor(){this.complete=true;this.naturalWidth=512;this.naturalHeight=512;this.decoding='async';this.onload=null;this._src=''}set src(value){this._src=value;if(value.includes('miner-b')){this.naturalWidth=315;this.naturalHeight=512}else if(value.includes('drill-')){this.naturalWidth=512;this.naturalHeight=283}else this.naturalWidth=512;queueMicrotask(()=>this.onload&&this.onload())}get src(){return this._src}}
   const context={
     window,document,console,
     localStorage:{getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)},
     requestAnimationFrame(){},setTimeout(){return 1},clearTimeout(){},
-    navigator:{vibrate:()=>true}
+    navigator:{vibrate:()=>true},Image:TestImage
   };
   window.window=window;window.document=document;window.localStorage=context.localStorage;window.requestAnimationFrame=context.requestAnimationFrame;
   vm.runInContext(source,vm.createContext(context),{filename:'script.js'});
-  return{api:window.__deepforgeTest,elements};
+  return{api:window.__deepforgeTest,elements,drawCalls};
 }
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.18.1');
-assert.equal(api.snapshot().build.name,'MOSSVEIN SURFACE ASSET');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.18.1');
-assert.equal(api.snapshot().assetVersion,'0181');
+assert.equal(api.snapshot().build.version,'0.19.0');
+assert.equal(api.snapshot().build.name,'LAYERED MINER');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.19.0');
+assert.equal(api.snapshot().assetVersion,'0190');
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
+assert.equal(JSON.stringify(api.snapshot().characterRendering),JSON.stringify({baseAsset:'assets/characters/miner-b.png',activeToolKey:'pickaxe-worn',activeToolAsset:'assets/tools/pickaxe-worn.png',toolAssetCount:11,handAnchor:{x:27,y:-6},layeredTools:true,legacyCanvasCharacter:false,legacyCanvasTools:false}));
+const pickaxeKeys=['pickaxe-worn','pickaxe-iron','pickaxe-runed','pickaxe-moonglass','pickaxe-ember'];
+for(let level=1;level<=5;level++){api.setDrillLevel(0);api.setPickaxeLevel(level);assert.equal(api.snapshot().characterRendering.activeToolKey,pickaxeKeys[level-1])}
+for(const variant of ['crusher','swift','prospector']){api.setDrillLevel(0);api.setStarforgeVariant(variant);assert.equal(api.snapshot().characterRendering.activeToolKey,'starforge-'+variant)}
+for(const [level,key] of [[1,'drill-burrower'],[2,'drill-pulse'],[3,'drill-deepcore']]){api.setDrillLevel(level);assert.equal(api.snapshot().characterRendering.activeToolKey,key)}
+api.setDrillLevel(0);api.setPickaxeLevel(1);runtime.drawCalls.length=0;api.renderOnce();
+assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b.png')).length,2);
+assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/tools/')).length,1);
+assert.ok(runtime.drawCalls.some(call=>call.src.includes('assets/tools/pickaxe-worn.png')));
+api.reset();
 assert.equal(api.snapshot().mineralNodeRenderScale,.85);
 let openingGuide=api.snapshot().guide;
 assert.equal(openingGuide.kind,'rock');assert.equal(openingGuide.scene,'surface');assert.equal(openingGuide.visible,true);

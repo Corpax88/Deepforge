@@ -949,8 +949,8 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__deepforgeTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__deepforgeTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.18.1',name:'MOSSVEIN SURFACE ASSET'});
-  expect(snapshot.assetVersion).toBe('0181');
+  expect(snapshot.build).toEqual({version:'0.19.0',name:'LAYERED MINER'});
+  expect(snapshot.assetVersion).toBe('0190');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.mineralNodeRenderScale).toBe(.85);
@@ -969,9 +969,9 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.18.1');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.19.0');
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.18.1 · MOSSVEIN SURFACE ASSET');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('DEEPFORGE v0.19.0 · LAYERED MINER');
 });
 
 test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{
