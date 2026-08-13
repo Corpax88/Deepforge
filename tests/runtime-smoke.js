@@ -7,11 +7,16 @@ const html=fs.readFileSync(require('node:path').join(__dirname,'..','index.html'
 const latest=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'..','version.json'),'utf8'));
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'0200');
+assert.equal(latest.version,'0201');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0200/);
-assert.match(html,/script\.js\?v=0200/);
+assert.match(html,/style\.css\?v=0201/);
+assert.match(html,/script\.js\?v=0201/);
+assert.match(source,/MUSIC_PATH='assets\/audio\/deepforge-drift-loop\.mp3\?v='/);
+assert.match(source,/backgroundMusic\.loop=true/);
+assert.match(source,/backgroundMusic\.volume=MUSIC_VOLUME/);
+const musicAsset=fs.readFileSync(require('node:path').join(__dirname,'..','assets/audio/deepforge-drift-loop.mp3'));
+assert.ok(musicAsset.length>100000&&musicAsset.length<2000000,'background music must stay within the mobile audio budget');
 const playerAssets=['assets/characters/miner-b.png','assets/characters/miner-b-drill-burrower.png','assets/characters/miner-b-drill-pulse.png','assets/characters/miner-b-drill-deepcore.png','assets/tools/pickaxe-worn.png','assets/tools/pickaxe-iron.png','assets/tools/pickaxe-runed.png','assets/tools/pickaxe-moonglass.png','assets/tools/pickaxe-ember.png','assets/tools/starforge-crusher.png','assets/tools/starforge-swift.png','assets/tools/starforge-prospector.png'];
 for(const relative of playerAssets){const path=require('node:path').join(__dirname,'..',relative),png=fs.readFileSync(path);assert.equal(png.toString('ascii',1,4),'PNG');assert.equal(png[25],6,relative+' must use RGBA');assert.ok(png.length<250000,relative+' exceeds mobile asset budget')}
 const storage=new Map();
@@ -35,12 +40,13 @@ function createRuntime(){
   element('gameCanvas').getContext=()=>canvasContext;
   const document={hidden:false,getElementById:element,addEventListener(){}};
   const window={devicePixelRatio:2,addEventListener(){},confirm:()=>true};
+  class TestAudio{constructor(src){this.src=src;this.volume=1;this.loop=false;this.paused=true;this.preload='';this.playsInline=false}play(){this.paused=false;return Promise.resolve()}pause(){this.paused=true}}
   class TestImage{constructor(){this.complete=true;this.naturalWidth=512;this.naturalHeight=512;this.decoding='async';this.onload=null;this._src=''}set src(value){this._src=value;if(value.includes('miner-b-drill-burrower')){this.naturalWidth=348;this.naturalHeight=512}else if(value.includes('miner-b-drill-pulse')){this.naturalWidth=361;this.naturalHeight=512}else if(value.includes('miner-b-drill-deepcore')){this.naturalWidth=354;this.naturalHeight=512}else if(value.includes('miner-b')){this.naturalWidth=315;this.naturalHeight=512}else this.naturalWidth=512;queueMicrotask(()=>this.onload&&this.onload())}get src(){return this._src}}
   const context={
     window,document,console,
     localStorage:{getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)},
     requestAnimationFrame(){},setTimeout(){return 1},clearTimeout(){},
-    navigator:{vibrate:()=>true},Image:TestImage
+    navigator:{vibrate:()=>true},Image:TestImage,Audio:TestAudio
   };
   window.window=window;window.document=document;window.localStorage=context.localStorage;window.requestAnimationFrame=context.requestAnimationFrame;
   vm.runInContext(source,vm.createContext(context),{filename:'script.js'});
@@ -49,10 +55,12 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.20.0');
-assert.equal(api.snapshot().build.name,'DRILL CHARACTER ASSETS');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.20.0');
-assert.equal(api.snapshot().assetVersion,'0200');
+assert.equal(api.snapshot().build.version,'0.20.1');
+assert.equal(api.snapshot().build.name,'DEEPFORGE DRIFT');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.20.1');
+assert.equal(api.snapshot().assetVersion,'0201');
+assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/deepforge-drift-loop.mp3',volume:.1,loop:true,started:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/deepforge-drift-loop.mp3?v=0201',volume:.1,loop:true,paused:false}));
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));

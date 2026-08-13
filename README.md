@@ -1,6 +1,8 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.20.0 - Drill Character Assets**
+Current build: **Deepforge v0.20.1 - Deepforge Drift**
+
+Deepforge Drift now plays as a low background soundtrack after the player's first interaction. Its intro and ending are rebuilt into an 82.38-second seamless crossfade loop, and playback pauses while the game is hidden.
 
 Burrower, Pulse, and Deepcore now use complete production character assets with both hands permanently drawn around the correct grips. Drill rendering swaps the entire character as one clean unit, so facing changes and recoil can never separate hands, body, and tool.
 
