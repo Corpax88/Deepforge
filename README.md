@@ -1,6 +1,8 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.19.1 - Animated Grip**
+Current build: **Deepforge v0.19.2 - Two-Hand Drills**
+
+Burrower, Pulse, and Deepcore now use individual rear-trigger and front-support grip maps. Both original Character B hands are composited over each drill and move with one shared recoil group in either facing direction.
 
 Character B now keeps its exact production PNG while the original grip arm is split at render time and animated together with the active tool. Pickaxes use a wind-up, impact, and recovery motion; drills share the same hand anchor with synchronized recoil and vibration.
 
