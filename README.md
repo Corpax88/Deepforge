@@ -1,8 +1,10 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.17.0 - Copper and Gold Assets**
+Current build: **Deepforge v0.17.1 - Buried Asset Seams**
 
 Copper and Gold now use dedicated transparent PNGs for both buried wall seams and revealed nodes. Their former canvas-drawn mineral bodies and seams are no longer rendered.
+
+Wall-seam PNGs are clipped into the final terrain face as narrow, shallow previews; full node PNGs remain unchanged.
 
 The Mossvein wall asset is now neutral charcoal stone without baked amber patches, so colored seams always indicate a real buried mineral.
 

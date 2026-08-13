@@ -36,9 +36,9 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.17.0');
-assert.equal(api.snapshot().build.name,'COPPER AND GOLD ASSETS');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.17.0');
+assert.equal(api.snapshot().build.version,'0.17.1');
+assert.equal(api.snapshot().build.name,'BURIED ASSET SEAMS');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.17.1');
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({copper:['wall','node'],gold:['wall','node']}));
 let openingGuide=api.snapshot().guide;
 assert.equal(openingGuide.kind,'rock');assert.equal(openingGuide.scene,'surface');assert.equal(openingGuide.visible,true);
