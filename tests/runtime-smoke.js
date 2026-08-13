@@ -7,11 +7,11 @@ const html=fs.readFileSync(require('node:path').join(__dirname,'..','index.html'
 const latest=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'..','version.json'),'utf8'));
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'0201');
+assert.equal(latest.version,'0202');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0201/);
-assert.match(html,/script\.js\?v=0201/);
+assert.match(html,/style\.css\?v=0202/);
+assert.match(html,/script\.js\?v=0202/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/deepforge-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
 assert.match(source,/backgroundMusic\.volume=MUSIC_VOLUME/);
@@ -55,12 +55,12 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.20.1');
-assert.equal(api.snapshot().build.name,'DEEPFORGE DRIFT');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.20.1');
-assert.equal(api.snapshot().assetVersion,'0201');
-assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/deepforge-drift-loop.mp3',volume:.1,loop:true,started:false}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/deepforge-drift-loop.mp3?v=0201',volume:.1,loop:true,paused:false}));
+assert.equal(api.snapshot().build.version,'0.20.2');
+assert.equal(api.snapshot().build.name,'QUIET DRIFT');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.20.2');
+assert.equal(api.snapshot().assetVersion,'0202');
+assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/deepforge-drift-loop.mp3',volume:1,loop:true,started:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/deepforge-drift-loop.mp3?v=0202',volume:1,loop:true,paused:false}));
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));

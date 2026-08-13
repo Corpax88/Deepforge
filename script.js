@@ -4,9 +4,10 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0201';
+  const ASSET_VERSION='0202';
   const MUSIC_PATH='assets/audio/deepforge-drift-loop.mp3?v='+ASSET_VERSION;
-  const MUSIC_VOLUME=.10;
+  // iOS may ignore HTMLAudioElement volume. The asset itself is mastered at -28 LUFS.
+  const MUSIC_VOLUME=1;
   const MOSSVEIN_ART={wall:null,floor:null,floorPattern:null};
   const SURFACE_ART={mossveinGround:null};
   const MINERAL_ART={stone:{wall:null,node:null},copper:{wall:null,node:null},gold:{wall:null,node:null}};
@@ -113,7 +114,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.20.1',name:'DEEPFORGE DRIFT'};
+  const BUILD={version:'0.20.2',name:'QUIET DRIFT'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='DEEPFORGE v'+BUILD.version+' · '+BUILD.name;
 
