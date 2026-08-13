@@ -1,6 +1,8 @@
 # Deepforge prototype
 
-Current build: **Deepforge v0.19.0 - Layered Miner**
+Current build: **Deepforge v0.19.1 - Animated Grip**
+
+Character B now keeps its exact production PNG while the original grip arm is split at render time and animated together with the active tool. Pickaxes use a wind-up, impact, and recovery motion; drills share the same hand anchor with synchronized recoil and vibration.
 
 Character B is now the production player character. The miner is one fixed tool-free PNG, while five pickaxes, three Starforge forms, and three drills render as mutually exclusive equipment layers on one shared hand anchor. The former canvas-drawn player and tools have been removed completely.
 
