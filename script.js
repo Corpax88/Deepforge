@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0260';
+  const ASSET_VERSION='0261';
   const LIGHTING=Object.freeze({
     bufferScale:.34,darknessDepth1:.78,darknessDepth2:.86,
     ambientRadius:132,beamLength:590,beamHalfAngle:.52,beamCoreHalfAngle:.3,
@@ -19,10 +19,10 @@
   const MOSSVEIN_ART={wall:null,floor:null,floorPattern:null};
   const SURFACE_ART={mossveinGround:null,moonglassGround:null,moonglassGroundPattern:null,moonglassCrystals:null,moonglassBloomBed:null};
   const DISCOVERY_ART={crystalPocket:null};
-  const STARTER_ART={sellStation:null,forgeStation:null,storageChest:null,wayfarerShop:null,moonglassGate:null,emberdeepSeal:null,emberdeepGateOpen:null,treasureClosed:null,treasureOpen:null,drops:{}};
+  const STARTER_ART={sellStation:null,forgeStation:null,storageChest:null,wayfarerShop:null,moonglassGate:null,emberdeepSeal:null,treasureClosed:null,treasureOpen:null,drops:{}};
   const STARTER_PATHS=Object.freeze({
     sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',
-    treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',moonglassGate:'assets/surface/moonglass-gate.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepGateOpen:'assets/surface/emberdeep-gate-open.png'
+    treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',moonglassGate:'assets/surface/moonglass-gate.png',emberdeepSeal:'assets/surface/emberdeep-seal.png'
   });
   const SURFACE_MOONGLASS_PATHS=Object.freeze({
     ground:'assets/surface/moonglass-ground.png',crystals:'assets/surface/moonglass-crystals.png',bloomBed:'assets/surface/moonglass-bloom-bed.png',
@@ -198,7 +198,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.26.0',name:'MOONGLASS COMPLETE'};
+  const BUILD={version:'0.26.1',name:'MOONGLASS COMPLETE'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='EVER DEEPER v'+BUILD.version+' · '+BUILD.name;
 
@@ -2885,7 +2885,7 @@
 
   function drawMoonglassSurfaceProductionDecor(){
     if(!imageReady(SURFACE_ART.moonglassGround))return;
-    const clusters=[[1175,220,94,78,false,.88],[1165,825,96,78,true,.86],[1435,185,106,84,true,.9],[1775,210,112,88,false,.86],[2110,330,104,82,true,.88],[1350,1210,112,88,true,.82],[1885,1170,116,90,false,.84],[2160,930,100,80,false,.82]];
+    const clusters=[[1185,220,112,48,false,.48],[1435,185,118,50,true,.5],[1775,210,122,52,false,.46],[2110,330,114,48,true,.48],[1415,1235,118,50,true,.44],[1885,1170,124,52,false,.46],[2160,930,112,48,false,.44]];
     for(const [x,y,w,h,flip,alpha] of clusters)drawSurfaceProductionAt(SURFACE_ART.moonglassCrystals,x,y,w,h,flip,alpha);
     drawSurfaceProductionAt(SURFACE_ART.moonglassBloomBed,1665,572,286,126,false,.96);
   }
@@ -3085,9 +3085,9 @@
   }
 
   function drawGate(){
-    drawGateAt(WORLD.gateX,state.areaUnlocked,'#68e8e5','#202720','#576358',STARTER_ART.moonglassGate);
-    drawGateAt(WORLD.emberGateX,state.emberdeepUnlocked,'#ff7747','#2b1b18','#75412c',state.emberdeepUnlocked?STARTER_ART.emberdeepGateOpen:STARTER_ART.emberdeepSeal);
-    drawGateAt(WORLD.starfallGateX,state.fourthUnlocked,'#c7caff','#1d1e31','#5e6081');
+    if(!state.areaUnlocked)drawGateAt(WORLD.gateX,false,'#68e8e5','#202720','#576358',STARTER_ART.moonglassGate);
+    if(!state.emberdeepUnlocked)drawGateAt(WORLD.emberGateX,false,'#ff7747','#2b1b18','#75412c',STARTER_ART.emberdeepSeal);
+    if(!state.fourthUnlocked)drawGateAt(WORLD.starfallGateX,false,'#c7caff','#1d1e31','#5e6081');
   }
 
   function drawGateAt(x,open,glowColor,stoneColor,braceColor,production=null){
@@ -3095,7 +3095,7 @@
     ctx.save();ctx.translate(p.x,p.y);
     if(imageReady(production)){
       ctx.fillStyle='rgba(0,0,0,.36)';ctx.beginPath();ctx.ellipse(0,65,72,18,0,0,Math.PI*2);ctx.fill();drawProductionWorldAsset(production,168,158,72);
-      if(!(open&&production===STARTER_ART.emberdeepGateOpen)){ctx.strokeStyle=open?glowColor+'55':glowColor;ctx.lineWidth=open?2:6;ctx.shadowBlur=open?5:17;ctx.shadowColor=glowColor;ctx.globalAlpha=open?.36:.92;ctx.beginPath();ctx.moveTo(0,-26);ctx.lineTo(0,55);ctx.stroke();ctx.globalAlpha=1;ctx.shadowBlur=0}ctx.restore();return;
+      ctx.strokeStyle=open?glowColor+'55':glowColor;ctx.lineWidth=open?2:6;ctx.shadowBlur=open?5:17;ctx.shadowColor=glowColor;ctx.globalAlpha=open?.36:.92;ctx.beginPath();ctx.moveTo(0,-26);ctx.lineTo(0,55);ctx.stroke();ctx.globalAlpha=1;ctx.shadowBlur=0;ctx.restore();return;
     }
     ctx.fillStyle=stoneColor;ctx.fillRect(-28,-190,56,145);ctx.fillRect(-28,45,56,145);
     ctx.fillStyle=braceColor;for(const y of [-170,-115,-60,60,115,170])ctx.fillRect(-34,y-13,68,25);
@@ -3416,11 +3416,11 @@
   window.__everDeeperTest={
     snapshot:()=>JSON.parse(JSON.stringify({
       build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true},surfaceAssetRendering:{mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
-      surfaceMoonglassRendering:{ground:SURFACE_MOONGLASS_PATHS.ground,crystals:SURFACE_MOONGLASS_PATHS.crystals,bloomBed:SURFACE_MOONGLASS_PATHS.bloomBed,entrance:MINE_ENTRANCE_PATHS.moonMine,emberdeepSeal:STARTER_PATHS.emberdeepSeal,emberdeepGateOpen:STARTER_PATHS.emberdeepGateOpen,chests:{crystalCache:{closed:SURFACE_MOONGLASS_PATHS.crystalCacheClosed,open:SURFACE_MOONGLASS_PATHS.crystalCacheOpen},reliquary:{closed:SURFACE_MOONGLASS_PATHS.reliquaryClosed,open:SURFACE_MOONGLASS_PATHS.reliquaryOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyEmberdeepSeal:false},
-      moonglassRendering:{surfaceGround:SURFACE_MOONGLASS_PATHS.ground,surfaceCrystals:SURFACE_MOONGLASS_PATHS.crystals,bloomBed:SURFACE_MOONGLASS_PATHS.bloomBed,entrance:MINE_ENTRANCE_PATHS.moonMine,emberdeepSeal:STARTER_PATHS.emberdeepSeal,emberdeepGateOpen:STARTER_PATHS.emberdeepGateOpen,chests:{crystalCache:{closed:SURFACE_MOONGLASS_PATHS.crystalCacheClosed,open:SURFACE_MOONGLASS_PATHS.crystalCacheOpen},reliquary:{closed:SURFACE_MOONGLASS_PATHS.reliquaryClosed,open:SURFACE_MOONGLASS_PATHS.reliquaryOpen}},floor:MOONGLASS_PATHS.floor,wall:MOONGLASS_PATHS.wall,routeMarker:MOONGLASS_PATHS.routeMarker,pocket:MOONGLASS_PATHS.pocket,cache:MOONGLASS_PATHS.cache,shrine:MOONGLASS_PATHS.shrine,nodes:{moonglass:MOONGLASS_PATHS.moonglassNode,starshard:MOONGLASS_PATHS.starshardNode},wallHints:{moonglass:MOONGLASS_PATHS.moonglassWall,starshard:MOONGLASS_PATHS.starshardWall},barriers:{moon_prism_gate:MOONGLASS_PATHS.prismFault,moon_star_lock:MOONGLASS_PATHS.starGeode},drops:{moonglass:DROP_PATHS.moonglass,starshard:DROP_PATHS.starshard},legacySurfaceDecorations:false,legacyMineFloor:false,legacyMineTerrain:false,legacyMineWalls:false,legacyBarriers:false,legacyPocketRewards:false,legacyResourceNodes:false},
+      surfaceMoonglassRendering:{ground:SURFACE_MOONGLASS_PATHS.ground,crystals:SURFACE_MOONGLASS_PATHS.crystals,bloomBed:SURFACE_MOONGLASS_PATHS.bloomBed,entrance:MINE_ENTRANCE_PATHS.moonMine,emberdeepSeal:STARTER_PATHS.emberdeepSeal,openBoundaryGatesRemoved:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:SURFACE_MOONGLASS_PATHS.crystalCacheClosed,open:SURFACE_MOONGLASS_PATHS.crystalCacheOpen},reliquary:{closed:SURFACE_MOONGLASS_PATHS.reliquaryClosed,open:SURFACE_MOONGLASS_PATHS.reliquaryOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyEmberdeepSeal:false},
+      moonglassRendering:{surfaceGround:SURFACE_MOONGLASS_PATHS.ground,surfaceCrystals:SURFACE_MOONGLASS_PATHS.crystals,bloomBed:SURFACE_MOONGLASS_PATHS.bloomBed,entrance:MINE_ENTRANCE_PATHS.moonMine,emberdeepSeal:STARTER_PATHS.emberdeepSeal,openBoundaryGatesRemoved:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:SURFACE_MOONGLASS_PATHS.crystalCacheClosed,open:SURFACE_MOONGLASS_PATHS.crystalCacheOpen},reliquary:{closed:SURFACE_MOONGLASS_PATHS.reliquaryClosed,open:SURFACE_MOONGLASS_PATHS.reliquaryOpen}},floor:MOONGLASS_PATHS.floor,wall:MOONGLASS_PATHS.wall,routeMarker:MOONGLASS_PATHS.routeMarker,pocket:MOONGLASS_PATHS.pocket,cache:MOONGLASS_PATHS.cache,shrine:MOONGLASS_PATHS.shrine,nodes:{moonglass:MOONGLASS_PATHS.moonglassNode,starshard:MOONGLASS_PATHS.starshardNode},wallHints:{moonglass:MOONGLASS_PATHS.moonglassWall,starshard:MOONGLASS_PATHS.starshardWall},barriers:{moon_prism_gate:MOONGLASS_PATHS.prismFault,moon_star_lock:MOONGLASS_PATHS.starGeode},drops:{moonglass:DROP_PATHS.moonglass,starshard:DROP_PATHS.starshard},legacySurfaceDecorations:false,legacyMineFloor:false,legacyMineTerrain:false,legacyMineWalls:false,legacyBarriers:false,legacyPocketRewards:false,legacyResourceNodes:false},
       prismaticRendering:{floor:PRISMATIC_PATHS.floor,wall:PRISMATIC_PATHS.wall,shaft:PRISMATIC_PATHS.shaft,sellStation:PRISMATIC_PATHS.sellStation,drillForge:PRISMATIC_PATHS.drillForge,pocket:PRISMATIC_PATHS.pocket,cache:PRISMATIC_PATHS.cache,shrine:PRISMATIC_PATHS.shrine,nodes:{prismite:PRISMATIC_PATHS.prismiteNode,deepstone:ROOTWOUND_PATHS.deepstone,lunacore:PRISMATIC_PATHS.lunacoreNode,phasecrystal:PRISMATIC_PATHS.phasecrystalNode},wallHints:{prismite:PRISMATIC_PATHS.prismiteWall,deepstone:PRISMATIC_PATHS.deepstoneWall,lunacore:PRISMATIC_PATHS.lunacoreWall,phasecrystal:PRISMATIC_PATHS.phasecrystalWall},drops:{deepstone:DROP_PATHS.deepstone,prismite:DROP_PATHS.prismite,lunacore:DROP_PATHS.lunacore,phasecrystal:DROP_PATHS.phasecrystal},legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyPocketRewards:false,legacyResourceNodes:false},
       discoveryRendering:{crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:MOSSVEIN_REWARD_PATHS.cache,shrineAsset:MOSSVEIN_REWARD_PATHS.shrine,legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true},characterRendering:{baseAsset:'assets/characters/miner-b.png',activeToolKey:currentPlayerToolKey(),activeRenderAsset:state.drillLevel?PLAYER_DRILL_CHARACTER_PATHS[currentPlayerToolKey()]:PLAYER_TOOL_PATHS[currentPlayerToolKey()],toolLayerCount:Object.keys(PLAYER_TOOL_PATHS).length,drillCompositeCount:Object.keys(PLAYER_DRILL_CHARACTER_PATHS).length,gripCrop:PLAYER_RENDER_CONTRACT.gripCrop,gripPivot:PLAYER_RENDER_CONTRACT.gripPivot,gripPoint:PLAYER_RENDER_CONTRACT.gripPoint,layeredTools:PLAYER_RENDER_CONTRACT.layeredTools,animatedGrip:PLAYER_RENDER_CONTRACT.animatedGrip,bodyReaction:PLAYER_RENDER_CONTRACT.bodyReaction,sharedGripAnchor:PLAYER_RENDER_CONTRACT.sharedGripAnchor,fullDrillComposites:PLAYER_RENDER_CONTRACT.fullDrillComposites,legacyDrillLimbCrops:PLAYER_RENDER_CONTRACT.legacyDrillLimbCrops,legacyCanvasCharacter:PLAYER_RENDER_CONTRACT.legacyCanvasCharacter,legacyCanvasTools:PLAYER_RENDER_CONTRACT.legacyCanvasTools},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
-      starterGateRendering:{moonglassGate:STARTER_PATHS.moonglassGate,legacyStarterGate:false},
+      starterGateRendering:{moonglassGate:STARTER_PATHS.moonglassGate,openWorldGatesRemoved:true,legacyStarterGate:false},
       effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower()),depthMainHits:currentMine()&&currentDepth===2?armoredHitsRequired(DEPTH2_RESOURCE_PROFILES[currentScene].main,currentPower(),currentShellPower()):null},
       goal:mainGoal(),guide:(()=>{const guide=visualGuide();return guide?{...guide,distance:distance(player.x,player.y,guide.x,guide.y),visible:distance(player.x,player.y,guide.x,guide.y)>guide.closeRadius}:null})(),markerStyle:{bonusVeinRings:false},toolMode:state.drillLevel?'drill':'pickaxe',protectedCargo:protectedDrillCargo(),sellableCargo:sellableCargo(),movement:{level:state.movementSpeedLevel,multiplier:movementSpeedMultiplier(),nextCost:movementSpeedCost()},miningRush:{...miningRush},lootSweep:{remaining:lootSweepRemaining(),nextAt:state.nextLootSweepAt},
       player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,
