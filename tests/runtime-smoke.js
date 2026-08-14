@@ -20,12 +20,12 @@ function auditBrandRemoval(directory){
 auditBrandRemoval(repositoryRoot);
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'0266');
+assert.equal(latest.version,'0267');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0266/);
-assert.match(html,/script\.js\?v=0266/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0266/);
+assert.match(html,/style\.css\?v=0267/);
+assert.match(html,/script\.js\?v=0267/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0267/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -144,12 +144,12 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.26.6');
+assert.equal(api.snapshot().build.version,'0.26.7');
 assert.equal(api.snapshot().build.name,'MOONGLASS COMPLETE');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.6');
-assert.equal(api.snapshot().assetVersion,'0266');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.7');
+assert.equal(api.snapshot().assetVersion,'0267');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0266',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0267',volume:1,loop:true,paused:false}));
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true,moonMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMinePosition:{x:180,y:830},legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
@@ -161,6 +161,8 @@ const expectedPrismaticRendering={floor:'assets/prismatic/floor.png',wall:'asset
 assert.equal(JSON.stringify(api.snapshot().moonglassRendering),JSON.stringify(expectedMoonglassRendering));
 assert.equal(JSON.stringify(api.snapshot().prismaticRendering),JSON.stringify(expectedPrismaticRendering));
 assert.equal(JSON.stringify(api.snapshot().discoveryRendering),JSON.stringify({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true}));
+assert.equal(JSON.stringify(api.snapshot().bonusVeinRendering),JSON.stringify({worldLabels:false,textPrompts:false,sleepingCracks:true,movingReadyPulse:true,radialTimer:true,completionBurst:true}));
+assert.doesNotMatch(source,/vein\.label|BONUS VEIN|COOLED/);
 assert.equal(JSON.stringify(api.snapshot().characterRendering),JSON.stringify({baseAsset:'assets/characters/miner-b.png',activeToolKey:'pickaxe-worn',activeRenderAsset:'assets/tools/pickaxe-worn.png',toolLayerCount:8,drillCompositeCount:3,gripCrop:{x:246,y:307,w:69,h:101},gripPivot:{x:14,y:24},gripPoint:{x:42,y:50},layeredTools:true,animatedGrip:true,bodyReaction:true,sharedGripAnchor:true,fullDrillComposites:true,legacyDrillLimbCrops:false,legacyCanvasCharacter:false,legacyCanvasTools:false}));
 function assertRendered(drawCalls,paths){for(const path of paths)assert.ok(drawCalls.some(call=>call.src.includes(path)),path+' must render')}
 function renderAt(testRuntime,testApi,x,y,paths){testApi.setPosition(x,y);testRuntime.drawCalls.length=0;testApi.renderOnce();assertRendered(testRuntime.drawCalls,paths)}

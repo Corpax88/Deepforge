@@ -1059,13 +1059,14 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.26.6',name:'MOONGLASS COMPLETE'});
-  expect(snapshot.assetVersion).toBe('0266');
+  expect(snapshot.build).toEqual({version:'0.26.7',name:'MOONGLASS COMPLETE'});
+  expect(snapshot.assetVersion).toBe('0267');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMinePosition:{x:180,y:830},legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
   expect(snapshot.starterGateRendering).toEqual({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',animatedMoonglassTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false});
   expect(snapshot.discoveryRendering).toEqual({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true});
+  expect(snapshot.bonusVeinRendering).toEqual({worldLabels:false,textPrompts:false,sleepingCracks:true,movingReadyPulse:true,radialTimer:true,completionBurst:true});
   expect(snapshot.mineralNodeRenderScale).toBe(.85);
   expect(snapshot.assetRendering).toEqual({stone:['node'],copper:['wall','node'],gold:['wall','node']});
   expect(snapshot.mine.height).toBeGreaterThanOrEqual(5000);
@@ -1082,11 +1083,11 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.26.6');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.26.7');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.26.6 · MOONGLASS COMPLETE');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.26.7 · MOONGLASS COMPLETE');
 });
 
 test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{
@@ -1394,11 +1395,11 @@ test('Rootwound Depth 2 uses the complete production asset set',async({page})=>{
   expect(art.every(asset=>asset.width>=300&&asset.height>=300)).toBe(true);
 });
 
-test('v0.26.6 exposes the complete Moonglass and Prismatic production contracts',async({page})=>{
+test('v0.26.7 exposes the complete Moonglass and Prismatic production contracts',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build.version).toBe('0.26.6');
-  expect(snapshot.assetVersion).toBe('0266');
+  expect(snapshot.build.version).toBe('0.26.7');
+  expect(snapshot.assetVersion).toBe('0267');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);
   expect(snapshot.prismaticRendering).toEqual(PRISMATIC_RENDERING);
