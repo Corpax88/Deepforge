@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0281';
+  const ASSET_VERSION='0282';
   const MOONGLASS_SURFACE_BLEND=190;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=190;
@@ -264,7 +264,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.28.1',name:'EMBERDEEP COMPLETE'};
+  const BUILD={version:'0.28.2',name:'EMBERDEEP COMPLETE'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='EVER DEEPER v'+BUILD.version+' · '+BUILD.name;
 
@@ -1820,13 +1820,11 @@
     const count=precision?11:6;
     for(let i=0;i<count;i++)addParticle({x,y,vx:(Math.random()-.5)*(precision?225:160)*feedback.spread,vy:-45-Math.random()*(precision?175:125),age:0,life:.35+Math.random()*.22,size:2+Math.random()*(precision?5:4),color:i%2?data.edge:data.accent,gravity:feedback.gravity,shape:feedback.shape});
     floaters.push({x,y:y-14,text:String(damage),color:'#fff2b3',age:0,life:.62,size:13});
-    rings.push({x,y,age:0,life:precision?.38:.24,radius:precision?17:12,color:data.edge});
   }
 
   function spawnBreak(x,y,type){
     const data=ROCK_TYPES[type],feedback=MATERIAL_FEEDBACK[type]||MATERIAL_FEEDBACK.stone;
     for(let i=0;i<15;i++)addParticle({x,y,vx:(Math.random()-.5)*250*feedback.spread,vy:-70-Math.random()*190,age:0,life:.55+Math.random()*.35,size:3+Math.random()*6,color:i%3?data.color:data.edge,gravity:feedback.gravity,shape:feedback.shape});
-    rings.push({x,y,age:0,life:.45,radius:18,color:data.edge});
   }
 
   function spawnDiscoveryBurst(rock,label){
@@ -3539,8 +3537,8 @@
   function playerRenderPose(){
     const drilling=state.drillLevel>0,activeDrill=drilling&&(!!player.swing||input.mineHeld);
     if(drilling){
-      const pulse=activeDrill?Math.sin(time*72):0,recoil=activeDrill?.55+Math.sin(time*34)*.22:0;
-      return{toolAngle:0,armAngle:0,armX:-recoil,armY:pulse*.18,bodyAngle:activeDrill?-.006+Math.sin(time*34)*.002:0,bodyY:0,active:activeDrill};
+      const buzzX=activeDrill?-.2+Math.sin(time*79)*.55+Math.sin(time*43)*.15:0,buzzY=activeDrill?Math.sin(time*91)*.3:0;
+      return{toolAngle:0,armAngle:0,armX:buzzX,armY:buzzY,bodyAngle:activeDrill?Math.sin(time*61)*.004:0,bodyY:0,active:activeDrill};
     }
     if(!player.swing)return{toolAngle:-.2,armAngle:0,armX:0,armY:0,bodyAngle:0,bodyY:0,active:false};
     const t=clamp(player.swing.elapsed/player.swing.duration,0,1),idle=-.2,windup=-1.08,strike=.58;
@@ -3716,7 +3714,7 @@
       prismaticRendering:{floor:PRISMATIC_PATHS.floor,wall:PRISMATIC_PATHS.wall,shaft:PRISMATIC_PATHS.shaft,sellStation:PRISMATIC_PATHS.sellStation,drillForge:PRISMATIC_PATHS.drillForge,pocket:PRISMATIC_PATHS.pocket,cache:PRISMATIC_PATHS.cache,shrine:PRISMATIC_PATHS.shrine,nodes:{prismite:PRISMATIC_PATHS.prismiteNode,deepstone:ROOTWOUND_PATHS.deepstone,lunacore:PRISMATIC_PATHS.lunacoreNode,phasecrystal:PRISMATIC_PATHS.phasecrystalNode},wallHints:{prismite:PRISMATIC_PATHS.prismiteWall,deepstone:PRISMATIC_PATHS.deepstoneWall,lunacore:PRISMATIC_PATHS.lunacoreWall,phasecrystal:PRISMATIC_PATHS.phasecrystalWall},drops:{deepstone:DROP_PATHS.deepstone,prismite:DROP_PATHS.prismite,lunacore:DROP_PATHS.lunacore,phasecrystal:DROP_PATHS.phasecrystal},legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyPocketRewards:false,legacyResourceNodes:false},
       emberdeepRendering:{floor:EMBERDEEP_PATHS.floor,wall:EMBERDEEP_PATHS.wall,routeMarker:EMBERDEEP_PATHS.routeMarker,pocket:EMBERDEEP_PATHS.pocket,cache:EMBERDEEP_PATHS.cache,shrine:EMBERDEEP_PATHS.shrine,nodes:{emberstone:EMBERDEEP_PATHS.emberstoneNode,moonglass:MOONGLASS_PATHS.moonglassNode,sunslag:EMBERDEEP_PATHS.sunslagNode},wallHints:{emberstone:EMBERDEEP_PATHS.emberstoneWall,moonglass:MOONGLASS_PATHS.moonglassWall,sunslag:EMBERDEEP_PATHS.sunslagWall},barriers:{ember_bulkhead:EMBERDEEP_PATHS.cinderBulkhead,ember_crucible_lock:EMBERDEEP_PATHS.crucibleSeal},drops:{emberstone:DROP_PATHS.emberstone,moonglass:DROP_PATHS.moonglass,sunslag:DROP_PATHS.sunslag},legacyMineFloor:false,legacyMineTerrain:false,legacyMineWalls:false,legacyBarriers:false,legacyPocketRewards:false,legacyResourceNodes:false},
       moltenRendering:{floor:MOLTEN_PATHS.floor,wall:MOLTEN_PATHS.wall,shaft:MOLTEN_PATHS.shaft,sellStation:MOLTEN_PATHS.sellStation,drillForge:MOLTEN_PATHS.drillForge,pocket:MOLTEN_PATHS.pocket,cache:MOLTEN_PATHS.cache,shrine:MOLTEN_PATHS.shrine,nodes:{magmaite:MOLTEN_PATHS.magmaiteNode,deepstone:MOLTEN_PATHS.deepstoneNode,furnaceheart:MOLTEN_PATHS.furnaceheartNode,infernium:MOLTEN_PATHS.inferniumNode},wallHints:{magmaite:MOLTEN_PATHS.magmaiteWall,deepstone:MOLTEN_PATHS.deepstoneWall,furnaceheart:MOLTEN_PATHS.furnaceheartWall,infernium:MOLTEN_PATHS.inferniumWall},drops:{deepstone:DROP_PATHS.deepstone,magmaite:DROP_PATHS.magmaite,furnaceheart:DROP_PATHS.furnaceheart,infernium:DROP_PATHS.infernium},legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyPocketRewards:false,legacyResourceNodes:false},
-      discoveryRendering:{crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:MOSSVEIN_REWARD_PATHS.cache,shrineAsset:MOSSVEIN_REWARD_PATHS.shrine,legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true},bonusVeinRendering:{worldLabels:false,textPrompts:false,sleepingCracks:true,movingReadyPulse:true,radialTimer:true,completionBurst:true},characterRendering:{baseAsset:'assets/characters/miner-b.png',activeToolKey:currentPlayerToolKey(),activeRenderAsset:state.drillLevel?PLAYER_DRILL_CHARACTER_PATHS[currentPlayerToolKey()]:PLAYER_TOOL_PATHS[currentPlayerToolKey()],toolLayerCount:Object.keys(PLAYER_TOOL_PATHS).length,drillCompositeCount:Object.keys(PLAYER_DRILL_CHARACTER_PATHS).length,gripCrop:PLAYER_RENDER_CONTRACT.gripCrop,gripPivot:PLAYER_RENDER_CONTRACT.gripPivot,gripPoint:PLAYER_RENDER_CONTRACT.gripPoint,layeredTools:PLAYER_RENDER_CONTRACT.layeredTools,animatedGrip:PLAYER_RENDER_CONTRACT.animatedGrip,bodyReaction:PLAYER_RENDER_CONTRACT.bodyReaction,sharedGripAnchor:PLAYER_RENDER_CONTRACT.sharedGripAnchor,fullDrillComposites:PLAYER_RENDER_CONTRACT.fullDrillComposites,legacyDrillLimbCrops:PLAYER_RENDER_CONTRACT.legacyDrillLimbCrops,legacyCanvasCharacter:PLAYER_RENDER_CONTRACT.legacyCanvasCharacter,legacyCanvasTools:PLAYER_RENDER_CONTRACT.legacyCanvasTools},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
+      discoveryRendering:{crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:MOSSVEIN_REWARD_PATHS.cache,shrineAsset:MOSSVEIN_REWARD_PATHS.shrine,legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true},bonusVeinRendering:{worldLabels:false,textPrompts:false,sleepingCracks:true,movingReadyPulse:true,radialTimer:true,completionBurst:true},miningFeedbackRendering:{routineImpactRings:false,routineBreakRings:false,drillVibration:true,drillVibrationMaxOffset:.9,cameraShake:false},characterRendering:{baseAsset:'assets/characters/miner-b.png',activeToolKey:currentPlayerToolKey(),activeRenderAsset:state.drillLevel?PLAYER_DRILL_CHARACTER_PATHS[currentPlayerToolKey()]:PLAYER_TOOL_PATHS[currentPlayerToolKey()],toolLayerCount:Object.keys(PLAYER_TOOL_PATHS).length,drillCompositeCount:Object.keys(PLAYER_DRILL_CHARACTER_PATHS).length,gripCrop:PLAYER_RENDER_CONTRACT.gripCrop,gripPivot:PLAYER_RENDER_CONTRACT.gripPivot,gripPoint:PLAYER_RENDER_CONTRACT.gripPoint,layeredTools:PLAYER_RENDER_CONTRACT.layeredTools,animatedGrip:PLAYER_RENDER_CONTRACT.animatedGrip,bodyReaction:PLAYER_RENDER_CONTRACT.bodyReaction,sharedGripAnchor:PLAYER_RENDER_CONTRACT.sharedGripAnchor,fullDrillComposites:PLAYER_RENDER_CONTRACT.fullDrillComposites,legacyDrillLimbCrops:PLAYER_RENDER_CONTRACT.legacyDrillLimbCrops,legacyCanvasCharacter:PLAYER_RENDER_CONTRACT.legacyCanvasCharacter,legacyCanvasTools:PLAYER_RENDER_CONTRACT.legacyCanvasTools},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
       starterGateRendering:{moonglassGate:STARTER_PATHS.moonglassGate,moonglassGateMark:STARTER_PATHS.moonglassGateMark,emberdeepSeal:STARTER_PATHS.emberdeepSeal,emberdeepSealMark:STARTER_PATHS.emberdeepSealMark,animatedMoonglassTransition:true,animatedEmberdeepTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false},
       effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower()),depthMainHits:currentMine()&&currentDepth===2?armoredHitsRequired(DEPTH2_RESOURCE_PROFILES[currentScene].main,currentPower(),currentShellPower()):null},
       goal:mainGoal(),guide:(()=>{const guide=visualGuide();return guide?{...guide,distance:distance(player.x,player.y,guide.x,guide.y),visible:distance(player.x,player.y,guide.x,guide.y)>guide.closeRadius}:null})(),markerStyle:{bonusVeinRings:false},toolMode:state.drillLevel?'drill':'pickaxe',protectedCargo:protectedProgressCargo(),sellableCargo:sellableCargo(),movement:{level:state.movementSpeedLevel,multiplier:movementSpeedMultiplier(),nextCost:movementSpeedCost()},miningRush:{...miningRush},lootSweep:{remaining:lootSweepRemaining(),nextAt:state.nextLootSweepAt},
