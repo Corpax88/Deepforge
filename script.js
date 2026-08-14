@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='02610';
+  const ASSET_VERSION='02611';
   const MOONGLASS_SURFACE_BLEND=190;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const LIGHTING=Object.freeze({
@@ -20,6 +20,7 @@
   const MUSIC_PATH='assets/audio/ever-deeper-drift-loop.mp3?v='+ASSET_VERSION;
   // iOS may ignore HTMLAudioElement volume. The asset itself is mastered at -28 LUFS.
   const MUSIC_VOLUME=1;
+  const AUDIO_SETTINGS_KEY='everDeeperAudioSettingsV1';
   const MOSSVEIN_ART={wall:null,floor:null,floorPattern:null};
   const SURFACE_ART={mossveinGround:null,mossveinMinePath:null,roads:{},moonglassGround:null,moonglassGroundPattern:null,moonglassCrystals:null,moonglassBloomBed:null};
   const MOSSVEIN_MINE_PATH='assets/surface/mossvein-mine-path.png';
@@ -192,6 +193,16 @@
   const toast=document.getElementById('toast');
   const menuButton=document.getElementById('menuButton');
   const menuShade=document.getElementById('menuShade');
+  const menuTitle=document.getElementById('menuTitle');
+  const menuCloseButton=document.getElementById('menuCloseButton');
+  const settingsTab=document.getElementById('settingsTab');
+  const statsTab=document.getElementById('statsTab');
+  const achievementsTab=document.getElementById('achievementsTab');
+  const settingsPanel=document.getElementById('settingsPanel');
+  const statsPanel=document.getElementById('statsPanel');
+  const achievementsPanel=document.getElementById('achievementsPanel');
+  const musicToggle=document.getElementById('musicToggle');
+  const effectsToggle=document.getElementById('effectsToggle');
   const resumeButton=document.getElementById('resumeButton');
   const resetButton=document.getElementById('resetButton');
   const inventoryButton=document.getElementById('inventoryButton');
@@ -206,7 +217,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.26.10',name:'MOONGLASS COMPLETE'};
+  const BUILD={version:'0.26.11',name:'SETTINGS'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='EVER DEEPER v'+BUILD.version+' · '+BUILD.name;
 
@@ -521,6 +532,7 @@
   const VEIN_ROCK_LAYOUT=VEIN_DEFINITIONS.flatMap(vein=>vein.positions.map(position=>[vein.type,position[0],position[1],vein.id]));
 
   let width=800,height=600,viewZoom=.86,viewWidth=930,viewHeight=698,dpr=1,lastFrame=0,time=0,timeScale=1,toastTimer=0,bannerTimer=0;
+  const audioSettings=loadAudioSettings();
   let audioContext=null,audioUnlocked=false,impactNoiseBuffer=null,backgroundMusic=null,musicStarted=false;
   let particles=[],floaters=[],rings=[],groundDrops=[];
   let moonglassGateTransition=null;
@@ -632,6 +644,17 @@
 
   function parseStoredState(serialized){
     try{return JSON.parse(serialized||'null')}catch(error){return null}
+  }
+
+  function loadAudioSettings(){
+    try{
+      const stored=parseStoredState(localStorage.getItem(AUDIO_SETTINGS_KEY));
+      return{music:stored&&typeof stored.music==='boolean'?stored.music:true,effects:stored&&typeof stored.effects==='boolean'?stored.effects:true};
+    }catch(error){return{music:true,effects:true}}
+  }
+
+  function persistAudioSettings(){
+    try{localStorage.setItem(AUDIO_SETTINGS_KEY,JSON.stringify(audioSettings))}catch(error){}
   }
 
   function isCompatibleLegacySave(candidate){
@@ -1263,12 +1286,36 @@
 
   function startBackgroundMusic(){
     if(typeof Audio==='undefined')return;
+    if(!audioSettings.music){if(backgroundMusic&&!backgroundMusic.paused)backgroundMusic.pause();musicStarted=false;return}
     if(!backgroundMusic){
       backgroundMusic=new Audio(MUSIC_PATH);backgroundMusic.loop=true;backgroundMusic.preload='auto';backgroundMusic.volume=MUSIC_VOLUME;backgroundMusic.playsInline=true;
     }
     if(!backgroundMusic.paused)return;
     const playback=backgroundMusic.play();
     if(playback&&typeof playback.then==='function')playback.then(()=>{musicStarted=true}).catch(()=>{});else musicStarted=true;
+  }
+
+  function syncAudioSettingsUI(){
+    musicToggle.setAttribute('aria-pressed',String(audioSettings.music));
+    effectsToggle.setAttribute('aria-pressed',String(audioSettings.effects));
+  }
+
+  function setAudioSetting(kind,enabled){
+    if(!Object.prototype.hasOwnProperty.call(audioSettings,kind))return false;
+    audioSettings[kind]=!!enabled;persistAudioSettings();syncAudioSettingsUI();
+    if(kind==='music'){
+      if(audioSettings.music)startBackgroundMusic();
+      else{if(backgroundMusic&&!backgroundMusic.paused)backgroundMusic.pause();musicStarted=false}
+    }else if(audioSettings.effects&&audioContext&&audioContext.state==='suspended')audioContext.resume();
+    return audioSettings[kind];
+  }
+
+  function setMenuTab(name){
+    const tabs={settings:settingsTab,stats:statsTab,achievements:achievementsTab},panels={settings:settingsPanel,stats:statsPanel,achievements:achievementsPanel};
+    if(!tabs[name])name='settings';
+    for(const [key,tab] of Object.entries(tabs)){const active=key===name;tab.classList.toggle('active',active);tab.setAttribute('aria-selected',String(active));panels[key].hidden=!active}
+    menuTitle.textContent=name==='stats'?'Stats':name==='achievements'?'Achievements':'Settings';
+    if(name==='stats')updateLedger();
   }
 
   function unlockAudio(){
@@ -1318,7 +1365,7 @@
   }
 
   function sound(kind,resourceType,intensity){
-    if(!audioContext)return;
+    if(!audioSettings.effects||!audioContext)return;
     const materialTone={stone:0,copper:95,moonglass:260,gold:175,starshard:340,emberstone:-25,sunslag:125,astralite:410,crownstone:520}[resourceType]||0;
     if(kind==='precision'){
       playTone(128,48,.14,.105,'triangle');playTone(760+materialTone,1380+materialTone,.11,.05,'sine',.006);playTone(1120+materialTone,620,.08,.025,'square',.018);playImpactNoise(.075,.046,1450+materialTone);
@@ -3507,14 +3554,18 @@
   autoSortButton.addEventListener('click',autoSortResources);buyChestButton.addEventListener('click',buyStorageChest);
   baseModuleList.addEventListener('click',event=>{const place=event.target.closest('[data-base-place]'),pack=event.target.closest('[data-base-pack]'),take=event.target.closest('[data-chest-take]');if(place)placeBaseModule(place.dataset.basePlace);else if(pack)packBaseModule(pack.dataset.basePack);else if(take)takeAllFromChest(take.dataset.chestTake)});
   inventoryShade.addEventListener('pointerdown',event=>{if(event.target===inventoryShade)closeInventory()});
-  menuButton.addEventListener('click',()=>{unlockAudio();inventoryShade.hidden=true;menuShade.hidden=false;updateLedger()});resumeButton.addEventListener('click',()=>menuShade.hidden=true);
+  syncAudioSettingsUI();
+  menuButton.addEventListener('click',()=>{unlockAudio();inventoryShade.hidden=true;setMenuTab('settings');menuShade.hidden=false});
+  settingsTab.addEventListener('click',()=>setMenuTab('settings'));statsTab.addEventListener('click',()=>setMenuTab('stats'));achievementsTab.addEventListener('click',()=>setMenuTab('achievements'));
+  musicToggle.addEventListener('click',()=>{unlockAudio();setAudioSetting('music',!audioSettings.music)});effectsToggle.addEventListener('click',()=>{unlockAudio();setAudioSetting('effects',!audioSettings.effects)});
+  menuCloseButton.addEventListener('click',()=>menuShade.hidden=true);resumeButton.addEventListener('click',()=>menuShade.hidden=true);
   resetButton.addEventListener('click',()=>{if(window.confirm('Reset all Ever Deeper progress?'))resetProgress()});
   menuShade.addEventListener('pointerdown',event=>{if(event.target===menuShade)menuShade.hidden=true});
   window.addEventListener('resize',resize,{passive:true});
 
   window.__everDeeperTest={
     snapshot:()=>JSON.parse(JSON.stringify({
-      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true},surfaceAssetRendering:{mossveinGround:true,mainRoad:SURFACE_ROAD_PATHS,seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:MOSSVEIN_MINE_PATH,mossveinMineApproachBounds:{x:125,y:750,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
+      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted,enabled:audioSettings.music,effectsEnabled:audioSettings.effects},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true},surfaceAssetRendering:{mossveinGround:true,mainRoad:SURFACE_ROAD_PATHS,seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:MOSSVEIN_MINE_PATH,mossveinMineApproachBounds:{x:125,y:750,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
       surfaceMoonglassRendering:{ground:SURFACE_MOONGLASS_PATHS.ground,crystals:SURFACE_MOONGLASS_PATHS.crystals,bloomBed:SURFACE_MOONGLASS_PATHS.bloomBed,entrance:MINE_ENTRANCE_PATHS.moonMine,gateMark:STARTER_PATHS.moonglassGateMark,emberdeepSeal:STARTER_PATHS.emberdeepSeal,openBoundaryGatesRemoved:true,animatedGateTransition:true,smoothMossveinBlend:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:SURFACE_MOONGLASS_PATHS.crystalCacheClosed,open:SURFACE_MOONGLASS_PATHS.crystalCacheOpen},reliquary:{closed:SURFACE_MOONGLASS_PATHS.reliquaryClosed,open:SURFACE_MOONGLASS_PATHS.reliquaryOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyEmberdeepSeal:false},
       moonglassRendering:{surfaceGround:SURFACE_MOONGLASS_PATHS.ground,surfaceCrystals:SURFACE_MOONGLASS_PATHS.crystals,bloomBed:SURFACE_MOONGLASS_PATHS.bloomBed,entrance:MINE_ENTRANCE_PATHS.moonMine,gateMark:STARTER_PATHS.moonglassGateMark,emberdeepSeal:STARTER_PATHS.emberdeepSeal,openBoundaryGatesRemoved:true,animatedGateTransition:true,smoothMossveinBlend:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:SURFACE_MOONGLASS_PATHS.crystalCacheClosed,open:SURFACE_MOONGLASS_PATHS.crystalCacheOpen},reliquary:{closed:SURFACE_MOONGLASS_PATHS.reliquaryClosed,open:SURFACE_MOONGLASS_PATHS.reliquaryOpen}},floor:MOONGLASS_PATHS.floor,wall:MOONGLASS_PATHS.wall,routeMarker:MOONGLASS_PATHS.routeMarker,pocket:MOONGLASS_PATHS.pocket,cache:MOONGLASS_PATHS.cache,shrine:MOONGLASS_PATHS.shrine,nodes:{moonglass:MOONGLASS_PATHS.moonglassNode,starshard:MOONGLASS_PATHS.starshardNode},wallHints:{moonglass:MOONGLASS_PATHS.moonglassWall,starshard:MOONGLASS_PATHS.starshardWall},barriers:{moon_prism_gate:MOONGLASS_PATHS.prismFault,moon_star_lock:MOONGLASS_PATHS.starGeode},drops:{moonglass:DROP_PATHS.moonglass,starshard:DROP_PATHS.starshard},legacySurfaceDecorations:false,legacyMineFloor:false,legacyMineTerrain:false,legacyMineWalls:false,legacyBarriers:false,legacyPocketRewards:false,legacyResourceNodes:false},
       prismaticRendering:{floor:PRISMATIC_PATHS.floor,wall:PRISMATIC_PATHS.wall,shaft:PRISMATIC_PATHS.shaft,sellStation:PRISMATIC_PATHS.sellStation,drillForge:PRISMATIC_PATHS.drillForge,pocket:PRISMATIC_PATHS.pocket,cache:PRISMATIC_PATHS.cache,shrine:PRISMATIC_PATHS.shrine,nodes:{prismite:PRISMATIC_PATHS.prismiteNode,deepstone:ROOTWOUND_PATHS.deepstone,lunacore:PRISMATIC_PATHS.lunacoreNode,phasecrystal:PRISMATIC_PATHS.phasecrystalNode},wallHints:{prismite:PRISMATIC_PATHS.prismiteWall,deepstone:PRISMATIC_PATHS.deepstoneWall,lunacore:PRISMATIC_PATHS.lunacoreWall,phasecrystal:PRISMATIC_PATHS.phasecrystalWall},drops:{deepstone:DROP_PATHS.deepstone,prismite:DROP_PATHS.prismite,lunacore:DROP_PATHS.lunacore,phasecrystal:DROP_PATHS.phasecrystal},legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyPocketRewards:false,legacyResourceNodes:false},
@@ -3538,6 +3589,7 @@
     })),
     reset:resetProgress,
     startMusic:()=>{startBackgroundMusic();return backgroundMusic?{src:backgroundMusic.src,volume:backgroundMusic.volume,loop:backgroundMusic.loop,paused:backgroundMusic.paused}:null},
+    setAudioSetting:(kind,enabled)=>setAudioSetting(kind,enabled),
     setPosition:(x,y)=>{const world=currentWorld();player.x=clamp(Number(x),52,world.width-52);player.y=clamp(Number(y),70,world.height-58);updateCamera(true);uiDirty=true},
     setAim:(x,y)=>{const length=Math.hypot(Number(x)||0,Number(y)||0);if(length){player.aimX=Number(x)/length;player.aimY=Number(y)/length;player.facing=player.aimX<0?-1:1}},
     sampleHeadlampRay:()=>{const angle=Math.atan2(player.aimY,player.aimX);return traceLightDistance(player.x+player.facing*8,player.y-12,angle,LIGHTING.beamLength,currentTerrain(),activeMineSolids(),currentWorld())},

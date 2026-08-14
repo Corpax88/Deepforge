@@ -26,23 +26,23 @@
       window.addEventListener('pageshow',event=>{if(event.persisted)checkLatest()});
     })();
   </script>
-  <link rel="preload" as="image" href="assets/branding/ever-deeper-logo.png?v=02610">
-  <link rel="stylesheet" href="style.css?v=02610">
+  <link rel="preload" as="image" href="assets/branding/ever-deeper-logo.png?v=02611">
+  <link rel="stylesheet" href="style.css?v=02611">
 </head>
 <body>
   <main id="game" aria-label="Ever Deeper mining game">
     <header class="topbar">
       <div class="brand" aria-label="Ever Deeper">
-        <img class="brand-logo" src="assets/branding/ever-deeper-logo.png?v=02610" alt="Ever Deeper">
+        <img class="brand-logo" src="assets/branding/ever-deeper-logo.png?v=02611" alt="Ever Deeper">
         <div class="brand-meta">
-          <span id="buildVersion">v0.26.10</span>
+          <span id="buildVersion">v0.26.11</span>
           <small id="areaName">MOSSVEIN QUARRY</small>
         </div>
       </div>
       <div class="resources" aria-label="Resources">
         <div class="resource gold" title="Gold"><i aria-hidden="true"></i><b id="goldValue">0</b></div>
         <button id="inventoryButton" class="resource cargo" type="button" title="Resource inventory" aria-label="Open resource inventory"><i aria-hidden="true"></i><b id="cargoValue">0</b></button>
-        <button id="menuButton" class="icon-button" type="button" aria-label="Open menu" title="Menu"><span></span></button>
+        <button id="menuButton" class="icon-button settings-button" type="button" aria-label="Open settings" title="Settings"><span aria-hidden="true"></span></button>
       </div>
     </header>
 
@@ -141,31 +141,53 @@
 
     <div id="menuShade" class="menu-shade" hidden>
       <section class="menu-card" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
-        <span id="menuBuildVersion">EVER DEEPER v0.26.10 · MOONGLASS COMPLETE</span>
-        <h2 id="menuTitle">Miner's Ledger</h2>
-        <div class="ledger-grid">
-          <div><span>Stone mined</span><b id="stoneMined">0</b></div>
-          <div><span>Copper mined</span><b id="copperMined">0</b></div>
-          <div><span>Moonglass mined</span><b id="crystalMined">0</b></div>
-          <div><span>Emberstone mined</span><b id="emberMined">0</b></div>
-          <div><span>Astralite mined</span><b id="astraliteMined">0</b></div>
-          <div><span>Rare ore mined</span><b id="rareMined">0</b></div>
-          <div><span>Bonus veins cleared</span><b id="veinsCleared">0</b></div>
-          <div><span>Ember mastery</span><b id="masteryRank">0 / 5</b></div>
-          <div><span>Deepest frontier</span><b id="deepestFrontier">Mossvein</b></div>
-          <div><span>Starforge forms</span><b id="starforgeForms">0 / 3</b></div>
-          <div><span>Depth 2 ore</span><b id="depthOreMined">0</b></div>
-          <div><span>Drill tier</span><b id="drillTier">0 / 3</b></div>
-          <div><span>Movement speed</span><b id="movementSpeed">1.00x · 0</b></div>
-          <div><span>Treasure chests</span><b id="chestsOpened">0 / 8</b></div>
-          <div><span>Mine passages</span><b id="minePassages">0 / 2</b></div>
-          <div><span>Total gold</span><b id="totalGold">0</b></div>
+        <header class="menu-header">
+          <div><span id="menuBuildVersion">EVER DEEPER v0.26.11 · SETTINGS</span><h2 id="menuTitle">Settings</h2></div>
+          <button id="menuCloseButton" class="menu-close" type="button" aria-label="Close settings">×</button>
+        </header>
+        <nav class="menu-tabs" aria-label="Game menu">
+          <button id="settingsTab" class="active" type="button" role="tab" aria-selected="true" aria-controls="settingsPanel"><i aria-hidden="true">⚙</i><span>SETTINGS</span></button>
+          <button id="statsTab" type="button" role="tab" aria-selected="false" aria-controls="statsPanel"><i aria-hidden="true">◆</i><span>STATS</span></button>
+          <button id="achievementsTab" type="button" role="tab" aria-selected="false" aria-controls="achievementsPanel"><i aria-hidden="true">★</i><span>ACHIEVEMENTS</span></button>
+        </nav>
+        <div id="settingsPanel" class="menu-panel settings-panel" role="tabpanel" aria-labelledby="settingsTab">
+          <button id="musicToggle" class="setting-row" type="button" aria-pressed="true">
+            <span class="setting-icon music-icon" aria-hidden="true">♪</span><span class="setting-copy"><b>Music</b><small>Background soundtrack</small></span><i class="setting-switch" aria-hidden="true"></i>
+          </button>
+          <button id="effectsToggle" class="setting-row" type="button" aria-pressed="true">
+            <span class="setting-icon sound-icon" aria-hidden="true">)))</span><span class="setting-copy"><b>Sound effects</b><small>Mining, loot and actions</small></span><i class="setting-switch" aria-hidden="true"></i>
+          </button>
+          <button id="resetButton" class="danger-setting" type="button"><span aria-hidden="true">↻</span><b>Reset progress</b></button>
+        </div>
+        <div id="statsPanel" class="menu-panel" role="tabpanel" aria-labelledby="statsTab" hidden>
+          <div class="ledger-grid">
+            <div><span>Stone mined</span><b id="stoneMined">0</b></div>
+            <div><span>Copper mined</span><b id="copperMined">0</b></div>
+            <div><span>Moonglass mined</span><b id="crystalMined">0</b></div>
+            <div><span>Emberstone mined</span><b id="emberMined">0</b></div>
+            <div><span>Astralite mined</span><b id="astraliteMined">0</b></div>
+            <div><span>Rare ore mined</span><b id="rareMined">0</b></div>
+            <div><span>Bonus veins cleared</span><b id="veinsCleared">0</b></div>
+            <div><span>Ember mastery</span><b id="masteryRank">0 / 5</b></div>
+            <div><span>Deepest frontier</span><b id="deepestFrontier">Mossvein</b></div>
+            <div><span>Starforge forms</span><b id="starforgeForms">0 / 3</b></div>
+            <div><span>Depth 2 ore</span><b id="depthOreMined">0</b></div>
+            <div><span>Drill tier</span><b id="drillTier">0 / 3</b></div>
+            <div><span>Movement speed</span><b id="movementSpeed">1.00x · 0</b></div>
+            <div><span>Treasure chests</span><b id="chestsOpened">0 / 8</b></div>
+            <div><span>Mine passages</span><b id="minePassages">0 / 2</b></div>
+            <div><span>Total gold</span><b id="totalGold">0</b></div>
+          </div>
+        </div>
+        <div id="achievementsPanel" class="menu-panel achievements-panel" role="tabpanel" aria-labelledby="achievementsTab" hidden>
+          <div class="achievement-seal" aria-hidden="true">★</div>
+          <h3>Achievements</h3>
+          <p>Coming in a future expedition.</p>
         </div>
         <button id="resumeButton" class="primary-button" type="button">RETURN TO MINE</button>
-        <button id="resetButton" class="text-button" type="button">Reset prototype progress</button>
       </section>
     </div>
   </main>
-  <script src="script.js?v=02610"></script>
+  <script src="script.js?v=02611"></script>
 </body>
 </html>

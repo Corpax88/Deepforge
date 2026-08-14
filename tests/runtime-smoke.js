@@ -20,12 +20,12 @@ function auditBrandRemoval(directory){
 auditBrandRemoval(repositoryRoot);
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'02610');
+assert.equal(latest.version,'02611');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=02610/);
-assert.match(html,/script\.js\?v=02610/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=02610/);
+assert.match(html,/style\.css\?v=02611/);
+assert.match(html,/script\.js\?v=02611/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=02611/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -114,7 +114,7 @@ function createElement(id){
   return{
     id,textContent:'',hidden:false,style:{},dataset:{},disabled:false,
     classList:{add:value=>classes.add(value),remove:value=>classes.delete(value),toggle:(value,force)=>force===undefined?(classes.has(value)?classes.delete(value):classes.add(value)):force?classes.add(value):classes.delete(value),contains:value=>classes.has(value)},
-    addEventListener(){},setPointerCapture(){},contains(){return true},querySelector(){return null},
+    addEventListener(){},setAttribute(name,value){this[name]=String(value)},setPointerCapture(){},contains(){return true},querySelector(){return null},
     getBoundingClientRect(){return{left:0,top:0,width:390,height:700,right:390,bottom:700}}
   };
 }
@@ -147,12 +147,15 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.26.10');
-assert.equal(api.snapshot().build.name,'MOONGLASS COMPLETE');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.10');
-assert.equal(api.snapshot().assetVersion,'02610');
-assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=02610',volume:1,loop:true,paused:false}));
+assert.equal(api.snapshot().build.version,'0.26.11');
+assert.equal(api.snapshot().build.name,'SETTINGS');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.11');
+assert.equal(api.snapshot().assetVersion,'02611');
+assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=02611',volume:1,loop:true,paused:false}));
+assert.equal(api.setAudioSetting('music',false),false);assert.equal(api.snapshot().music.enabled,false);assert.equal(api.snapshot().music.started,false);
+assert.equal(api.setAudioSetting('effects',false),false);assert.equal(api.snapshot().music.effectsEnabled,false);
+assert.equal(api.setAudioSetting('music',true),true);assert.equal(api.setAudioSetting('effects',true),true);
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true,moonMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:750,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
