@@ -20,12 +20,12 @@ function auditBrandRemoval(directory){
 auditBrandRemoval(repositoryRoot);
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'0261');
+assert.equal(latest.version,'0262');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0261/);
-assert.match(html,/script\.js\?v=0261/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0261/);
+assert.match(html,/style\.css\?v=0262/);
+assert.match(html,/script\.js\?v=0262/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0262/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -53,6 +53,7 @@ const rootwoundAssets=['floor.png','wall.png','rootiron-node.png','deepstone-nod
 for(const name of rootwoundAssets){const png=fs.readFileSync(require('node:path').join(__dirname,'..','assets/rootwound',name));assert.equal(png.toString('ascii',1,4),'PNG');assert.ok(png.length<250000,name+' exceeds mobile asset budget');if(name!=='floor.png')assert.ok([4,6].includes(png[25])||png.includes(Buffer.from('tRNS')),name+' must preserve transparency')}
 const moonglassSurfaceAssets={
   'assets/surface/moonglass-ground.png':[512,512,{alpha:false,maxBytes:220000}],
+  'assets/surface/moonglass-gate-mark.png':[512,341,{maxBytes:100000}],
   'assets/surface/moonglass-crystals.png':[512,256,{maxBytes:100000}],
   'assets/surface/moonglass-bloom-bed.png':[640,280,{maxBytes:120000}],
   'assets/surface/crystal-cache-closed.png':[384,334,{maxBytes:120000}],
@@ -142,19 +143,19 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.26.1');
+assert.equal(api.snapshot().build.version,'0.26.2');
 assert.equal(api.snapshot().build.name,'MOONGLASS COMPLETE');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.1');
-assert.equal(api.snapshot().assetVersion,'0261');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.2');
+assert.equal(api.snapshot().assetVersion,'0262');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0261',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0262',volume:1,loop:true,paused:false}));
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true,moonMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
 assert.equal(JSON.stringify(api.snapshot().starterRendering),JSON.stringify({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false}));
-assert.equal(JSON.stringify(api.snapshot().starterGateRendering),JSON.stringify({moonglassGate:'assets/surface/moonglass-gate.png',openWorldGatesRemoved:true,legacyStarterGate:false}));
+assert.equal(JSON.stringify(api.snapshot().starterGateRendering),JSON.stringify({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',animatedMoonglassTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false}));
 assert.equal(JSON.stringify(api.snapshot().rootwoundRendering),JSON.stringify({floor:'assets/rootwound/floor.png',wall:'assets/rootwound/wall.png',nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:'assets/rootwound/rootiron-wall.png',shaft:'assets/rootwound/depth-shaft.png',sellStation:'assets/rootwound/sell-station.png',drillForge:'assets/rootwound/drill-forge.png',legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false}));
-const expectedMoonglassRendering={surfaceGround:'assets/surface/moonglass-ground.png',surfaceCrystals:'assets/surface/moonglass-crystals.png',bloomBed:'assets/surface/moonglass-bloom-bed.png',entrance:'assets/entrances/moonglass-entrance.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',openBoundaryGatesRemoved:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:'assets/surface/crystal-cache-closed.png',open:'assets/surface/crystal-cache-open.png'},reliquary:{closed:'assets/surface/moonglass-reliquary-closed.png',open:'assets/surface/moonglass-reliquary-open.png'}},floor:'assets/moonglass/floor.png',wall:'assets/moonglass/wall.png',routeMarker:'assets/moonglass/route-marker.png',pocket:'assets/moonglass/crystal-pocket.png',cache:'assets/moonglass/buried-cache.png',shrine:'assets/moonglass/mining-rush-shrine.png',nodes:{moonglass:'assets/moonglass/moonglass-node.png',starshard:'assets/moonglass/starshard-node.png'},wallHints:{moonglass:'assets/moonglass/moonglass-wall.png',starshard:'assets/moonglass/starshard-wall.png'},barriers:{moon_prism_gate:'assets/moonglass/prismatic-fault.png',moon_star_lock:'assets/moonglass/starbound-geode.png'},drops:{moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png'},legacySurfaceDecorations:false,legacyMineFloor:false,legacyMineTerrain:false,legacyMineWalls:false,legacyBarriers:false,legacyPocketRewards:false,legacyResourceNodes:false};
+const expectedMoonglassRendering={surfaceGround:'assets/surface/moonglass-ground.png',surfaceCrystals:'assets/surface/moonglass-crystals.png',bloomBed:'assets/surface/moonglass-bloom-bed.png',entrance:'assets/entrances/moonglass-entrance.png',gateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',openBoundaryGatesRemoved:true,animatedGateTransition:true,smoothMossveinBlend:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:'assets/surface/crystal-cache-closed.png',open:'assets/surface/crystal-cache-open.png'},reliquary:{closed:'assets/surface/moonglass-reliquary-closed.png',open:'assets/surface/moonglass-reliquary-open.png'}},floor:'assets/moonglass/floor.png',wall:'assets/moonglass/wall.png',routeMarker:'assets/moonglass/route-marker.png',pocket:'assets/moonglass/crystal-pocket.png',cache:'assets/moonglass/buried-cache.png',shrine:'assets/moonglass/mining-rush-shrine.png',nodes:{moonglass:'assets/moonglass/moonglass-node.png',starshard:'assets/moonglass/starshard-node.png'},wallHints:{moonglass:'assets/moonglass/moonglass-wall.png',starshard:'assets/moonglass/starshard-wall.png'},barriers:{moon_prism_gate:'assets/moonglass/prismatic-fault.png',moon_star_lock:'assets/moonglass/starbound-geode.png'},drops:{moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png'},legacySurfaceDecorations:false,legacyMineFloor:false,legacyMineTerrain:false,legacyMineWalls:false,legacyBarriers:false,legacyPocketRewards:false,legacyResourceNodes:false};
 const expectedPrismaticRendering={floor:'assets/prismatic/floor.png',wall:'assets/prismatic/wall.png',shaft:'assets/prismatic/depth-portal.png',sellStation:'assets/prismatic/sell-station.png',drillForge:'assets/prismatic/drill-forge.png',pocket:'assets/prismatic/crystal-pocket.png',cache:'assets/prismatic/buried-cache.png',shrine:'assets/prismatic/mining-rush-shrine.png',nodes:{prismite:'assets/prismatic/prismite-node.png',deepstone:'assets/rootwound/deepstone-node.png',lunacore:'assets/prismatic/lunacore-node.png',phasecrystal:'assets/prismatic/phasecrystal-node.png'},wallHints:{prismite:'assets/prismatic/prismite-wall.png',deepstone:'assets/prismatic/deepstone-wall.png',lunacore:'assets/prismatic/lunacore-wall.png',phasecrystal:'assets/prismatic/phasecrystal-wall.png'},drops:{deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png'},legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyPocketRewards:false,legacyResourceNodes:false};
 assert.equal(JSON.stringify(api.snapshot().moonglassRendering),JSON.stringify(expectedMoonglassRendering));
 assert.equal(JSON.stringify(api.snapshot().prismaticRendering),JSON.stringify(expectedPrismaticRendering));
@@ -168,8 +169,18 @@ function exposeRock(testApi,rock,maxHits=8){for(let hit=0;hit<maxHits&&!testApi.
 const storageBeforeMoonglassRendering=new Map(storage),productionRuntime=createRuntime(),productionApi=productionRuntime.api;
 productionApi.reset();
 renderAt(productionRuntime,productionApi,2175,650,['assets/surface/moonglass-ground.png','assets/surface/emberdeep-seal.png']);
+productionApi.startMoonglassGateTransition();
+renderAt(productionRuntime,productionApi,1110,650,['assets/surface/moonglass-gate.png','assets/surface/moonglass-gate-mark.png']);
+assert.equal(JSON.stringify(productionApi.snapshot().moonglassGateTransition),JSON.stringify({active:true,progress:0}));
+productionApi.step(.7);
+renderAt(productionRuntime,productionApi,1110,650,['assets/surface/moonglass-gate.png','assets/surface/moonglass-gate-mark.png','assets/entrances/moonglass-entrance.png']);
+assert.ok(productionApi.snapshot().moonglassGateTransition.progress>0&&productionApi.snapshot().moonglassGateTransition.progress<1);
+productionApi.step(1.2);
+renderAt(productionRuntime,productionApi,1110,650,['assets/surface/moonglass-gate-mark.png','assets/entrances/moonglass-entrance.png']);
+assert.equal(JSON.stringify(productionApi.snapshot().moonglassGateTransition),JSON.stringify({active:false,progress:1}));
+assert.ok(!productionRuntime.drawCalls.some(call=>call.src.includes('assets/surface/moonglass-gate.png')),'the sunk Moonglass gate must leave only its ground mark');
 productionApi.unlockAllAreas();productionApi.setPickaxeLevel(4);
-renderAt(productionRuntime,productionApi,1225,720,['assets/surface/moonglass-ground.png','assets/surface/moonglass-crystals.png','assets/entrances/moonglass-entrance.png']);
+renderAt(productionRuntime,productionApi,1225,720,['assets/surface/moonglass-ground.png','assets/surface/moonglass-crystals.png','assets/surface/moonglass-gate-mark.png','assets/entrances/moonglass-entrance.png']);
 assert.ok(!productionRuntime.drawCalls.some(call=>call.src.includes('assets/surface/moonglass-gate.png')),'opened Moonglass boundary gate must disappear');
 renderAt(productionRuntime,productionApi,1665,500,['assets/surface/moonglass-ground.png','assets/surface/moonglass-bloom-bed.png']);
 renderAt(productionRuntime,productionApi,2175,650,['assets/surface/moonglass-ground.png']);

@@ -5,8 +5,11 @@ const SURFACE_MOONGLASS_RENDERING={
   crystals:'assets/surface/moonglass-crystals.png',
   bloomBed:'assets/surface/moonglass-bloom-bed.png',
   entrance:'assets/entrances/moonglass-entrance.png',
+  gateMark:'assets/surface/moonglass-gate-mark.png',
   emberdeepSeal:'assets/surface/emberdeep-seal.png',
   openBoundaryGatesRemoved:true,
+  animatedGateTransition:true,
+  smoothMossveinBlend:true,
   backgroundCrystalsDistinct:true,
   chests:{
     crystalCache:{closed:'assets/surface/crystal-cache-closed.png',open:'assets/surface/crystal-cache-open.png'},
@@ -24,8 +27,11 @@ const MOONGLASS_RENDERING={
   surfaceCrystals:'assets/surface/moonglass-crystals.png',
   bloomBed:'assets/surface/moonglass-bloom-bed.png',
   entrance:'assets/entrances/moonglass-entrance.png',
+  gateMark:'assets/surface/moonglass-gate-mark.png',
   emberdeepSeal:'assets/surface/emberdeep-seal.png',
   openBoundaryGatesRemoved:true,
+  animatedGateTransition:true,
+  smoothMossveinBlend:true,
   backgroundCrystalsDistinct:true,
   chests:{
     crystalCache:{closed:'assets/surface/crystal-cache-closed.png',open:'assets/surface/crystal-cache-open.png'},
@@ -1053,12 +1059,12 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.26.1',name:'MOONGLASS COMPLETE'});
-  expect(snapshot.assetVersion).toBe('0261');
+  expect(snapshot.build).toEqual({version:'0.26.2',name:'MOONGLASS COMPLETE'});
+  expect(snapshot.assetVersion).toBe('0262');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
-  expect(snapshot.starterGateRendering).toEqual({moonglassGate:'assets/surface/moonglass-gate.png',openWorldGatesRemoved:true,legacyStarterGate:false});
+  expect(snapshot.starterGateRendering).toEqual({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',animatedMoonglassTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false});
   expect(snapshot.discoveryRendering).toEqual({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true});
   expect(snapshot.mineralNodeRenderScale).toBe(.85);
   expect(snapshot.assetRendering).toEqual({stone:['node'],copper:['wall','node'],gold:['wall','node']});
@@ -1076,11 +1082,11 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.26.1');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.26.2');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.26.1 · MOONGLASS COMPLETE');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.26.2 · MOONGLASS COMPLETE');
 });
 
 test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{
@@ -1388,11 +1394,11 @@ test('Rootwound Depth 2 uses the complete production asset set',async({page})=>{
   expect(art.every(asset=>asset.width>=300&&asset.height>=300)).toBe(true);
 });
 
-test('v0.26.1 exposes the complete Moonglass and Prismatic production contracts',async({page})=>{
+test('v0.26.2 exposes the complete Moonglass and Prismatic production contracts',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build.version).toBe('0.26.1');
-  expect(snapshot.assetVersion).toBe('0261');
+  expect(snapshot.build.version).toBe('0.26.2');
+  expect(snapshot.assetVersion).toBe('0262');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);
   expect(snapshot.prismaticRendering).toEqual(PRISMATIC_RENDERING);
@@ -1402,6 +1408,21 @@ test('v0.26.1 exposes the complete Moonglass and Prismatic production contracts'
   expect(paths.length).toBeGreaterThanOrEqual(40);
   expect(art).toHaveLength(paths.length);
   expect(art.every(asset=>asset.width>=256&&asset.height>=190)).toBe(true);
+});
+
+test('Moonglass gate sinks before the mine entrance settles and leaves a permanent mark',async({page})=>{
+  await freshGame(page);
+  const stages=await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.startMoonglassGateTransition();api.renderOnce();const start=api.snapshot().moonglassGateTransition;
+    api.step(.7);api.renderOnce();const middle=api.snapshot().moonglassGateTransition;
+    api.step(1.2);api.renderOnce();const end=api.snapshot().moonglassGateTransition;
+    return{start,middle,end,contract:api.snapshot().starterGateRendering};
+  });
+  expect(stages.start).toEqual({active:true,progress:0});
+  expect(stages.middle.active).toBe(true);expect(stages.middle.progress).toBeGreaterThan(0);expect(stages.middle.progress).toBeLessThan(1);
+  expect(stages.end).toEqual({active:false,progress:1});
+  expect(stages.contract).toEqual({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',animatedMoonglassTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false});
 });
 
 test('Moonglass surface portal and both bespoke chest states use production art',async({page},testInfo)=>{
