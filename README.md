@@ -1,8 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.27.0 - Material Pacing**
+Current build: **Ever Deeper v0.28.0 - Emberdeep Complete**
 
-Moonglass now has a complete production-art pass across the surface biome, mine portal, chests, labyrinth barriers and hidden chambers, plus the full Prismatic Depths loop with its own portal, stations, resources, wall hints, drops, and Phase Crystal drill gate.
+Emberdeep now has a complete production-art pass across the blended surface biome, sinking seal, permanent gate mark, mine approach, portal, chests and bonus fault. Emberdeep Works and Molten Depths have their own floors, walls, barriers, hidden chambers, stations, readable ore hints, mineable nodes, drops, natural lighting and Infernium drill gate.
 
 Every cave now uses a low-resolution raycast lightmap: the miner's helmet projects a warm, directional beam that stops against solid terrain, nearby darkness remains readable, and exposed ores emit restrained light in their own material colors. The light buffer is capped at 34% resolution and 16 visible ore lights to keep the effect mobile-safe.
 

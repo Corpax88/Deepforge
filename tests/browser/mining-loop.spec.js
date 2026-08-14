@@ -56,6 +56,93 @@ const MOONGLASS_RENDERING={
   legacyResourceNodes:false
 };
 
+const SURFACE_EMBERDEEP_RENDERING={
+  ground:'assets/surface/emberdeep-ground.png',
+  slag:'assets/surface/emberdeep-slag-clusters.png',
+  faultBed:'assets/surface/emberdeep-fault-bed.png',
+  minePath:'assets/surface/emberdeep-mine-path.png',
+  minePathBounds:{x:2440,y:788,w:500,h:222},
+  entrance:'assets/entrances/emberdeep-entrance.png',
+  entrancePosition:{x:2480,y:970,radius:112},
+  gateSeal:'assets/surface/emberdeep-seal.png',
+  gateMark:'assets/surface/emberdeep-seal-mark.png',
+  animatedGateTransition:true,
+  smoothMoonglassBlend:true,
+  continuousBlendUnderlay:true,
+  backgroundSlagDistinct:true,
+  chests:{
+    foundry:{closed:'assets/surface/foundry-lockbox-closed.png',open:'assets/surface/foundry-lockbox-open.png'},
+    vault:{closed:'assets/surface/ember-vault-closed.png',open:'assets/surface/ember-vault-open.png'}
+  },
+  legacyGrid:false,
+  legacyDecorations:false,
+  legacyChests:false,
+  legacyEntrance:false,
+  legacyGate:false
+};
+
+const EMBERDEEP_RENDERING={
+  floor:'assets/emberdeep/floor.png',
+  wall:'assets/emberdeep/wall.png',
+  routeMarker:'assets/emberdeep/route-marker.png',
+  pocket:'assets/emberdeep/crystal-pocket.png',
+  cache:'assets/emberdeep/buried-cache.png',
+  shrine:'assets/emberdeep/mining-rush-shrine.png',
+  nodes:{
+    emberstone:'assets/emberdeep/emberstone-node.png',
+    moonglass:'assets/moonglass/moonglass-node.png',
+    sunslag:'assets/emberdeep/sunslag-node.png'
+  },
+  wallHints:{
+    emberstone:'assets/emberdeep/emberstone-wall.png',
+    moonglass:'assets/moonglass/moonglass-wall.png',
+    sunslag:'assets/emberdeep/sunslag-wall.png'
+  },
+  barriers:{ember_bulkhead:'assets/emberdeep/cinder-bulkhead.png',ember_crucible_lock:'assets/emberdeep/crucible-seal.png'},
+  drops:{emberstone:'assets/drops/emberstone-drop.png',moonglass:'assets/drops/moonglass-drop.png',sunslag:'assets/drops/sunslag-drop.png'},
+  legacyMineFloor:false,
+  legacyMineTerrain:false,
+  legacyMineWalls:false,
+  legacyBarriers:false,
+  legacyPocketRewards:false,
+  legacyResourceNodes:false
+};
+
+const MOLTEN_RENDERING={
+  floor:'assets/molten/floor.png',
+  wall:'assets/molten/wall.png',
+  shaft:'assets/molten/depth-portal.png',
+  sellStation:'assets/molten/sell-station.png',
+  drillForge:'assets/molten/drill-forge.png',
+  pocket:'assets/molten/crystal-pocket.png',
+  cache:'assets/molten/buried-cache.png',
+  shrine:'assets/molten/mining-rush-shrine.png',
+  nodes:{
+    magmaite:'assets/molten/magmaite-node.png',
+    deepstone:'assets/molten/deepstone-node.png',
+    furnaceheart:'assets/molten/furnaceheart-node.png',
+    infernium:'assets/molten/infernium-node.png'
+  },
+  wallHints:{
+    magmaite:'assets/molten/magmaite-wall.png',
+    deepstone:'assets/molten/deepstone-wall.png',
+    furnaceheart:'assets/molten/furnaceheart-wall.png',
+    infernium:'assets/molten/infernium-wall.png'
+  },
+  drops:{
+    deepstone:'assets/drops/deepstone-drop.png',
+    magmaite:'assets/drops/magmaite-drop.png',
+    furnaceheart:'assets/drops/furnaceheart-drop.png',
+    infernium:'assets/drops/infernium-drop.png'
+  },
+  legacyFloorDecorations:false,
+  legacyTerrainTexture:false,
+  legacyDepthShaft:false,
+  legacyDepthStations:false,
+  legacyPocketRewards:false,
+  legacyResourceNodes:false
+};
+
 const PRISMATIC_RENDERING={
   floor:'assets/prismatic/floor.png',
   wall:'assets/prismatic/wall.png',
@@ -932,7 +1019,7 @@ test('every unlocked surface biome leads to its own mine layout',async({page})=>
 
   const cases=[
     {scene:'moonMine',surface:[1450,850],title:'Moonglass Labyrinth',resource:'moonglass',style:'moon'},
-    {scene:'emberMine',surface:[2340,650],title:'Emberdeep Works',resource:'emberstone',style:'ember'},
+    {scene:'emberMine',surface:[2480,970],title:'Emberdeep Works',resource:'emberstone',style:'ember'},
     {scene:'starMine',surface:[3450,690],title:'Starfall Hollow',resource:'astralite',style:'star'}
   ];
   const signatures=new Set();
@@ -1062,12 +1149,12 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.27.0',name:'MATERIAL PACING'});
-  expect(snapshot.assetVersion).toBe('0270');
-  expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true});
+  expect(snapshot.build).toEqual({version:'0.28.0',name:'EMBERDEEP COMPLETE'});
+  expect(snapshot.assetVersion).toBe('0280');
+  expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true,emberMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
-  expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
-  expect(snapshot.starterGateRendering).toEqual({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',animatedMoonglassTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false});
+  expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png',emberstone:'assets/drops/emberstone-drop.png',sunslag:'assets/drops/sunslag-drop.png',magmaite:'assets/drops/magmaite-drop.png',furnaceheart:'assets/drops/furnaceheart-drop.png',infernium:'assets/drops/infernium-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
+  expect(snapshot.starterGateRendering).toEqual({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepSealMark:'assets/surface/emberdeep-seal-mark.png',animatedMoonglassTransition:true,animatedEmberdeepTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false});
   expect(snapshot.discoveryRendering).toEqual({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true});
   expect(snapshot.bonusVeinRendering).toEqual({worldLabels:false,textPrompts:false,sleepingCracks:true,movingReadyPulse:true,radialTimer:true,completionBurst:true});
   expect(snapshot.mineralNodeRenderScale).toBe(.85);
@@ -1086,11 +1173,11 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.27.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.28.0');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.27.0 · MATERIAL PACING');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.28.0 · EMBERDEEP COMPLETE');
 });
 
 test('settings opens first and keeps audio choices separate from stats',async({page})=>{
@@ -1143,7 +1230,7 @@ test('each mine hides one persistent random entrance to a contrasting Depth 2',a
     expect(snapshot.mine.terrain.maxHp).toBeGreaterThan(8);
     expect(snapshot.mine.dirt).not.toBe(snapshot.mine.floor);
     expect(snapshot.mine.discovery.deposits.length).toBeGreaterThanOrEqual(14);
-    expect(snapshot.mine.discovery.deposits.every(deposit=>Object.values(snapshot.mine.depthResources).includes(deposit.type))).toBe(true);
+    expect(snapshot.mine.discovery.deposits.every(deposit=>deposit.drillGated||Object.values(snapshot.mine.depthResources).includes(deposit.type))).toBe(true);
     expect(snapshot.mine.depthStations).toEqual(expect.objectContaining({sell:expect.any(Object),forge:expect.any(Object)}));
     expect(snapshot.mine.depthEntrance).toMatchObject({...entrance,discovered:true});
     expect(await page.evaluate(()=>window.__everDeeperTest.exitDepth())).toBe(true);
@@ -1416,18 +1503,21 @@ test('Rootwound Depth 2 uses the complete production asset set',async({page})=>{
   expect(art.every(asset=>asset.width>=300&&asset.height>=300)).toBe(true);
 });
 
-test('v0.27.0 exposes the complete Moonglass and Prismatic production contracts',async({page})=>{
+test('v0.28.0 exposes the complete Moonglass, Emberdeep, Prismatic, and Molten production contracts',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build.version).toBe('0.27.0');
-  expect(snapshot.assetVersion).toBe('0270');
+  expect(snapshot.build).toEqual({version:'0.28.0',name:'EMBERDEEP COMPLETE'});
+  expect(snapshot.assetVersion).toBe('0280');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
+  expect(snapshot.surfaceEmberdeepRendering).toEqual(SURFACE_EMBERDEEP_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);
+  expect(snapshot.emberdeepRendering).toEqual(EMBERDEEP_RENDERING);
   expect(snapshot.prismaticRendering).toEqual(PRISMATIC_RENDERING);
+  expect(snapshot.moltenRendering).toEqual(MOLTEN_RENDERING);
 
-  const paths=pngPaths({surface:SURFACE_MOONGLASS_RENDERING,moonglass:MOONGLASS_RENDERING,prismatic:PRISMATIC_RENDERING});
+  const paths=pngPaths({surfaceMoonglass:SURFACE_MOONGLASS_RENDERING,surfaceEmberdeep:SURFACE_EMBERDEEP_RENDERING,moonglass:MOONGLASS_RENDERING,emberdeep:EMBERDEEP_RENDERING,prismatic:PRISMATIC_RENDERING,molten:MOLTEN_RENDERING});
   const art=await inspectPngs(page,paths);
-  expect(paths.length).toBeGreaterThanOrEqual(40);
+  expect(paths.length).toBeGreaterThanOrEqual(65);
   expect(art).toHaveLength(paths.length);
   expect(art.every(asset=>asset.width>=256&&asset.height>=190)).toBe(true);
 });
@@ -1444,7 +1534,7 @@ test('Moonglass gate sinks before the mine entrance settles and leaves a permane
   expect(stages.start).toEqual({active:true,progress:0});
   expect(stages.middle.active).toBe(true);expect(stages.middle.progress).toBeGreaterThan(0);expect(stages.middle.progress).toBeLessThan(1);
   expect(stages.end).toEqual({active:false,progress:1});
-  expect(stages.contract).toEqual({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',animatedMoonglassTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false});
+  expect(stages.contract).toEqual({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepSealMark:'assets/surface/emberdeep-seal-mark.png',animatedMoonglassTransition:true,animatedEmberdeepTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false});
 });
 
 test('Moonglass surface portal and both bespoke chest states use production art',async({page},testInfo)=>{
@@ -1627,6 +1717,230 @@ test('Moonglass portal and Prismatic Depths remain readable on compact and tall 
     expect(layout.panel.right).toBeLessThanOrEqual(layout.width);
     expect(layout.panel.bottom).toBeLessThanOrEqual(layout.height);
     await page.screenshot({path:testInfo.outputPath('prismatic-'+size.name+'-'+size.width+'x'+size.height+'.png'),fullPage:true});
+    await page.evaluate(()=>{window.__everDeeperTest.exitDepth();window.__everDeeperTest.exitMine()});
+  }
+});
+
+test('Emberdeep seal sinks through start, middle, and finish before leaving its permanent mark',async({page})=>{
+  await freshGame(page);
+  const stages=await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.startEmberdeepGateTransition();api.renderOnce();const start=api.snapshot().emberdeepGateTransition;
+    api.step(.7);api.renderOnce();const middle=api.snapshot().emberdeepGateTransition;
+    api.step(1.2);api.renderOnce();const end=api.snapshot().emberdeepGateTransition;
+    const snapshot=api.snapshot();api.save();
+    return{start,middle,end,starterGate:snapshot.starterGateRendering,surface:snapshot.surfaceEmberdeepRendering};
+  });
+  expect(stages.start).toEqual({active:true,progress:0});
+  expect(stages.middle.active).toBe(true);
+  expect(stages.middle.progress).toBeGreaterThan(0);
+  expect(stages.middle.progress).toBeLessThan(1);
+  expect(stages.end).toEqual({active:false,progress:1});
+  expect(stages.starterGate).toEqual({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepSealMark:'assets/surface/emberdeep-seal-mark.png',animatedMoonglassTransition:true,animatedEmberdeepTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false});
+  expect(stages.surface).toEqual(SURFACE_EMBERDEEP_RENDERING);
+  expect(stages.surface.gateMark).toBe('assets/surface/emberdeep-seal-mark.png');
+
+  await page.reload();
+  await page.waitForFunction(()=>window.__everDeeperTest);
+  const reloaded=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(reloaded.state.emberdeepUnlocked).toBe(true);
+  expect(reloaded.emberdeepGateTransition).toEqual({active:false,progress:1});
+  expect(reloaded.surfaceEmberdeepRendering.gateMark).toBe('assets/surface/emberdeep-seal-mark.png');
+});
+
+test('moved Emberdeep entrance and both foundry chest states use production art and persist',async({page},testInfo)=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.unlockAllAreas();
+    api.setPickaxeLevel(5);
+    api.setPosition(2480,970);
+    api.renderOnce();
+  });
+  await expect(page.locator('#contextTitle')).toHaveText('Emberdeep Works');
+  let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.surfaceEmberdeepRendering).toEqual(SURFACE_EMBERDEEP_RENDERING);
+  expect(snapshot.surfaceEmberdeepRendering.entrancePosition).toEqual({x:2480,y:970,radius:112});
+  expect(snapshot.chests.find(chest=>chest.id==='ember_cache')).toMatchObject({x:2720,y:1160,opened:false});
+  expect(snapshot.chests.find(chest=>chest.id==='ember_vault')).toMatchObject({x:3250,y:205,opened:false});
+  await page.screenshot({path:testInfo.outputPath('emberdeep-entrance-moved.png'),fullPage:true});
+
+  await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.setPosition(2720,1160);
+    api.step(.05);
+    api.renderOnce();
+  });
+  await expect(page.locator('#contextTitle')).toHaveText('Foundry Lockbox');
+  await page.screenshot({path:testInfo.outputPath('foundry-lockbox-closed.png'),fullPage:true});
+
+  await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.openChest('ember_cache');
+    api.openChest('ember_vault');
+    api.setPosition(3250,205);
+    api.step(.05);
+    api.renderOnce();
+    api.save();
+  });
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.state.openedChests).toEqual(expect.objectContaining({ember_cache:true,ember_vault:true}));
+  expect(snapshot.surfaceEmberdeepRendering.chests).toEqual(SURFACE_EMBERDEEP_RENDERING.chests);
+  await expect(page.locator('#contextPanel')).toBeHidden();
+  await page.screenshot({path:testInfo.outputPath('ember-vault-open.png'),fullPage:true});
+
+  await page.reload();
+  await page.waitForFunction(()=>window.__everDeeperTest);
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.state.openedChests).toEqual(expect.objectContaining({ember_cache:true,ember_vault:true}));
+  expect(snapshot.chests.find(chest=>chest.id==='ember_cache')).toMatchObject({x:2720,y:1160,opened:true});
+  expect(snapshot.chests.find(chest=>chest.id==='ember_vault')).toMatchObject({x:3250,y:205,opened:true});
+});
+
+test('Emberdeep Works production barriers and a claimed hidden pocket survive reload',async({page},testInfo)=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.unlockAllAreas();
+    api.setPickaxeLevel(5);
+    api.enterMine('emberMine');
+  });
+  let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.mine).toMatchObject({name:'EMBERDEEP WORKS',depth:1,visualPass:'emberdeep-production-assets-v1'});
+  expect(snapshot.mine.barrierIds).toEqual(['ember_bulkhead','ember_crucible_lock']);
+  expect(snapshot.emberdeepRendering).toEqual(EMBERDEEP_RENDERING);
+  const pocket=snapshot.mine.discovery.caverns.find(cavern=>['cache','shrine'].includes(cavern.reward.kind));
+  expect(pocket).toBeTruthy();
+  expect(pocket.discovered).toBe(false);
+  expect(pocket.reward.claimed).toBe(false);
+
+  await page.evaluate(({pocketId,rewardId})=>{
+    const api=window.__everDeeperTest;
+    api.clearMineBarrier('ember_bulkhead');
+    api.clearMineBarrier('ember_crucible_lock');
+    api.discoverCavern(pocketId);
+    api.claimPocketReward(rewardId);
+    api.save();
+    api.renderOnce();
+  },{pocketId:pocket.id,rewardId:pocket.reward.id});
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.state.clearedMineBarriers).toEqual(expect.objectContaining({ember_bulkhead:true,ember_crucible_lock:true}));
+  expect(snapshot.mine.discovery.caverns.find(cavern=>cavern.id===pocket.id)).toMatchObject({discovered:true,reward:{claimed:true}});
+  expect(snapshot.state.claimedPocketRewards[pocket.reward.id]).toBe(true);
+  await page.evaluate(({x,y})=>window.__everDeeperTest.setPosition(x,y),{x:pocket.x,y:pocket.y});
+  await page.screenshot({path:testInfo.outputPath('emberdeep-claimed-pocket.png'),fullPage:true});
+
+  await page.reload();
+  await page.waitForFunction(()=>window.__everDeeperTest);
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot).toMatchObject({scene:'emberMine',depth:1});
+  expect(snapshot.state.clearedMineBarriers).toEqual(expect.objectContaining({ember_bulkhead:true,ember_crucible_lock:true}));
+  expect(snapshot.state.discoveredCaverns[pocket.id]).toBe(true);
+  expect(snapshot.state.claimedPocketRewards[pocket.reward.id]).toBe(true);
+  expect(snapshot.mine.discovery.caverns.find(cavern=>cavern.id===pocket.id).reward.claimed).toBe(true);
+});
+
+test('Molten Depths portal, stations, nodes, and Infernium Drill 2 gate survive reload',async({page},testInfo)=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.unlockAllAreas();
+    api.enterMine('emberMine');
+    api.discoverDepthEntrance();
+    api.enterDepth();
+  });
+  let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.mine).toMatchObject({name:'MOLTEN DEPTHS',depth:2,visualPass:'molten-production-assets-v1'});
+  expect(snapshot.mine.depthResources).toEqual({main:'magmaite',secondary:'deepstone',rare:'furnaceheart'});
+  expect(snapshot.mine.depthStations).toEqual(expect.objectContaining({sell:expect.any(Object),forge:expect.any(Object)}));
+  expect(snapshot.moltenRendering).toEqual(MOLTEN_RENDERING);
+  expect(snapshot.moltenRendering.shaft).toBe('assets/molten/depth-portal.png');
+  for(const type of ['magmaite','deepstone','furnaceheart','infernium']){
+    expect(snapshot.rocks.some(rock=>rock.scene==='emberMine'&&rock.depth===2&&rock.type===type)).toBe(true);
+    expect(snapshot.moltenRendering.nodes[type]).toBe('assets/molten/'+type+'-node.png');
+  }
+
+  const infernium=snapshot.mine.discovery.deposits.find(deposit=>deposit.type==='infernium');
+  expect(infernium).toEqual(expect.objectContaining({requiresDrillLevel:2,drillGated:true}));
+  const lockedAtZero=await page.evaluate(id=>window.__everDeeperTest.hitDepositRock(id,0),infernium.id);
+  expect(lockedAtZero.after).toEqual(lockedAtZero.before);
+  await page.evaluate(()=>window.__everDeeperTest.setDrillLevel(1));
+  const lockedAtOne=await page.evaluate(id=>window.__everDeeperTest.hitDepositRock(id,0),infernium.id);
+  expect(lockedAtOne.after).toEqual(lockedAtOne.before);
+  await page.evaluate(()=>window.__everDeeperTest.setDrillLevel(2));
+  const unlocked=await page.evaluate(id=>window.__everDeeperTest.hitDepositRock(id,0),infernium.id);
+  expect(unlocked.after).not.toEqual(unlocked.before);
+
+  await page.evaluate(stations=>{
+    const api=window.__everDeeperTest;
+    api.setPosition(stations.forge.x,stations.forge.y);
+    api.save();
+    api.renderOnce();
+  },snapshot.mine.depthStations);
+  await expect(page.locator('#contextTitle')).toContainText('Drill');
+  await page.screenshot({path:testInfo.outputPath('molten-depths-drill-forge.png'),fullPage:true});
+
+  await page.reload();
+  await page.waitForFunction(()=>window.__everDeeperTest);
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot).toMatchObject({scene:'emberMine',depth:2});
+  expect(snapshot.state.drillLevel).toBe(2);
+  expect(snapshot.state.discoveredDepthEntrances.emberMine).toBe(true);
+  expect(snapshot.mine).toMatchObject({name:'MOLTEN DEPTHS',visualPass:'molten-production-assets-v1'});
+  expect(snapshot.moltenRendering).toEqual(MOLTEN_RENDERING);
+  expect(snapshot.mine.discovery.deposits.find(deposit=>deposit.type==='infernium')).toEqual(expect.objectContaining({requiresDrillLevel:2,drillGated:true}));
+});
+
+test('Emberdeep entrance and Molten Depths remain readable on compact and tall phones',async({page},testInfo)=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__everDeeperTest.unlockAllAreas());
+  const sizes=[{name:'compact',width:375,height:667},{name:'tall',width:390,height:844}];
+  for(const size of sizes){
+    await page.setViewportSize({width:size.width,height:size.height});
+    await page.evaluate(()=>{
+      const api=window.__everDeeperTest;
+      api.setPosition(2480,970);
+      api.step(.05);
+      api.renderOnce();
+    });
+    await expect(page.locator('#contextPanel')).toBeVisible();
+    await expect(page.locator('#contextTitle')).toHaveText('Emberdeep Works');
+    await page.screenshot({path:testInfo.outputPath('emberdeep-entrance-'+size.name+'-'+size.width+'x'+size.height+'.png'),fullPage:true});
+
+    await page.evaluate(()=>{
+      const api=window.__everDeeperTest;
+      api.enterMine('emberMine');
+      api.discoverDepthEntrance();
+      api.enterDepth();
+    });
+    const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+    await page.evaluate(({x,y})=>{
+      const api=window.__everDeeperTest;
+      api.setPosition(x,y);
+      api.step(.05);
+      api.renderOnce();
+    },snapshot.mine.depthEntrance);
+    await expect(page.locator('#areaName')).toHaveText('MOLTEN DEPTHS');
+    await expect(page.locator('#contextPanel')).toBeVisible();
+    await expect(page.locator('#contextTitle')).toContainText('Depth 1');
+    const layout=await page.evaluate(()=>{
+      const canvas=document.getElementById('gameCanvas').getBoundingClientRect();
+      const panel=document.getElementById('contextPanel').getBoundingClientRect();
+      return{
+        width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,
+        canvas:{left:canvas.left,right:canvas.right,top:canvas.top,bottom:canvas.bottom,width:canvas.width,height:canvas.height},
+        panel:{left:panel.left,right:panel.right,bottom:panel.bottom}
+      };
+    });
+    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width);
+    expect(layout.canvas.left).toBeGreaterThanOrEqual(0);
+    expect(layout.canvas.right).toBeLessThanOrEqual(layout.width);
+    expect(layout.canvas.width).toBeGreaterThan(0);
+    expect(layout.canvas.height).toBeGreaterThan(0);
+    expect(layout.panel.left).toBeGreaterThanOrEqual(0);
+    expect(layout.panel.right).toBeLessThanOrEqual(layout.width);
+    expect(layout.panel.bottom).toBeLessThanOrEqual(layout.height);
+    await page.screenshot({path:testInfo.outputPath('molten-'+size.name+'-'+size.width+'x'+size.height+'.png'),fullPage:true});
     await page.evaluate(()=>{window.__everDeeperTest.exitDepth();window.__everDeeperTest.exitMine()});
   }
 });
