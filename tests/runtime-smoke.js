@@ -20,12 +20,12 @@ function auditBrandRemoval(directory){
 auditBrandRemoval(repositoryRoot);
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'0262');
+assert.equal(latest.version,'0263');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0262/);
-assert.match(html,/script\.js\?v=0262/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0262/);
+assert.match(html,/style\.css\?v=0263/);
+assert.match(html,/script\.js\?v=0263/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0263/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -143,12 +143,12 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.26.2');
+assert.equal(api.snapshot().build.version,'0.26.3');
 assert.equal(api.snapshot().build.name,'MOONGLASS COMPLETE');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.2');
-assert.equal(api.snapshot().assetVersion,'0262');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.3');
+assert.equal(api.snapshot().assetVersion,'0263');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0262',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0263',volume:1,loop:true,paused:false}));
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true,moonMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
@@ -180,7 +180,7 @@ renderAt(productionRuntime,productionApi,1110,650,['assets/surface/moonglass-gat
 assert.equal(JSON.stringify(productionApi.snapshot().moonglassGateTransition),JSON.stringify({active:false,progress:1}));
 assert.ok(!productionRuntime.drawCalls.some(call=>call.src.includes('assets/surface/moonglass-gate.png')),'the sunk Moonglass gate must leave only its ground mark');
 productionApi.unlockAllAreas();productionApi.setPickaxeLevel(4);
-renderAt(productionRuntime,productionApi,1225,720,['assets/surface/moonglass-ground.png','assets/surface/moonglass-crystals.png','assets/surface/moonglass-gate-mark.png','assets/entrances/moonglass-entrance.png']);
+renderAt(productionRuntime,productionApi,1450,850,['assets/surface/moonglass-ground.png','assets/surface/moonglass-crystals.png','assets/surface/moonglass-gate-mark.png','assets/entrances/moonglass-entrance.png']);
 assert.ok(!productionRuntime.drawCalls.some(call=>call.src.includes('assets/surface/moonglass-gate.png')),'opened Moonglass boundary gate must disappear');
 renderAt(productionRuntime,productionApi,1665,500,['assets/surface/moonglass-ground.png','assets/surface/moonglass-bloom-bed.png']);
 renderAt(productionRuntime,productionApi,2175,650,['assets/surface/moonglass-ground.png']);
