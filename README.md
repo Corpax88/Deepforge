@@ -1,6 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.25.0 - Cave Lighting**
+Current build: **Ever Deeper v0.26.0 - Moonglass Complete**
+
+Moonglass now has a complete production-art pass across the surface biome, mine portal, chests, labyrinth barriers and hidden chambers, plus the full Prismatic Depths loop with its own portal, stations, resources, wall hints, drops, and Phase Crystal drill gate.
 
 Every cave now uses a low-resolution raycast lightmap: the miner's helmet projects a warm, directional beam that stops against solid terrain, nearby darkness remains readable, and exposed ores emit restrained light in their own material colors. The light buffer is capped at 34% resolution and 16 visible ore lights to keep the effect mobile-safe.
 

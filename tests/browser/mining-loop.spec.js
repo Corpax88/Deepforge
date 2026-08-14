@@ -1,5 +1,107 @@
 const {test,expect}=require('@playwright/test');
 
+const SURFACE_MOONGLASS_RENDERING={
+  ground:'assets/surface/moonglass-ground.png',
+  crystals:'assets/surface/moonglass-crystals.png',
+  bloomBed:'assets/surface/moonglass-bloom-bed.png',
+  entrance:'assets/entrances/moonglass-entrance.png',
+  emberdeepSeal:'assets/surface/emberdeep-seal.png',
+  emberdeepGateOpen:'assets/surface/emberdeep-gate-open.png',
+  chests:{
+    crystalCache:{closed:'assets/surface/crystal-cache-closed.png',open:'assets/surface/crystal-cache-open.png'},
+    reliquary:{closed:'assets/surface/moonglass-reliquary-closed.png',open:'assets/surface/moonglass-reliquary-open.png'}
+  },
+  legacyGrid:false,
+  legacyDecorations:false,
+  legacyChests:false,
+  legacyEntrance:false,
+  legacyEmberdeepSeal:false
+};
+
+const MOONGLASS_RENDERING={
+  surfaceGround:'assets/surface/moonglass-ground.png',
+  surfaceCrystals:'assets/surface/moonglass-crystals.png',
+  bloomBed:'assets/surface/moonglass-bloom-bed.png',
+  entrance:'assets/entrances/moonglass-entrance.png',
+  emberdeepSeal:'assets/surface/emberdeep-seal.png',
+  emberdeepGateOpen:'assets/surface/emberdeep-gate-open.png',
+  chests:{
+    crystalCache:{closed:'assets/surface/crystal-cache-closed.png',open:'assets/surface/crystal-cache-open.png'},
+    reliquary:{closed:'assets/surface/moonglass-reliquary-closed.png',open:'assets/surface/moonglass-reliquary-open.png'}
+  },
+  floor:'assets/moonglass/floor.png',
+  wall:'assets/moonglass/wall.png',
+  routeMarker:'assets/moonglass/route-marker.png',
+  pocket:'assets/moonglass/crystal-pocket.png',
+  cache:'assets/moonglass/buried-cache.png',
+  shrine:'assets/moonglass/mining-rush-shrine.png',
+  nodes:{moonglass:'assets/moonglass/moonglass-node.png',starshard:'assets/moonglass/starshard-node.png'},
+  wallHints:{moonglass:'assets/moonglass/moonglass-wall.png',starshard:'assets/moonglass/starshard-wall.png'},
+  barriers:{moon_prism_gate:'assets/moonglass/prismatic-fault.png',moon_star_lock:'assets/moonglass/starbound-geode.png'},
+  drops:{moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png'},
+  legacySurfaceDecorations:false,
+  legacyMineFloor:false,
+  legacyMineTerrain:false,
+  legacyMineWalls:false,
+  legacyBarriers:false,
+  legacyPocketRewards:false,
+  legacyResourceNodes:false
+};
+
+const PRISMATIC_RENDERING={
+  floor:'assets/prismatic/floor.png',
+  wall:'assets/prismatic/wall.png',
+  shaft:'assets/prismatic/depth-portal.png',
+  sellStation:'assets/prismatic/sell-station.png',
+  drillForge:'assets/prismatic/drill-forge.png',
+  pocket:'assets/prismatic/crystal-pocket.png',
+  cache:'assets/prismatic/buried-cache.png',
+  shrine:'assets/prismatic/mining-rush-shrine.png',
+  nodes:{
+    prismite:'assets/prismatic/prismite-node.png',
+    deepstone:'assets/rootwound/deepstone-node.png',
+    lunacore:'assets/prismatic/lunacore-node.png',
+    phasecrystal:'assets/prismatic/phasecrystal-node.png'
+  },
+  wallHints:{
+    prismite:'assets/prismatic/prismite-wall.png',
+    deepstone:'assets/prismatic/deepstone-wall.png',
+    lunacore:'assets/prismatic/lunacore-wall.png',
+    phasecrystal:'assets/prismatic/phasecrystal-wall.png'
+  },
+  drops:{
+    deepstone:'assets/drops/deepstone-drop.png',
+    prismite:'assets/drops/prismite-drop.png',
+    lunacore:'assets/drops/lunacore-drop.png',
+    phasecrystal:'assets/drops/phasecrystal-drop.png'
+  },
+  legacyFloorDecorations:false,
+  legacyTerrainTexture:false,
+  legacyDepthShaft:false,
+  legacyDepthStations:false,
+  legacyPocketRewards:false,
+  legacyResourceNodes:false
+};
+
+function pngPaths(value){
+  const paths=[];
+  const visit=item=>{
+    if(typeof item==='string'&&item.endsWith('.png'))paths.push(item);
+    else if(Array.isArray(item))item.forEach(visit);
+    else if(item&&typeof item==='object')Object.values(item).forEach(visit);
+  };
+  visit(value);return[...new Set(paths)];
+}
+
+async function inspectPngs(page,paths){
+  return page.evaluate(sources=>Promise.all(sources.map(src=>new Promise(resolve=>{
+    const image=new Image();
+    image.onload=()=>resolve({src,width:image.naturalWidth,height:image.naturalHeight});
+    image.onerror=()=>resolve({src,width:0,height:0});
+    image.src=src;
+  }))),paths);
+}
+
 async function freshGame(page){
   await page.goto('/');
   await page.waitForFunction(()=>window.__everDeeperTest);
@@ -949,11 +1051,11 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.25.0',name:'CAVE LIGHTING'});
-  expect(snapshot.assetVersion).toBe('0250');
-  expect(snapshot.entranceAssetRendering).toEqual({mossMine:true});
+  expect(snapshot.build).toEqual({version:'0.26.0',name:'MOONGLASS COMPLETE'});
+  expect(snapshot.assetVersion).toBe('0260');
+  expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
-  expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
+  expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
   expect(snapshot.starterGateRendering).toEqual({moonglassGate:'assets/surface/moonglass-gate.png',legacyStarterGate:false});
   expect(snapshot.discoveryRendering).toEqual({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true});
   expect(snapshot.mineralNodeRenderScale).toBe(.85);
@@ -972,11 +1074,11 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.25.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.26.0');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.25.0 · CAVE LIGHTING');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.26.0 · MOONGLASS COMPLETE');
 });
 
 test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{
@@ -1282,4 +1384,204 @@ test('Rootwound Depth 2 uses the complete production asset set',async({page})=>{
   const art=await page.evaluate(paths=>Promise.all(paths.map(src=>new Promise(resolve=>{const image=new Image();image.onload=()=>resolve({src,width:image.naturalWidth,height:image.naturalHeight});image.onerror=()=>resolve({src,width:0,height:0});image.src=src}))),paths);
   expect(art).toHaveLength(6);
   expect(art.every(asset=>asset.width>=300&&asset.height>=300)).toBe(true);
+});
+
+test('v0.26.0 exposes the complete Moonglass and Prismatic production contracts',async({page})=>{
+  await freshGame(page);
+  const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.build.version).toBe('0.26.0');
+  expect(snapshot.assetVersion).toBe('0260');
+  expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
+  expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);
+  expect(snapshot.prismaticRendering).toEqual(PRISMATIC_RENDERING);
+
+  const paths=pngPaths({surface:SURFACE_MOONGLASS_RENDERING,moonglass:MOONGLASS_RENDERING,prismatic:PRISMATIC_RENDERING});
+  const art=await inspectPngs(page,paths);
+  expect(paths.length).toBeGreaterThanOrEqual(40);
+  expect(art).toHaveLength(paths.length);
+  expect(art.every(asset=>asset.width>=256&&asset.height>=190)).toBe(true);
+});
+
+test('Moonglass surface portal and both bespoke chest states use production art',async({page},testInfo)=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.unlockAllAreas();
+    api.setPickaxeLevel(4);
+    api.setPosition(1225,720);
+    api.renderOnce();
+  });
+  await expect(page.locator('#contextTitle')).toHaveText('Moonglass Labyrinth');
+  let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.surfaceMoonglassRendering.entrance).toBe('assets/entrances/moonglass-entrance.png');
+  expect(snapshot.chests.find(chest=>chest.id==='moon_cache').opened).toBe(false);
+  expect(snapshot.chests.find(chest=>chest.id==='moon_reliquary').opened).toBe(false);
+  await page.screenshot({path:testInfo.outputPath('moonglass-portal.png'),fullPage:true});
+  await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.setPosition(1285,1110);
+    api.step(.05);
+    api.renderOnce();
+  });
+  await expect(page.locator('#contextTitle')).toHaveText('Crystal Cache');
+  await page.screenshot({path:testInfo.outputPath('moonglass-crystal-cache-closed.png'),fullPage:true});
+
+  await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.openChest('moon_cache');
+    api.openChest('moon_reliquary');
+    api.setPosition(2070,215);
+    api.step(.05);
+    api.renderOnce();
+  });
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.state.openedChests).toEqual(expect.objectContaining({moon_cache:true,moon_reliquary:true}));
+  expect(snapshot.moonglassRendering.chests).toEqual(MOONGLASS_RENDERING.chests);
+  await expect(page.locator('#contextPanel')).toBeHidden();
+  await page.screenshot({path:testInfo.outputPath('moonglass-reliquary-open.png'),fullPage:true});
+
+  await page.reload();
+  await page.waitForFunction(()=>window.__everDeeperTest);
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.state.openedChests).toEqual(expect.objectContaining({moon_cache:true,moon_reliquary:true}));
+});
+
+test('Moonglass Labyrinth production barriers and hidden chamber persist',async({page},testInfo)=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.unlockAllAreas();
+    api.setPickaxeLevel(5);
+    api.enterMine('moonMine');
+  });
+  let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.mine).toMatchObject({name:'MOONGLASS LABYRINTH',depth:1,visualPass:'moonglass-production-assets-v1'});
+  expect(snapshot.mine.barrierIds).toEqual(['moon_prism_gate','moon_star_lock']);
+  expect(snapshot.moonglassRendering.barriers).toEqual(MOONGLASS_RENDERING.barriers);
+
+  const rareFind=snapshot.rocks.find(rock=>rock.scene==='moonMine'&&rock.depth===1&&rock.rareFind);
+  const cavern=snapshot.mine.discovery.caverns.find(item=>item.id===rareFind.cavernId);
+  expect(cavern.discovered).toBe(false);
+  expect(rareFind.exposed).toBe(false);
+  await page.evaluate(({cavernId})=>{
+    const api=window.__everDeeperTest;
+    api.clearMineBarrier('moon_prism_gate');
+    api.clearMineBarrier('moon_star_lock');
+    api.discoverCavern(cavernId);
+    api.save();
+    api.renderOnce();
+  },{cavernId:cavern.id});
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.state.clearedMineBarriers).toEqual(expect.objectContaining({moon_prism_gate:true,moon_star_lock:true}));
+  expect(snapshot.mine.discovery.caverns.find(item=>item.id===cavern.id).discovered).toBe(true);
+  expect(snapshot.rocks.find(rock=>rock.id===rareFind.id).exposed).toBe(true);
+  await page.evaluate(({x,y})=>window.__everDeeperTest.setPosition(x,y),{x:cavern.x,y:cavern.y});
+  await page.screenshot({path:testInfo.outputPath('moonglass-hidden-chamber.png'),fullPage:true});
+
+  await page.reload();
+  await page.waitForFunction(()=>window.__everDeeperTest);
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.scene).toBe('moonMine');
+  expect(snapshot.state.clearedMineBarriers).toEqual(expect.objectContaining({moon_prism_gate:true,moon_star_lock:true}));
+  expect(snapshot.state.discoveredCaverns[cavern.id]).toBe(true);
+});
+
+test('Prismatic Depths production portal, stations, resources, and Phase Crystal gate survive reload',async({page},testInfo)=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.unlockAllAreas();
+    api.enterMine('moonMine');
+    api.discoverDepthEntrance();
+    api.enterDepth();
+  });
+  let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.mine).toMatchObject({name:'PRISMATIC DEPTHS',depth:2,visualPass:'prismatic-production-assets-v1'});
+  expect(snapshot.mine.depthResources).toEqual({main:'prismite',secondary:'deepstone',rare:'lunacore'});
+  expect(snapshot.mine.depthStations).toEqual(expect.objectContaining({sell:expect.any(Object),forge:expect.any(Object)}));
+  expect(snapshot.prismaticRendering).toEqual(PRISMATIC_RENDERING);
+  expect(snapshot.prismaticRendering.shaft).toBe('assets/prismatic/depth-portal.png');
+
+  const phaseDeposit=snapshot.mine.discovery.deposits.find(deposit=>deposit.type==='phasecrystal');
+  expect(phaseDeposit).toEqual(expect.objectContaining({requiresDrillLevel:2,drillGated:true}));
+  const lockedAtZero=await page.evaluate(id=>window.__everDeeperTest.hitDepositRock(id,0),phaseDeposit.id);
+  expect(lockedAtZero.after).toEqual(lockedAtZero.before);
+  await page.evaluate(()=>window.__everDeeperTest.setDrillLevel(1));
+  const lockedAtOne=await page.evaluate(id=>window.__everDeeperTest.hitDepositRock(id,0),phaseDeposit.id);
+  expect(lockedAtOne.after).toEqual(lockedAtOne.before);
+  await page.evaluate(()=>window.__everDeeperTest.setDrillLevel(2));
+  const unlocked=await page.evaluate(id=>window.__everDeeperTest.hitDepositRock(id,0),phaseDeposit.id);
+  expect(unlocked.after).not.toEqual(unlocked.before);
+
+  await page.evaluate(stations=>{
+    const api=window.__everDeeperTest;
+    api.setPosition(stations.forge.x,stations.forge.y);
+    api.save();
+    api.renderOnce();
+  },snapshot.mine.depthStations);
+  await expect(page.locator('#contextTitle')).toContainText('Drill');
+  await page.screenshot({path:testInfo.outputPath('prismatic-depths-forge.png'),fullPage:true});
+
+  await page.reload();
+  await page.waitForFunction(()=>window.__everDeeperTest);
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot).toMatchObject({scene:'moonMine',depth:2});
+  expect(snapshot.state.drillLevel).toBe(2);
+  expect(snapshot.state.discoveredDepthEntrances.moonMine).toBe(true);
+  expect(snapshot.mine).toMatchObject({name:'PRISMATIC DEPTHS',visualPass:'prismatic-production-assets-v1'});
+  expect(snapshot.prismaticRendering).toEqual(PRISMATIC_RENDERING);
+});
+
+test('Moonglass portal and Prismatic Depths remain readable on compact and tall phones',async({page},testInfo)=>{
+  await freshGame(page);
+  await page.evaluate(()=>window.__everDeeperTest.unlockAllAreas());
+  const sizes=[{name:'compact',width:375,height:667},{name:'tall',width:390,height:844}];
+  for(const size of sizes){
+    await page.setViewportSize({width:size.width,height:size.height});
+    await page.evaluate(()=>{
+      const api=window.__everDeeperTest;
+      api.setPosition(1225,720);
+      api.step(.05);
+      api.renderOnce();
+    });
+    await expect(page.locator('#contextPanel')).toBeVisible();
+    await expect(page.locator('#contextTitle')).toHaveText('Moonglass Labyrinth');
+    await page.screenshot({path:testInfo.outputPath('moonglass-portal-'+size.name+'-'+size.width+'x'+size.height+'.png'),fullPage:true});
+
+    await page.evaluate(()=>{
+      const api=window.__everDeeperTest;
+      api.enterMine('moonMine');
+      api.discoverDepthEntrance();
+      api.enterDepth();
+    });
+    const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+    await page.evaluate(({x,y})=>{
+      const api=window.__everDeeperTest;
+      api.setPosition(x,y);
+      api.step(.05);
+      api.renderOnce();
+    },snapshot.mine.depthEntrance);
+    await expect(page.locator('#areaName')).toHaveText('PRISMATIC DEPTHS');
+    await expect(page.locator('#contextPanel')).toBeVisible();
+    await expect(page.locator('#contextTitle')).toContainText('Depth 1');
+    const layout=await page.evaluate(()=>{
+      const canvas=document.getElementById('gameCanvas').getBoundingClientRect();
+      const panel=document.getElementById('contextPanel').getBoundingClientRect();
+      return{
+        width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,
+        canvas:{left:canvas.left,right:canvas.right,top:canvas.top,bottom:canvas.bottom,width:canvas.width,height:canvas.height},
+        panel:{left:panel.left,right:panel.right,bottom:panel.bottom}
+      };
+    });
+    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width);
+    expect(layout.canvas.left).toBeGreaterThanOrEqual(0);
+    expect(layout.canvas.right).toBeLessThanOrEqual(layout.width);
+    expect(layout.canvas.width).toBeGreaterThan(0);
+    expect(layout.canvas.height).toBeGreaterThan(0);
+    expect(layout.panel.left).toBeGreaterThanOrEqual(0);
+    expect(layout.panel.right).toBeLessThanOrEqual(layout.width);
+    expect(layout.panel.bottom).toBeLessThanOrEqual(layout.height);
+    await page.screenshot({path:testInfo.outputPath('prismatic-'+size.name+'-'+size.width+'x'+size.height+'.png'),fullPage:true});
+    await page.evaluate(()=>{window.__everDeeperTest.exitDepth();window.__everDeeperTest.exitMine()});
+  }
 });

@@ -20,12 +20,12 @@ function auditBrandRemoval(directory){
 auditBrandRemoval(repositoryRoot);
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'0250');
+assert.equal(latest.version,'0260');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0250/);
-assert.match(html,/script\.js\?v=0250/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0250/);
+assert.match(html,/style\.css\?v=0260/);
+assert.match(html,/script\.js\?v=0260/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0260/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -34,6 +34,15 @@ const musicAsset=fs.readFileSync(require('node:path').join(__dirname,'..','asset
 assert.ok(musicAsset.length>100000&&musicAsset.length<2000000,'background music must stay within the mobile audio budget');
 const logoAsset=fs.readFileSync(require('node:path').join(__dirname,'..','assets/branding/ever-deeper-logo.png'));
 assert.equal(logoAsset.toString('ascii',1,4),'PNG');assert.equal(logoAsset[25],6,'logo must use RGBA');assert.ok(logoAsset.length<300000,'logo exceeds mobile asset budget');
+function assertPng(relative,width,height,{alpha=true,maxBytes=250000}={}){
+  const png=fs.readFileSync(require('node:path').join(repositoryRoot,relative));
+  assert.equal(png.toString('ascii',1,4),'PNG',relative+' must be a PNG');
+  assert.equal(png.readUInt32BE(16),width,relative+' has the wrong width');
+  assert.equal(png.readUInt32BE(20),height,relative+' has the wrong height');
+  const preservesAlpha=[4,6].includes(png[25])||png.includes(Buffer.from('tRNS'));
+  assert.equal(preservesAlpha,alpha,relative+(alpha?' must preserve transparency':' must be fully opaque'));
+  assert.ok(png.length<maxBytes,relative+' exceeds its '+maxBytes+' byte mobile budget');
+}
 const playerAssets=['assets/characters/miner-b.png','assets/characters/miner-b-drill-burrower.png','assets/characters/miner-b-drill-pulse.png','assets/characters/miner-b-drill-deepcore.png','assets/tools/pickaxe-worn.png','assets/tools/pickaxe-iron.png','assets/tools/pickaxe-runed.png','assets/tools/pickaxe-moonglass.png','assets/tools/pickaxe-ember.png','assets/tools/starforge-crusher.png','assets/tools/starforge-swift.png','assets/tools/starforge-prospector.png'];
 for(const relative of playerAssets){const path=require('node:path').join(__dirname,'..',relative),png=fs.readFileSync(path);assert.equal(png.toString('ascii',1,4),'PNG');assert.equal(png[25],6,relative+' must use RGBA');assert.ok(png.length<250000,relative+' exceeds mobile asset budget')}
 const pocketAsset=fs.readFileSync(require('node:path').join(__dirname,'..','assets/mossvein/magic-crystal-pocket.png'));
@@ -42,6 +51,58 @@ const starterProductionAssets=['assets/surface/assay-station.png','assets/surfac
 for(const relative of starterProductionAssets){const png=fs.readFileSync(require('node:path').join(__dirname,'..',relative));assert.equal(png.toString('ascii',1,4),'PNG');assert.ok([4,6].includes(png[25])||png.includes(Buffer.from('tRNS')),relative+' must preserve transparency');assert.ok(png.length<180000,relative+' exceeds mobile asset budget')}
 const rootwoundAssets=['floor.png','wall.png','rootiron-node.png','deepstone-node.png','ambercore-node.png','burrowsteel-node.png','rootiron-wall.png','depth-shaft.png','sell-station.png','drill-forge.png'];
 for(const name of rootwoundAssets){const png=fs.readFileSync(require('node:path').join(__dirname,'..','assets/rootwound',name));assert.equal(png.toString('ascii',1,4),'PNG');assert.ok(png.length<250000,name+' exceeds mobile asset budget');if(name!=='floor.png')assert.ok([4,6].includes(png[25])||png.includes(Buffer.from('tRNS')),name+' must preserve transparency')}
+const moonglassSurfaceAssets={
+  'assets/surface/moonglass-ground.png':[512,512,{alpha:false,maxBytes:220000}],
+  'assets/surface/moonglass-crystals.png':[384,300,{maxBytes:100000}],
+  'assets/surface/moonglass-bloom-bed.png':[640,280,{maxBytes:120000}],
+  'assets/surface/crystal-cache-closed.png':[384,334,{maxBytes:120000}],
+  'assets/surface/crystal-cache-open.png':[384,350,{maxBytes:120000}],
+  'assets/surface/moonglass-reliquary-closed.png':[384,334,{maxBytes:120000}],
+  'assets/surface/moonglass-reliquary-open.png':[384,350,{maxBytes:120000}],
+  'assets/surface/emberdeep-seal.png':[512,470,{maxBytes:180000}],
+  'assets/surface/emberdeep-gate-open.png':[512,470,{maxBytes:180000}],
+  'assets/entrances/moonglass-entrance.png':[512,466,{maxBytes:180000}]
+};
+const moonglassMineAssets={
+  'assets/moonglass/floor.png':[512,512,{alpha:false,maxBytes:220000}],
+  'assets/moonglass/wall.png':[512,366,{maxBytes:150000}],
+  'assets/moonglass/moonglass-node.png':[512,466,{maxBytes:180000}],
+  'assets/moonglass/moonglass-wall.png':[341,512,{maxBytes:100000}],
+  'assets/moonglass/starshard-node.png':[512,512,{maxBytes:180000}],
+  'assets/moonglass/starshard-wall.png':[341,512,{maxBytes:100000}],
+  'assets/moonglass/crystal-pocket.png':[640,358,{maxBytes:180000}],
+  'assets/moonglass/buried-cache.png':[384,273,{maxBytes:120000}],
+  'assets/moonglass/mining-rush-shrine.png':[459,512,{maxBytes:150000}],
+  'assets/moonglass/prismatic-fault.png':[384,512,{maxBytes:120000}],
+  'assets/moonglass/starbound-geode.png':[384,512,{maxBytes:120000}],
+  'assets/moonglass/route-marker.png':[512,256,{maxBytes:120000}]
+};
+const prismaticAssets={
+  'assets/prismatic/floor.png':[512,512,{alpha:false,maxBytes:220000}],
+  'assets/prismatic/wall.png':[512,366,{maxBytes:120000}],
+  'assets/prismatic/prismite-node.png':[512,466,{maxBytes:180000}],
+  'assets/prismatic/prismite-wall.png':[341,512,{maxBytes:100000}],
+  'assets/prismatic/lunacore-node.png':[512,512,{maxBytes:180000}],
+  'assets/prismatic/lunacore-wall.png':[341,512,{maxBytes:100000}],
+  'assets/prismatic/phasecrystal-node.png':[512,466,{maxBytes:180000}],
+  'assets/prismatic/phasecrystal-wall.png':[341,512,{maxBytes:100000}],
+  'assets/prismatic/deepstone-wall.png':[341,512,{maxBytes:100000}],
+  'assets/prismatic/depth-portal.png':[512,444,{maxBytes:180000}],
+  'assets/prismatic/sell-station.png':[512,455,{maxBytes:180000}],
+  'assets/prismatic/drill-forge.png':[512,512,{maxBytes:180000}],
+  'assets/prismatic/crystal-pocket.png':[640,358,{maxBytes:180000}],
+  'assets/prismatic/buried-cache.png':[384,273,{maxBytes:120000}],
+  'assets/prismatic/mining-rush-shrine.png':[459,512,{maxBytes:150000}]
+};
+const moonglassDropAssets={
+  'assets/drops/moonglass-drop.png':[256,256,{maxBytes:60000}],
+  'assets/drops/starshard-drop.png':[256,256,{maxBytes:60000}],
+  'assets/drops/deepstone-drop.png':[256,256,{maxBytes:60000}],
+  'assets/drops/prismite-drop.png':[256,256,{maxBytes:60000}],
+  'assets/drops/lunacore-drop.png':[256,256,{maxBytes:60000}],
+  'assets/drops/phasecrystal-drop.png':[256,256,{maxBytes:60000}]
+};
+for(const [relative,[assetWidth,assetHeight,options]] of Object.entries({...moonglassSurfaceAssets,...moonglassMineAssets,...prismaticAssets,...moonglassDropAssets}))assertPng(relative,assetWidth,assetHeight,options);
 const storage=new Map();
 
 function createElement(id){
@@ -82,20 +143,67 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.25.0');
-assert.equal(api.snapshot().build.name,'CAVE LIGHTING');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.25.0');
-assert.equal(api.snapshot().assetVersion,'0250');
+assert.equal(api.snapshot().build.version,'0.26.0');
+assert.equal(api.snapshot().build.name,'MOONGLASS COMPLETE');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.0');
+assert.equal(api.snapshot().assetVersion,'0260');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0250',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0260',volume:1,loop:true,paused:false}));
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
-assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true}));
+assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true,moonMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
-assert.equal(JSON.stringify(api.snapshot().starterRendering),JSON.stringify({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false}));
+assert.equal(JSON.stringify(api.snapshot().starterRendering),JSON.stringify({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false}));
 assert.equal(JSON.stringify(api.snapshot().starterGateRendering),JSON.stringify({moonglassGate:'assets/surface/moonglass-gate.png',legacyStarterGate:false}));
 assert.equal(JSON.stringify(api.snapshot().rootwoundRendering),JSON.stringify({floor:'assets/rootwound/floor.png',wall:'assets/rootwound/wall.png',nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:'assets/rootwound/rootiron-wall.png',shaft:'assets/rootwound/depth-shaft.png',sellStation:'assets/rootwound/sell-station.png',drillForge:'assets/rootwound/drill-forge.png',legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false}));
+const expectedMoonglassRendering={surfaceGround:'assets/surface/moonglass-ground.png',surfaceCrystals:'assets/surface/moonglass-crystals.png',bloomBed:'assets/surface/moonglass-bloom-bed.png',entrance:'assets/entrances/moonglass-entrance.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepGateOpen:'assets/surface/emberdeep-gate-open.png',chests:{crystalCache:{closed:'assets/surface/crystal-cache-closed.png',open:'assets/surface/crystal-cache-open.png'},reliquary:{closed:'assets/surface/moonglass-reliquary-closed.png',open:'assets/surface/moonglass-reliquary-open.png'}},floor:'assets/moonglass/floor.png',wall:'assets/moonglass/wall.png',routeMarker:'assets/moonglass/route-marker.png',pocket:'assets/moonglass/crystal-pocket.png',cache:'assets/moonglass/buried-cache.png',shrine:'assets/moonglass/mining-rush-shrine.png',nodes:{moonglass:'assets/moonglass/moonglass-node.png',starshard:'assets/moonglass/starshard-node.png'},wallHints:{moonglass:'assets/moonglass/moonglass-wall.png',starshard:'assets/moonglass/starshard-wall.png'},barriers:{moon_prism_gate:'assets/moonglass/prismatic-fault.png',moon_star_lock:'assets/moonglass/starbound-geode.png'},drops:{moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png'},legacySurfaceDecorations:false,legacyMineFloor:false,legacyMineTerrain:false,legacyMineWalls:false,legacyBarriers:false,legacyPocketRewards:false,legacyResourceNodes:false};
+const expectedPrismaticRendering={floor:'assets/prismatic/floor.png',wall:'assets/prismatic/wall.png',shaft:'assets/prismatic/depth-portal.png',sellStation:'assets/prismatic/sell-station.png',drillForge:'assets/prismatic/drill-forge.png',pocket:'assets/prismatic/crystal-pocket.png',cache:'assets/prismatic/buried-cache.png',shrine:'assets/prismatic/mining-rush-shrine.png',nodes:{prismite:'assets/prismatic/prismite-node.png',deepstone:'assets/rootwound/deepstone-node.png',lunacore:'assets/prismatic/lunacore-node.png',phasecrystal:'assets/prismatic/phasecrystal-node.png'},wallHints:{prismite:'assets/prismatic/prismite-wall.png',deepstone:'assets/prismatic/deepstone-wall.png',lunacore:'assets/prismatic/lunacore-wall.png',phasecrystal:'assets/prismatic/phasecrystal-wall.png'},drops:{deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png'},legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyPocketRewards:false,legacyResourceNodes:false};
+assert.equal(JSON.stringify(api.snapshot().moonglassRendering),JSON.stringify(expectedMoonglassRendering));
+assert.equal(JSON.stringify(api.snapshot().prismaticRendering),JSON.stringify(expectedPrismaticRendering));
 assert.equal(JSON.stringify(api.snapshot().discoveryRendering),JSON.stringify({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true}));
 assert.equal(JSON.stringify(api.snapshot().characterRendering),JSON.stringify({baseAsset:'assets/characters/miner-b.png',activeToolKey:'pickaxe-worn',activeRenderAsset:'assets/tools/pickaxe-worn.png',toolLayerCount:8,drillCompositeCount:3,gripCrop:{x:246,y:307,w:69,h:101},gripPivot:{x:14,y:24},gripPoint:{x:42,y:50},layeredTools:true,animatedGrip:true,bodyReaction:true,sharedGripAnchor:true,fullDrillComposites:true,legacyDrillLimbCrops:false,legacyCanvasCharacter:false,legacyCanvasTools:false}));
+function assertRendered(drawCalls,paths){for(const path of paths)assert.ok(drawCalls.some(call=>call.src.includes(path)),path+' must render')}
+function renderAt(testRuntime,testApi,x,y,paths){testApi.setPosition(x,y);testRuntime.drawCalls.length=0;testApi.renderOnce();assertRendered(testRuntime.drawCalls,paths)}
+function terrainIndexForRock(snapshot,rock){const cols=Math.ceil(snapshot.mine.width/snapshot.mine.terrain.tileSize);return Math.floor(rock.y/snapshot.mine.terrain.tileSize)*cols+Math.floor(rock.x/snapshot.mine.terrain.tileSize)}
+function exposeRock(testApi,rock,maxHits=8){for(let hit=0;hit<maxHits&&!testApi.snapshot().rocks.find(item=>item.id===rock.id).exposed;hit++)testApi.mineTerrainCell(terrainIndexForRock(testApi.snapshot(),rock));assert.equal(testApi.snapshot().rocks.find(item=>item.id===rock.id).exposed,true,rock.type+' test node must be exposed')}
+
+const storageBeforeMoonglassRendering=new Map(storage),productionRuntime=createRuntime(),productionApi=productionRuntime.api;
+productionApi.reset();
+renderAt(productionRuntime,productionApi,2175,650,['assets/surface/moonglass-ground.png','assets/surface/emberdeep-seal.png']);
+productionApi.unlockAllAreas();productionApi.setPickaxeLevel(4);
+renderAt(productionRuntime,productionApi,1225,720,['assets/surface/moonglass-ground.png','assets/surface/moonglass-crystals.png','assets/entrances/moonglass-entrance.png']);
+renderAt(productionRuntime,productionApi,1665,500,['assets/surface/moonglass-ground.png','assets/surface/moonglass-bloom-bed.png']);
+renderAt(productionRuntime,productionApi,2175,650,['assets/surface/moonglass-ground.png','assets/surface/emberdeep-gate-open.png']);
+renderAt(productionRuntime,productionApi,1285,1110,['assets/surface/crystal-cache-closed.png']);productionApi.openChest('moon_cache');renderAt(productionRuntime,productionApi,1285,1110,['assets/surface/crystal-cache-open.png']);
+renderAt(productionRuntime,productionApi,2070,215,['assets/surface/moonglass-reliquary-closed.png']);productionApi.openChest('moon_reliquary');renderAt(productionRuntime,productionApi,2070,215,['assets/surface/moonglass-reliquary-open.png']);
+productionApi.spawnGroundDrops('moonglass',1,1285,1110);productionApi.spawnGroundDrops('starshard',1,1285,1110);renderAt(productionRuntime,productionApi,1285,1110,['assets/drops/moonglass-drop.png','assets/drops/starshard-drop.png']);productionApi.forceGlobalLootSweep();
+
+productionApi.setStarforgeVariant('swift');productionApi.enterMine('moonMine');
+assert.equal(productionApi.snapshot().mine.visualPass,'moonglass-production-assets-v1');
+renderAt(productionRuntime,productionApi,150,1180,['assets/moonglass/floor.png','assets/entrances/moonglass-entrance.png']);
+renderAt(productionRuntime,productionApi,535,690,['assets/moonglass/floor.png','assets/moonglass/wall.png','assets/moonglass/route-marker.png','assets/moonglass/prismatic-fault.png','assets/moonglass/moonglass-node.png']);
+renderAt(productionRuntime,productionApi,1055,500,['assets/moonglass/starbound-geode.png']);
+let productionSnapshot=productionApi.snapshot(),buriedMoonglass=productionSnapshot.rocks.find(rock=>rock.scene==='moonMine'&&rock.depth===1&&rock.type==='moonglass'&&rock.depositId&&!rock.cavernId&&!rock.exposed);
+assert.ok(buriedMoonglass);const moonCols=Math.ceil(productionSnapshot.mine.width/productionSnapshot.mine.terrain.tileSize),moonIndex=terrainIndexForRock(productionSnapshot,buriedMoonglass);
+for(const neighbor of [moonIndex-1,moonIndex+1,moonIndex-moonCols,moonIndex+moonCols]){productionApi.mineTerrainCell(neighbor);if(productionApi.snapshot().mine.terrain.mineralHints.some(hint=>hint.rockId===buriedMoonglass.id))break}
+assert.ok(productionApi.snapshot().mine.terrain.mineralHints.some(hint=>hint.rockId===buriedMoonglass.id));renderAt(productionRuntime,productionApi,buriedMoonglass.x,buriedMoonglass.y,['assets/moonglass/moonglass-wall.png']);
+exposeRock(productionApi,buriedMoonglass);renderAt(productionRuntime,productionApi,buriedMoonglass.x,buriedMoonglass.y,['assets/moonglass/moonglass-node.png']);
+const moonCacheCavern=productionApi.snapshot().mine.discovery.caverns.find(cavern=>cavern.reward.kind==='cache');productionApi.mineTerrainCell(moonCacheCavern.boundaryIndex);renderAt(productionRuntime,productionApi,moonCacheCavern.x,moonCacheCavern.y,['assets/moonglass/crystal-pocket.png','assets/moonglass/buried-cache.png']);
+const moonShrineCavern=productionApi.snapshot().mine.discovery.caverns.find(cavern=>cavern.reward.kind==='shrine');productionApi.mineTerrainCell(moonShrineCavern.boundaryIndex);renderAt(productionRuntime,productionApi,moonShrineCavern.x,moonShrineCavern.y,['assets/moonglass/crystal-pocket.png','assets/moonglass/mining-rush-shrine.png']);
+
+assert.equal(productionApi.discoverDepthEntrance(),true);assert.equal(productionApi.enterDepth(),true);productionApi.setDrillLevel(2);productionSnapshot=productionApi.snapshot();
+assert.equal(productionSnapshot.mine.visualPass,'prismatic-production-assets-v1');
+assert.equal(JSON.stringify(productionSnapshot.mine.depthResources),JSON.stringify({main:'prismite',secondary:'deepstone',rare:'lunacore'}));
+assert.ok(productionSnapshot.mine.discovery.deposits.some(deposit=>deposit.type==='phasecrystal'&&deposit.drillGated&&deposit.requiresDrillLevel===2));
+renderAt(productionRuntime,productionApi,productionSnapshot.mine.depthEntrance.x,productionSnapshot.mine.depthEntrance.y,['assets/prismatic/floor.png','assets/prismatic/wall.png','assets/prismatic/depth-portal.png','assets/prismatic/sell-station.png','assets/prismatic/drill-forge.png']);
+const buriedPrismite=productionSnapshot.rocks.find(rock=>rock.scene==='moonMine'&&rock.depth===2&&rock.type==='prismite'&&rock.depositId&&!rock.cavernId&&!rock.exposed),prismaticCols=Math.ceil(productionSnapshot.mine.width/productionSnapshot.mine.terrain.tileSize),prismiteIndex=terrainIndexForRock(productionSnapshot,buriedPrismite);
+for(const neighbor of [prismiteIndex-1,prismiteIndex+1,prismiteIndex-prismaticCols,prismiteIndex+prismaticCols]){productionApi.mineTerrainCell(neighbor);productionApi.mineTerrainCell(neighbor);if(productionApi.snapshot().mine.terrain.mineralHints.some(hint=>hint.rockId===buriedPrismite.id))break}
+assert.ok(productionApi.snapshot().mine.terrain.mineralHints.some(hint=>hint.rockId===buriedPrismite.id));renderAt(productionRuntime,productionApi,buriedPrismite.x,buriedPrismite.y,['assets/prismatic/prismite-wall.png']);
+for(const [type,path] of [['prismite','assets/prismatic/prismite-node.png'],['deepstone','assets/rootwound/deepstone-node.png'],['lunacore','assets/prismatic/lunacore-node.png'],['phasecrystal','assets/prismatic/phasecrystal-node.png']]){const rock=productionApi.snapshot().rocks.find(item=>item.scene==='moonMine'&&item.depth===2&&item.type===type&&item.depositId&&!item.cavernId&&!item.broken);assert.ok(rock,type+' production node is missing');exposeRock(productionApi,rock);renderAt(productionRuntime,productionApi,rock.x,rock.y,[path])}
+const prismaticCache=productionApi.snapshot().mine.discovery.caverns.find(cavern=>cavern.reward.kind==='cache');productionApi.mineTerrainCell(prismaticCache.boundaryIndex);productionApi.mineTerrainCell(prismaticCache.boundaryIndex);renderAt(productionRuntime,productionApi,prismaticCache.x,prismaticCache.y,['assets/prismatic/crystal-pocket.png','assets/prismatic/buried-cache.png']);
+const prismaticShrine=productionApi.snapshot().mine.discovery.caverns.find(cavern=>cavern.reward.kind==='shrine');productionApi.mineTerrainCell(prismaticShrine.boundaryIndex);productionApi.mineTerrainCell(prismaticShrine.boundaryIndex);renderAt(productionRuntime,productionApi,prismaticShrine.x,prismaticShrine.y,['assets/prismatic/crystal-pocket.png','assets/prismatic/mining-rush-shrine.png']);
+for(const type of ['deepstone','prismite','lunacore','phasecrystal'])productionApi.spawnGroundDrops(type,1,productionApi.snapshot().player.x,productionApi.snapshot().player.y);productionRuntime.drawCalls.length=0;productionApi.renderOnce();assertRendered(productionRuntime.drawCalls,['assets/drops/deepstone-drop.png','assets/drops/prismite-drop.png','assets/drops/lunacore-drop.png','assets/drops/phasecrystal-drop.png']);
+storage.clear();for(const [key,value] of storageBeforeMoonglassRendering)storage.set(key,value);
+
 api.setPosition(455,350);runtime.drawCalls.length=0;api.renderOnce();
 for(const asset of ['assay-station.png','forge-station.png','storage-chest.png','wayfarer-shop.png'])assert.ok(runtime.drawCalls.some(call=>call.src.includes(asset)),asset+' must render in the starter place');
 for(const type of ['stone','copper','gold'])api.spawnGroundDrops(type,1,455,350);
@@ -328,4 +436,4 @@ runtime=createRuntime();after=runtime.api.snapshot();assert.equal(after.state.ba
 const migrationState={...after.state,gold:424242};
 storage.clear();storage.set('retiredMiningPrototypeSave',JSON.stringify(migrationState));runtime=createRuntime();after=runtime.api.snapshot();
 assert.equal(after.state.gold,424242);assert.equal(storage.has('retiredMiningPrototypeSave'),false);assert.equal(storage.has('everDeeperPrototypeV2'),true);
-console.log('Runtime smoke passed: Ever Deeper branding, save migration, progression, guidance, movable base, rendering, lighting, and reload. Light pass '+lightingAverageMs.toFixed(2)+'ms average.');
+console.log('Runtime smoke passed: Ever Deeper branding, Moonglass/Prismatic production rendering, save migration, progression, guidance, movable base, lighting, and reload. Light pass '+lightingAverageMs.toFixed(2)+'ms average.');
