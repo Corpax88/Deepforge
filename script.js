@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0269';
+  const ASSET_VERSION='02610';
   const MOONGLASS_SURFACE_BLEND=190;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const LIGHTING=Object.freeze({
@@ -206,7 +206,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.26.9',name:'MOONGLASS COMPLETE'};
+  const BUILD={version:'0.26.10',name:'MOONGLASS COMPLETE'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='EVER DEEPER v'+BUILD.version+' · '+BUILD.name;
 
@@ -504,7 +504,7 @@
     ['gold',560,380],
     ['moonglass',1300,350],['moonglass',1490,530],['moonglass',1730,330],['moonglass',1980,500],
     ['moonglass',1265,950],['moonglass',1510,1010],['moonglass',1790,950],['moonglass',2040,1030],
-    ['copper',1390,900],['copper',1880,900],['stone',1600,930],['stone',2100,930],['starshard',1840,1080],
+    ['copper',1180,980],['copper',1880,900],['stone',1600,930],['stone',2100,930],['starshard',1840,1080],
     ['emberstone',2380,335],['emberstone',2580,520],['emberstone',2825,310],['emberstone',3140,470],
     ['emberstone',2400,865],['emberstone',2690,1030],['emberstone',2940,950],['emberstone',3220,1010],
     ['moonglass',2520,900],['copper',3070,900],['sunslag',3000,1080],
@@ -514,7 +514,7 @@
   ];
   const VEIN_DEFINITIONS=[
     {id:'copper_run',type:'copper',timeLimit:16,respawn:28,color:'#e2a36e',bonus:{copper:3},positions:[[875,1085],[945,1025],[1010,1100]]},
-    {id:'moonglass_bloom',type:'moonglass',timeLimit:18,respawn:32,color:'#9ef2ed',bonus:{moonglass:2,starshard:1},positions:[[1600,430],[1665,500],[1735,555]]},
+    {id:'moonglass_bloom',type:'moonglass',timeLimit:18,respawn:32,color:'#9ef2ed',bonus:{moonglass:2,starshard:1},positions:[[1593,504],[1665,504],[1742,504]]},
     {id:'ember_fault',type:'emberstone',timeLimit:22,respawn:38,color:'#ff9b54',bonus:{emberstone:3,sunslag:1},positions:[[2700,875],[2780,940],[2855,900]]},
     {id:'starfall_lattice',type:'astralite',timeLimit:20,respawn:42,color:'#c4cfff',bonus:{astralite:3,crownstone:1},positions:[[3720,880],[3810,930],[3900,890]]}
   ];
