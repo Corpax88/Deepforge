@@ -20,12 +20,14 @@ function auditBrandRemoval(directory){
 auditBrandRemoval(repositoryRoot);
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'0283');
+const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
+assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
+assert.equal(latest.version,'0284');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0283/);
-assert.match(html,/script\.js\?v=0283/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0283/);
+assert.match(html,/style\.css\?v=0284/);
+assert.match(html,/script\.js\?v=0284/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0284/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -198,12 +200,12 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.28.3');
+assert.equal(api.snapshot().build.version,'0.28.4');
 assert.equal(api.snapshot().build.name,'EMBERDEEP COMPLETE');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.28.3');
-assert.equal(api.snapshot().assetVersion,'0283');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.28.4');
+assert.equal(api.snapshot().assetVersion,'0284');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0283',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0284',volume:1,loop:true,paused:false}));
 assert.equal(api.setAudioSetting('music',false),false);assert.equal(api.snapshot().music.enabled,false);assert.equal(api.snapshot().music.started,false);
 assert.equal(api.setAudioSetting('effects',false),false);assert.equal(api.snapshot().music.effectsEnabled,false);
 assert.equal(api.setAudioSetting('music',true),true);assert.equal(api.setAudioSetting('effects',true),true);
@@ -223,7 +225,7 @@ assert.equal(JSON.stringify(api.snapshot().prismaticRendering),JSON.stringify(ex
 assert.equal(JSON.stringify(api.snapshot().surfaceEmberdeepRendering),JSON.stringify(expectedSurfaceEmberdeepRendering));
 assert.equal(JSON.stringify(api.snapshot().emberdeepRendering),JSON.stringify(expectedEmberdeepRendering));
 assert.equal(JSON.stringify(api.snapshot().moltenRendering),JSON.stringify(expectedMoltenRendering));
-assert.equal(JSON.stringify(api.snapshot().discoveryRendering),JSON.stringify({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true,routineDiscoveryText:false,rareDiscoveryText:true}));
+assert.equal(JSON.stringify(api.snapshot().discoveryRendering),JSON.stringify({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true,routineDiscoveryText:false,rareDiscoveryText:false}));
 assert.equal(JSON.stringify(api.snapshot().miningFeedbackRendering),JSON.stringify({routineImpactRings:false,routineBreakRings:false,drillVibration:true,drillVibrationMaxOffset:.9,cameraShake:false}));
 assert.equal(JSON.stringify(api.snapshot().bonusVeinRendering),JSON.stringify({worldLabels:false,textPrompts:false,sleepingCracks:true,movingReadyPulse:true,radialTimer:true,completionBurst:true}));
 assert.doesNotMatch(source,/vein\.label|BONUS VEIN|COOLED/);
