@@ -26,22 +26,22 @@
       window.addEventListener('pageshow',event=>{if(event.persisted)checkLatest()});
     })();
   </script>
-  <link rel="preload" as="image" href="assets/branding/ever-deeper-logo.png?v=0291">
-  <link rel="preload" as="image" href="assets/characters/miner-b-walk.png?v=0291">
-  <link rel="stylesheet" href="style.css?v=0291">
+  <link rel="preload" as="image" href="assets/branding/ever-deeper-logo.png?v=0300">
+  <link rel="preload" as="image" href="assets/characters/miner-b-walk.png?v=0300">
+  <link rel="stylesheet" href="style.css?v=0300">
 </head>
 <body>
   <main id="game" aria-label="Ever Deeper mining game">
     <header class="topbar">
       <div class="brand" aria-label="Ever Deeper">
-        <img class="brand-logo" src="assets/branding/ever-deeper-logo.png?v=0291" alt="Ever Deeper">
+        <img class="brand-logo" src="assets/branding/ever-deeper-logo.png?v=0300" alt="Ever Deeper">
         <div class="brand-meta">
-          <span id="buildVersion">v0.29.1</span>
+          <span id="buildVersion">v0.30.0</span>
           <small id="areaName">MOSSVEIN QUARRY</small>
         </div>
       </div>
       <div class="resources" aria-label="Resources">
-        <div class="resource gold" title="Gold"><i aria-hidden="true"></i><b id="goldValue">0</b></div>
+        <div class="resource gold" title="Gold"><span class="resource-icon topbar-resource" data-resource="gold"><img src="assets/drops/gold-drop.png?v=0300" alt="" aria-hidden="true"></span><b id="goldValue">0</b></div>
         <button id="inventoryButton" class="resource cargo" type="button" title="Resource inventory" aria-label="Open resource inventory"><i aria-hidden="true"></i><b id="cargoValue">0</b></button>
         <button id="menuButton" class="icon-button settings-button" type="button" aria-label="Open settings" title="Settings"><span aria-hidden="true"></span></button>
       </div>
@@ -145,7 +145,7 @@
     <div id="menuShade" class="menu-shade" hidden>
       <section class="menu-card" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
         <header class="menu-header">
-          <div><span id="menuBuildVersion">EVER DEEPER v0.29.1 · EMBER PATH ALIGNMENT</span><h2 id="menuTitle">Settings</h2></div>
+          <div><span id="menuBuildVersion">EVER DEEPER v0.30.0 · RESOURCE CLARITY</span><h2 id="menuTitle">Settings</h2></div>
           <button id="menuCloseButton" class="menu-close" type="button" aria-label="Close settings">×</button>
         </header>
         <nav class="menu-tabs" aria-label="Game menu">
@@ -191,6 +191,6 @@
       </section>
     </div>
   </main>
-  <script src="script.js?v=0291"></script>
+  <script src="script.js?v=0300"></script>
 </body>
 </html>

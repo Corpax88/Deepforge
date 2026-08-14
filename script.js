@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0291';
+  const ASSET_VERSION='0300';
   const MOONGLASS_SURFACE_BLEND=190;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=190;
@@ -77,8 +77,21 @@
   const MOSSVEIN_REWARD_PATHS=Object.freeze({cache:'assets/mossvein/buried-cache.png',shrine:'assets/mossvein/mining-rush-shrine.png'});
   const DROP_PATHS=Object.freeze({
     stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',
-    deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png',
-    emberstone:'assets/drops/emberstone-drop.png',sunslag:'assets/drops/sunslag-drop.png',magmaite:'assets/drops/magmaite-drop.png',furnaceheart:'assets/drops/furnaceheart-drop.png',infernium:'assets/drops/infernium-drop.png'
+    emberstone:'assets/drops/emberstone-drop.png',sunslag:'assets/drops/sunslag-drop.png',astralite:'assets/drops/astralite-drop.png',crownstone:'assets/drops/crownstone-drop.png',
+    deepstone:'assets/drops/deepstone-drop.png',rootiron:'assets/drops/rootiron-drop.png',ambercore:'assets/drops/ambercore-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',
+    magmaite:'assets/drops/magmaite-drop.png',furnaceheart:'assets/drops/furnaceheart-drop.png',voidglass:'assets/drops/voidglass-drop.png',singularity:'assets/drops/singularity-drop.png',burrowsteel:'assets/drops/burrowsteel-drop.png',
+    phasecrystal:'assets/drops/phasecrystal-drop.png',infernium:'assets/drops/infernium-drop.png'
+  });
+  const RESOURCE_IMAGE_BOUNDS=Object.freeze({
+    stone:Object.freeze({x:0,y:0,w:256,h:211}),copper:Object.freeze({x:0,y:0,w:256,h:239}),gold:Object.freeze({x:0,y:0,w:256,h:194}),
+    moonglass:Object.freeze({x:9,y:8,w:237,h:240}),starshard:Object.freeze({x:36,y:8,w:183,h:240}),emberstone:Object.freeze({x:39,y:58,w:184,h:132}),sunslag:Object.freeze({x:64,y:50,w:157,h:140}),
+    astralite:Object.freeze({x:23,y:22,w:210,h:212}),crownstone:Object.freeze({x:26,y:22,w:203,h:212}),deepstone:Object.freeze({x:8,y:19,w:240,h:218}),rootiron:Object.freeze({x:31,y:22,w:194,h:212}),ambercore:Object.freeze({x:31,y:22,w:193,h:212}),
+    prismite:Object.freeze({x:8,y:15,w:240,h:225}),lunacore:Object.freeze({x:15,y:8,w:225,h:240}),magmaite:Object.freeze({x:53,y:37,w:151,h:164}),furnaceheart:Object.freeze({x:55,y:37,w:138,h:170}),
+    voidglass:Object.freeze({x:23,y:22,w:209,h:212}),singularity:Object.freeze({x:23,y:22,w:210,h:212}),burrowsteel:Object.freeze({x:22,y:22,w:211,h:212}),phasecrystal:Object.freeze({x:40,y:8,w:175,h:240}),infernium:Object.freeze({x:62,y:24,w:129,h:192})
+  });
+  const RESOURCE_RENDER_CONTRACT=Object.freeze({
+    completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,objectiveIcons:true,inventoryIcons:true,storageIcons:true,recipeIcons:true,ledgerIcons:true,
+    croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false
   });
   const ROOTWOUND_ART={floor:null,floorPattern:null,wall:null,rootironWall:null,shaft:null,sellStation:null,drillForge:null,nodes:{}};
   const ROOTWOUND_PATHS=Object.freeze({
@@ -284,7 +297,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.29.1',name:'EMBER PATH ALIGNMENT'};
+  const BUILD={version:'0.30.0',name:'RESOURCE CLARITY'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='EVER DEEPER v'+BUILD.version+' · '+BUILD.name;
 
@@ -1104,16 +1117,29 @@
   function openInventory(){releaseTouchControls();inventoryShade.hidden=false;renderInventory()}
   function closeInventory(){inventoryShade.hidden=true}
 
+  function resourceKey(type){return type==='coin'?'gold':type}
+  function resourceIconMarkup(type,className='',label=''){
+    const key=resourceKey(type),path=DROP_PATHS[key],bounds=RESOURCE_IMAGE_BOUNDS[key]||{x:0,y:0,w:256,h:256};if(!path)return'';
+    const fit=.9,max=Math.max(bounds.w,bounds.h),scale=fit*256/max,left=50-(bounds.x+bounds.w*.5)*fit/max*100,top=50-(bounds.y+bounds.h*.5)*fit/max*100;
+    return'<span class="resource-icon'+(className?' '+className:'')+'" data-resource="'+key+'" title="'+(label||titleCase(key))+'" style="--resource-scale:'+scale*100+'%;--resource-left:'+left+'%;--resource-top:'+top+'%"><img src="'+path+'?v='+ASSET_VERSION+'" alt="" aria-hidden="true"></span>';
+  }
+  function resourceAmountMarkup(type,amount,className=''){
+    const data=ROCK_TYPES[type];return'<span class="resource-amount'+(className?' '+className:'')+'">'+resourceIconMarkup(type,'',data?data.label:'')+'<b>'+amount+'</b></span>';
+  }
+  function resourceRequirementsMarkup(requirements=[],extra=''){
+    return'<span class="context-resource-list">'+requirements.map(requirement=>resourceAmountMarkup(requirement.type,Math.min(state.cargo[requirement.type]||0,requirement.amount)+' / '+requirement.amount)).join('')+(extra?'<em>'+extra+'</em>':'')+'</span>';
+  }
+
   function renderInventory(){
     const total=cargoCount(),types=Object.values(state.cargo).filter(amount=>amount>0).length,protectedCargo=protectedProgressCargo();inventoryTotal.textContent=String(total);inventoryTypes.textContent=String(types);
     const entries=Object.entries(state.cargo).filter(([,amount])=>amount>0).sort((a,b)=>Number(ROCK_TYPES[b[0]].rare)-Number(ROCK_TYPES[a[0]].rare)||ROCK_TYPES[a[0]].label.localeCompare(ROCK_TYPES[b[0]].label));
-    inventoryGrid.innerHTML=entries.length?entries.map(([type,amount])=>{const data=ROCK_TYPES[type],protectedAmount=protectedCargo[type]||0;return'<div class="inventory-slot'+(protectedAmount?' protected':'')+'"><i class="resource-gem" style="--gem-color:'+data.color+';--gem-edge:'+data.edge+'"></i><span>'+data.label+'</span><b>'+amount+'</b></div>'}).join(''):'<div class="inventory-slot empty">Resources you pick up will appear here.</div>';
+    inventoryGrid.innerHTML=entries.length?entries.map(([type,amount])=>{const data=ROCK_TYPES[type],protectedAmount=protectedCargo[type]||0;return'<div class="inventory-slot'+(protectedAmount?' protected':'')+'">'+resourceIconMarkup(type,'inventory-resource',data.label)+'<span class="inventory-resource-name">'+data.label+'</span><b>'+amount+'</b></div>'}).join(''):'<div class="inventory-slot empty">Resources you pick up will appear here.</div>';
     const nearby=nearbyStorageChests();autoSortButton.disabled=!nearby.length||!total;autoSortHint.textContent=nearby.length?nearby.length+' CHEST'+(nearby.length===1?'':'S')+' NEARBY':'NO CHEST NEARBY';
     const cost=storageChestCost();buyChestCost.textContent=cost+' GOLD';buyChestButton.disabled=state.gold<cost;
     const modules=allBaseModules();baseModuleList.innerHTML=modules.map(module=>{
       const nearbyModule=canInteractModule(module),nearbyStorage=canInteractModule(module,AUTO_SORT_RADIUS),placedHere=moduleIsHere(module),items=module.kind==='storage'?Object.entries(module.items).filter(([,amount])=>amount>0):[];
       const title=module.kind==='forge'?'Forge':module.kind==='sell'?'Sell Chest':'Storage Chest '+(state.base.chests.indexOf(module)+1);
-      const contents=module.kind==='storage'?(items.length?items.map(([type,amount])=>ROCK_TYPES[type].label+' ×'+amount).join(' · '):'Empty · '+chestTypeCount(module)+' / '+STORAGE_CHEST_CAPACITY+' types'):(module.kind==='forge'?'Pickaxe upgrades and Ember Mastery.':'Sell carried resources while protecting upgrade materials.');
+      const contents=module.kind==='storage'?(items.length?items.map(([type,amount])=>resourceAmountMarkup(type,'×'+amount,'storage-resource')).join(''):'Empty · '+chestTypeCount(module)+' / '+STORAGE_CHEST_CAPACITY+' types'):(module.kind==='forge'?'Pickaxe upgrades and Ember Mastery.':'Sell carried resources while protecting upgrade materials.');
       const action=module.packed?'<button data-base-place="'+module.id+'">PLACE HERE</button>':placedHere&&nearbyModule?'<button class="secondary" data-base-pack="'+module.id+'">PACK</button>':'<button disabled>'+moduleLocationLabel(module)+'</button>';
       const take=module.kind==='storage'&&placedHere&&nearbyStorage?'<button data-chest-take="'+module.id+'"'+(items.length?'':' disabled')+'>TAKE ALL</button>':'';
       return'<article class="base-module"><div class="base-module-head"><h4>'+title+'</h4><small>'+(module.kind==='storage'?chestTypeCount(module)+' / '+STORAGE_CHEST_CAPACITY+' TYPES':'BASE MODULE')+'</small></div><small>'+moduleLocationLabel(module)+'</small><div class="base-module-items">'+contents+'</div><div class="base-module-actions">'+action+take+'</div></article>';
@@ -2358,7 +2384,7 @@
     objectiveRequirements.hidden=!requirements.length;
     objectiveRequirements.innerHTML=requirements.map(requirement=>{
       const data=ROCK_TYPES[requirement.type],current=Math.min(requirement.amount,state.cargo[requirement.type]||0);
-      return'<div class="objective-requirement" title="'+data.label+'" aria-label="'+data.label+' '+current+' of '+requirement.amount+'"><i style="--gem-color:'+data.color+';--gem-edge:'+data.edge+'"></i><b>'+current+'/'+requirement.amount+'</b></div>';
+      return'<div class="objective-requirement" title="'+data.label+'" aria-label="'+data.label+' '+current+' of '+requirement.amount+'">'+resourceIconMarkup(requirement.type,'objective-resource',data.label)+'<b>'+current+'/'+requirement.amount+'</b></div>';
     }).join('');
   }
 
@@ -2476,7 +2502,7 @@
       else if(!state.drillLevel&&!state.starforgeVariant){contextTitle.textContent=drill.name;contextDetail.textContent='Bring any forged Starforge pickaxe to begin the Drill Age.';contextButton.textContent='STARFORGE REQUIRED';contextButton.disabled=true}
       else{
         const missing=nextMissingDrillRequirement(cost);
-        contextTitle.textContent=drill.name;contextDetail.textContent=cost.requirements.map(requirement=>drillRequirementProgress(requirement)).join(' · ')+(missing?' · '+DEPTH_ROUTE_LABELS[missing.scene]:'');
+        contextTitle.textContent=drill.name;contextDetail.innerHTML=resourceRequirementsMarkup(cost.requirements,missing?DEPTH_ROUTE_LABELS[missing.scene]:'');
         contextButton.textContent=cost.gold+' GOLD';contextButton.disabled=!drillReady();
       }
     }else if(baseContext&&baseContext.kind==='storage'){
@@ -2499,8 +2525,8 @@
         const next=PICKAXES[5],currentHits=hitsRequired('emberstone',currentPickaxe().power),nextHits=hitsRequired('emberstone',next.power);
         contextEyebrow.textContent='FORGE UPGRADE - POWER '+currentPickaxe().power+' -> '+next.power;contextTitle.textContent=next.name;
         if(!state.emberdeepUnlocked)contextDetail.textContent='Open Emberdeep Foundry first.';
-        else if(!emberPickaxeReady())contextDetail.textContent='EMBERSTONE '+state.cargo.emberstone+' / '+EMBER_PICKAXE_ORE_REQUIRED+' - '+currentHits+' -> '+nextHits+' HITS';
-        else contextDetail.textContent='EMBERSTONE READY - '+currentHits+' -> '+nextHits+' HITS';
+        else if(!emberPickaxeReady())contextDetail.innerHTML=resourceRequirementsMarkup([{type:'emberstone',amount:EMBER_PICKAXE_ORE_REQUIRED}],currentHits+' → '+nextHits+' HITS');
+        else contextDetail.innerHTML=resourceRequirementsMarkup([{type:'emberstone',amount:EMBER_PICKAXE_ORE_REQUIRED}],currentHits+' → '+nextHits+' HITS');
         contextButton.textContent=emberPickaxeReady()?next.cost+' GOLD':'LOCKED '+Math.min(EMBER_PICKAXE_ORE_REQUIRED,state.cargo.emberstone)+'/'+EMBER_PICKAXE_ORE_REQUIRED;
         contextButton.disabled=!emberPickaxeReady()||state.gold<next.cost;return;
       }
@@ -2510,7 +2536,7 @@
         else{
           const oldHits=armoredHitsRequired('sunslag',currentPower(),currentShellPower()),newHits=armoredHitsRequired('sunslag',next.power,next.shellPower);
           contextEyebrow.textContent='REFORGE '+state.emberMastery+' / 5 - POWER '+currentPower()+' -> '+next.power;contextTitle.textContent=next.label;
-          contextDetail.textContent='SUNSLAG '+Math.min(state.cargo.sunslag,next.sunslag)+' / '+next.sunslag+' - TOTAL '+oldHits+' -> '+newHits+' HITS - YIELD '+Math.round(next.bonusYield*100)+'%';
+          contextDetail.innerHTML=resourceRequirementsMarkup([{type:'sunslag',amount:next.sunslag}],oldHits+' → '+newHits+' HITS · YIELD '+Math.round(next.bonusYield*100)+'%');
           contextButton.textContent=state.cargo.sunslag>=next.sunslag?next.gold+' GOLD':'LOCKED '+Math.min(state.cargo.sunslag,next.sunslag)+'/'+next.sunslag;
           contextButton.disabled=!masteryReady();
         }
@@ -2528,12 +2554,18 @@
         const id=button.dataset.starforge,variant=STARFORGE_VARIANTS[id],unlocked=state.starforgeUnlocked[id],selected=state.starforgeVariant===id;
         button.classList.toggle('selected',selected&&!state.drillLevel);button.disabled=!!state.drillLevel||selected;
         button.querySelector('b').textContent=variant.name.toUpperCase();
-        button.querySelector('small').textContent=selected?'ACTIVE':unlocked?'SELECT':variant.short+' - '+variant.cost.astralite+'A '+variant.cost.crownstone+'C';
+        const detail=button.querySelector('small');if(selected)detail.textContent='ACTIVE';else if(unlocked)detail.textContent='SELECT';else detail.innerHTML='<span class="starforge-short">'+variant.short+'</span>'+resourceAmountMarkup('astralite',variant.cost.astralite,'starforge-resource')+resourceAmountMarkup('crownstone',variant.cost.crownstone,'starforge-resource');
       });
     }
   }
 
   function updateLedger(){
+    if(!menuShade.dataset.resourceIcons){
+      for(const [id,type,label] of [['stoneMined','stone','Stone mined'],['copperMined','copper','Copper mined'],['crystalMined','moonglass','Moonglass mined'],['emberMined','emberstone','Emberstone mined'],['astraliteMined','astralite','Astralite mined']]){
+        const value=document.getElementById(id),caption=value&&value.parentElement&&value.parentElement.querySelector('span');if(caption){caption.classList.add('ledger-resource-label');caption.innerHTML=resourceIconMarkup(type,'ledger-resource',label)+'<span>'+label+'</span>'}
+      }
+      menuShade.dataset.resourceIcons='true';
+    }
     document.getElementById('stoneMined').textContent=state.mined.stone;
     document.getElementById('copperMined').textContent=state.mined.copper;
     document.getElementById('crystalMined').textContent=state.mined.moonglass;
@@ -3415,17 +3447,14 @@
     for(const drop of groundDrops){
       if(drop.scene!==currentScene||drop.depth!==currentDepth)continue;
       const p=worldToScreen(drop.x,drop.y),data=lootData(drop.type);if(p.x<-40||p.y<-55||p.x>viewWidth+40||p.y>viewHeight+40)continue;
-      const fade=sweepRemaining<8?sweepRemaining/8:1,bob=drop.settled?Math.sin(time*3.2+drop.id)*2:0,size=data.rare?9:7;
+      const fade=sweepRemaining<8?sweepRemaining/8:1,bob=drop.settled?Math.sin(time*3.2+drop.id)*2:0,size=data.rare?9:7,key=resourceKey(drop.type),production=STARTER_ART.drops[key];
+      if(!imageReady(production))continue;
       ctx.save();ctx.globalAlpha=fade;ctx.translate(p.x,p.y-drop.z+bob);ctx.fillStyle='rgba(0,0,0,.34)';ctx.beginPath();ctx.ellipse(0,drop.z-bob+7,size+5,4,0,0,Math.PI*2);ctx.fill();
-      const production=STARTER_ART.drops[drop.type==='coin'?'gold':drop.type];
-      if(imageReady(production)){
-        const maxWidth=drop.type==='stone'?30:32,maxHeight=27,scale=Math.min(maxWidth/production.naturalWidth,maxHeight/production.naturalHeight),assetWidth=production.naturalWidth*scale,assetHeight=production.naturalHeight*scale;
-        ctx.shadowBlur=drop.type==='coin'||drop.type==='gold'?8:drop.type==='copper'?4:2;ctx.shadowColor=data.edge;ctx.drawImage(production,-assetWidth*.5,-assetHeight*.72,assetWidth,assetHeight);ctx.shadowBlur=0;
+      {
+        const bounds=RESOURCE_IMAGE_BOUNDS[key]||{x:0,y:0,w:production.naturalWidth,h:production.naturalHeight},maxWidth=drop.type==='stone'?30:data.rare?35:33,maxHeight=drop.type==='stone'?27:data.rare?32:30,scale=Math.min(maxWidth/bounds.w,maxHeight/bounds.h),assetWidth=bounds.w*scale,assetHeight=bounds.h*scale;
+        ctx.shadowBlur=drop.type==='coin'||drop.type==='gold'?8:drop.type==='copper'?4:2;ctx.shadowColor=data.edge;ctx.drawImage(production,bounds.x,bounds.y,bounds.w,bounds.h,-assetWidth*.5,-assetHeight*.72,assetWidth,assetHeight);ctx.shadowBlur=0;
         if(drop.amount>1){ctx.fillStyle='#fff2c8';ctx.strokeStyle='rgba(0,0,0,.8)';ctx.lineWidth=3;ctx.textAlign='center';ctx.font='900 9px Georgia';ctx.strokeText('x'+drop.amount,0,-assetHeight*.72-4);ctx.fillText('x'+drop.amount,0,-assetHeight*.72-4)}ctx.restore();continue;
       }
-      ctx.shadowBlur=data.rare?11:5;ctx.shadowColor=data.edge;ctx.fillStyle=data.color;ctx.strokeStyle=data.edge;ctx.lineWidth=1.5;ctx.rotate(time*(data.rare?.55:.3)+drop.id);
-      ctx.beginPath();ctx.moveTo(0,-size);ctx.lineTo(size*.78,-size*.15);ctx.lineTo(size*.52,size);ctx.lineTo(-size*.62,size*.72);ctx.lineTo(-size,-size*.2);ctx.closePath();ctx.fill();ctx.stroke();ctx.rotate(-(time*(data.rare?.55:.3)+drop.id));ctx.shadowBlur=0;
-      if(drop.amount>1){ctx.fillStyle='#fff2c8';ctx.strokeStyle='rgba(0,0,0,.8)';ctx.lineWidth=3;ctx.textAlign='center';ctx.font='900 9px Georgia';ctx.strokeText('x'+drop.amount,0,-size-6);ctx.fillText('x'+drop.amount,0,-size-6)}ctx.restore();
     }
   }
 
@@ -3490,32 +3519,6 @@
     }
   }
 
-  function drawRockBody(rock,data){
-    if(['emberstone','sunslag','magmaite','furnaceheart','infernium'].includes(rock.type)){
-      ctx.fillStyle=data.color;ctx.strokeStyle=data.edge;ctx.lineWidth=2;
-      ctx.beginPath();ctx.moveTo(-37,19);ctx.lineTo(-40,-7);ctx.lineTo(-23,-31);ctx.lineTo(5,-38);ctx.lineTo(33,-23);ctx.lineTo(41,4);ctx.lineTo(26,27);ctx.lineTo(-13,29);ctx.closePath();ctx.fill();ctx.stroke();
-      ctx.fillStyle=data.accent;ctx.beginPath();ctx.moveTo(-23,-29);ctx.lineTo(3,-37);ctx.lineTo(-2,-3);ctx.lineTo(-33,6);ctx.closePath();ctx.fill();
-      ctx.strokeStyle=ROCK_TYPES[rock.type].rare?'#ffe197':data.edge;ctx.lineWidth=3;ctx.shadowBlur=8;ctx.shadowColor=ctx.strokeStyle;
-      ctx.beginPath();ctx.moveTo(-17,-15);ctx.lineTo(-3,-3);ctx.lineTo(9,-22);ctx.moveTo(-3,-3);ctx.lineTo(17,15);ctx.lineTo(29,5);ctx.moveTo(-3,-3);ctx.lineTo(-20,15);ctx.stroke();ctx.shadowBlur=0;
-      return;
-    }
-    if(['moonglass','starshard','astralite','crownstone','ambercore','prismite','lunacore','voidglass','singularity','phasecrystal'].includes(rock.type)){
-      const side=rock.type==='starshard'?-1:1;
-      ctx.fillStyle=data.accent;ctx.strokeStyle=data.edge;ctx.lineWidth=2;
-      ctx.beginPath();ctx.moveTo(-34,23);ctx.lineTo(-27,-11);ctx.lineTo(-12,-28);ctx.lineTo(-4,21);ctx.closePath();ctx.fill();ctx.stroke();
-      ctx.fillStyle=data.color;ctx.beginPath();ctx.moveTo(-11,23);ctx.lineTo(-5,-37);ctx.lineTo(12,-23);ctx.lineTo(18,23);ctx.closePath();ctx.fill();ctx.stroke();
-      ctx.fillStyle=data.accent;ctx.beginPath();ctx.moveTo(13,23);ctx.lineTo(18,-18);ctx.lineTo(34,-5);ctx.lineTo(30,24);ctx.closePath();ctx.fill();ctx.stroke();
-      ctx.globalAlpha=.42;ctx.fillStyle=data.edge;ctx.beginPath();ctx.moveTo(-3,-32);ctx.lineTo(4,-25);ctx.lineTo(8,12);ctx.lineTo(1,5);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
-      if(side<0){ctx.strokeStyle='#fff3ff';ctx.globalAlpha=.45;ctx.beginPath();ctx.moveTo(-26,-8);ctx.lineTo(-17,8);ctx.stroke();ctx.globalAlpha=1}
-      if(['crownstone','lunacore','singularity'].includes(rock.type)){
-        ctx.strokeStyle='#fff2ff';ctx.lineWidth=2;ctx.globalAlpha=.72;ctx.beginPath();ctx.moveTo(-20,-5);ctx.lineTo(-7,-22);ctx.lineTo(1,-8);ctx.lineTo(12,-25);ctx.lineTo(23,-5);ctx.stroke();ctx.globalAlpha=1;
-      }
-      return;
-    }
-    ctx.beginPath();ctx.moveTo(-33,22);ctx.lineTo(-39,-1);ctx.lineTo(-21,-29);ctx.lineTo(3,-39);ctx.lineTo(29,-27);ctx.lineTo(40,-2);ctx.lineTo(29,25);ctx.closePath();ctx.fillStyle=data.color;ctx.fill();ctx.strokeStyle=data.edge;ctx.lineWidth=2;ctx.stroke();
-    ctx.fillStyle=data.accent;ctx.beginPath();ctx.moveTo(-21,-27);ctx.lineTo(2,-37);ctx.lineTo(-1,-5);ctx.lineTo(-32,5);ctx.closePath();ctx.fill();
-  }
-
   function drawMineralNodeAsset(rock){
     const rootwoundNode=isRootwoundProduction()?ROOTWOUND_ART.nodes[rock.type]:null;
     if(imageReady(rootwoundNode)){
@@ -3529,11 +3532,15 @@
       ctx.drawImage(productionNode,-width*.5,-height*.56,width,height);
       return true;
     }
-    const production=MINERAL_ART[rock.type];if(!production)return false;
-    const image=production.node;if(!imageReady(image))return false;
-    const maxWidth=92*MINERAL_NODE_RENDER_SCALE,maxHeight=82*MINERAL_NODE_RENDER_SCALE,scale=Math.min(maxWidth/image.naturalWidth,maxHeight/image.naturalHeight),width=image.naturalWidth*scale,height=image.naturalHeight*scale;
-    ctx.drawImage(image,-width*.5,-height*.56,width,height);
-    return true;
+    const production=MINERAL_ART[rock.type],image=production&&production.node;
+    if(imageReady(image)){
+      const maxWidth=92*MINERAL_NODE_RENDER_SCALE,maxHeight=82*MINERAL_NODE_RENDER_SCALE,scale=Math.min(maxWidth/image.naturalWidth,maxHeight/image.naturalHeight),width=image.naturalWidth*scale,height=image.naturalHeight*scale;
+      ctx.drawImage(image,-width*.5,-height*.56,width,height);return true;
+    }
+    const pickup=STARTER_ART.drops[rock.type],bounds=RESOURCE_IMAGE_BOUNDS[rock.type];
+    if(!imageReady(pickup)||!bounds)return false;
+    const maxWidth=ROCK_TYPES[rock.type].rare?88:84,maxHeight=80,scale=Math.min(maxWidth/bounds.w,maxHeight/bounds.h),width=bounds.w*scale,height=bounds.h*scale;
+    ctx.drawImage(pickup,bounds.x,bounds.y,bounds.w,bounds.h,-width*.5,-height*.56,width,height);return true;
   }
 
   function drawChests(){
@@ -3582,20 +3589,7 @@
       ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(0,24,37,13,0,0,Math.PI*2);ctx.fill();
       const hitScale=rock.hit>0?1+rock.hit*.22:1;ctx.scale(hitScale,1/hitScale);
       const assetNode=drawMineralNodeAsset(rock);
-      if(!assetNode){
-        drawRockBody(rock,data);
-        const damageStage=Math.min(3,Math.ceil((rock.shell>0?1-rock.shell/rock.maxShell:1-rock.hp/rock.maxHp)*3));
-        ctx.strokeStyle=damageStage>=2?'rgba(25,18,14,.88)':data.edge;ctx.lineWidth=damageStage>=3?4:3;ctx.globalAlpha=damageStage?1:.38;
-        ctx.beginPath();ctx.moveTo(-9,-27);ctx.lineTo(4,-7);ctx.lineTo(22,-19);
-        if(damageStage>=1){ctx.moveTo(4,-7);ctx.lineTo(13,18)}
-        if(damageStage>=2){ctx.moveTo(4,-7);ctx.lineTo(-17,8);ctx.lineTo(-26,21);ctx.moveTo(13,18);ctx.lineTo(27,11)}
-        if(damageStage>=3){ctx.moveTo(-17,8);ctx.lineTo(-29,-4);ctx.moveTo(13,18);ctx.lineTo(5,29);ctx.moveTo(22,-19);ctx.lineTo(31,-8)}
-        ctx.stroke();ctx.globalAlpha=1;
-        if(rock.shell>0){ctx.strokeStyle=data.edge;ctx.globalAlpha=.5;ctx.lineWidth=5;ctx.beginPath();ctx.arc(0,-2,39,Math.PI*.08,Math.PI*.92);ctx.stroke();ctx.globalAlpha=1}
-        if(['moonglass','starshard','astralite','crownstone','ambercore','prismite','lunacore','voidglass','singularity','phasecrystal'].includes(rock.type)){
-          ctx.strokeStyle=data.edge;ctx.lineWidth=2;ctx.globalAlpha=.58;ctx.beginPath();ctx.moveTo(-5,-34);ctx.lineTo(2,14);ctx.moveTo(19,-15);ctx.lineTo(24,16);ctx.stroke();ctx.globalAlpha=1;
-        }
-      }
+      if(!assetNode){ctx.restore();continue}
       if(rock.shell>0){ctx.fillStyle='rgba(0,0,0,.62)';ctx.fillRect(-31,-55,62,6);ctx.fillStyle=data.edge;ctx.fillRect(-31,-55,62*(rock.shell/rock.maxShell),6)}
       else if(rock.hp<rock.maxHp){ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(-30,-52,60,5);ctx.fillStyle=data.edge;ctx.fillRect(-30,-52,60*(rock.hp/rock.maxHp),5)}
       if(rock.glintActive>0){
@@ -3803,7 +3797,7 @@
 
   window.__everDeeperTest={
     snapshot:()=>JSON.parse(JSON.stringify({
-      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted,enabled:audioSettings.music,effectsEnabled:audioSettings.effects},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true,emberMine:true},surfaceAssetRendering:{mossveinGround:true,mainRoad:SURFACE_ROAD_PATHS,seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:MOSSVEIN_MINE_PATH,mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
+      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted,enabled:audioSettings.music,effectsEnabled:audioSettings.effects},resourceRendering:{...RESOURCE_RENDER_CONTRACT,paths:DROP_PATHS,bounds:RESOURCE_IMAGE_BOUNDS},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true,emberMine:true},surfaceAssetRendering:{mossveinGround:true,mainRoad:SURFACE_ROAD_PATHS,seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:MOSSVEIN_MINE_PATH,mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
       surfaceMoonglassRendering:{ground:SURFACE_MOONGLASS_PATHS.ground,crystals:SURFACE_MOONGLASS_PATHS.crystals,bloomBed:SURFACE_MOONGLASS_PATHS.bloomBed,entrance:MINE_ENTRANCE_PATHS.moonMine,gateMark:STARTER_PATHS.moonglassGateMark,emberdeepSeal:STARTER_PATHS.emberdeepSeal,openBoundaryGatesRemoved:true,animatedGateTransition:true,smoothMossveinBlend:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:SURFACE_MOONGLASS_PATHS.crystalCacheClosed,open:SURFACE_MOONGLASS_PATHS.crystalCacheOpen},reliquary:{closed:SURFACE_MOONGLASS_PATHS.reliquaryClosed,open:SURFACE_MOONGLASS_PATHS.reliquaryOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyEmberdeepSeal:false},
       surfaceEmberdeepRendering:{ground:SURFACE_EMBERDEEP_PATHS.ground,slag:SURFACE_EMBERDEEP_PATHS.slag,faultBed:SURFACE_EMBERDEEP_PATHS.faultBed,minePath:SURFACE_EMBERDEEP_PATHS.minePath,minePathBounds:{...EMBERDEEP_MINE_PATH_BOUNDS},minePathRotation:EMBERDEEP_MINE_PATH_ROTATION,minePathPivot:{...EMBERDEEP_MINE_PATH_PIVOT},minePathMouthTarget:{x:2480,y:1015},entrance:MINE_ENTRANCE_PATHS.emberMine,entrancePosition:{...MINE_DEFINITIONS.emberMine.surfaceEntrance},entranceFlipped:true,gateSeal:STARTER_PATHS.emberdeepSeal,gateMark:STARTER_PATHS.emberdeepSealMark,animatedGateTransition:true,smoothMoonglassBlend:true,continuousBlendUnderlay:true,backgroundSlagDistinct:true,chests:{foundry:{closed:SURFACE_EMBERDEEP_PATHS.foundryClosed,open:SURFACE_EMBERDEEP_PATHS.foundryOpen},vault:{closed:SURFACE_EMBERDEEP_PATHS.vaultClosed,open:SURFACE_EMBERDEEP_PATHS.vaultOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyGate:false},
       moonglassRendering:{surfaceGround:SURFACE_MOONGLASS_PATHS.ground,surfaceCrystals:SURFACE_MOONGLASS_PATHS.crystals,bloomBed:SURFACE_MOONGLASS_PATHS.bloomBed,entrance:MINE_ENTRANCE_PATHS.moonMine,gateMark:STARTER_PATHS.moonglassGateMark,emberdeepSeal:STARTER_PATHS.emberdeepSeal,openBoundaryGatesRemoved:true,animatedGateTransition:true,smoothMossveinBlend:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:SURFACE_MOONGLASS_PATHS.crystalCacheClosed,open:SURFACE_MOONGLASS_PATHS.crystalCacheOpen},reliquary:{closed:SURFACE_MOONGLASS_PATHS.reliquaryClosed,open:SURFACE_MOONGLASS_PATHS.reliquaryOpen}},floor:MOONGLASS_PATHS.floor,wall:MOONGLASS_PATHS.wall,routeMarker:MOONGLASS_PATHS.routeMarker,pocket:MOONGLASS_PATHS.pocket,cache:MOONGLASS_PATHS.cache,shrine:MOONGLASS_PATHS.shrine,nodes:{moonglass:MOONGLASS_PATHS.moonglassNode,starshard:MOONGLASS_PATHS.starshardNode},wallHints:{moonglass:MOONGLASS_PATHS.moonglassWall,starshard:MOONGLASS_PATHS.starshardWall},barriers:{moon_prism_gate:MOONGLASS_PATHS.prismFault,moon_star_lock:MOONGLASS_PATHS.starGeode},drops:{moonglass:DROP_PATHS.moonglass,starshard:DROP_PATHS.starshard},legacySurfaceDecorations:false,legacyMineFloor:false,legacyMineTerrain:false,legacyMineWalls:false,legacyBarriers:false,legacyPocketRewards:false,legacyResourceNodes:false},

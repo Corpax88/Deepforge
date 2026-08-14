@@ -12,14 +12,14 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   const logo=page.locator('.brand-logo');
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('alt','Ever Deeper');
-  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0291');
+  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0300');
   const logoState=await logo.evaluate(image=>({complete:image.complete,width:image.naturalWidth,height:image.naturalHeight,bounds:image.getBoundingClientRect().toJSON()}));
   expect(logoState).toMatchObject({complete:true,width:800,height:297});
   expect(logoState.bounds.width).toBeGreaterThanOrEqual(124);
   expect(logoState.bounds.right).toBeLessThanOrEqual(await page.evaluate(()=>innerWidth));
 
-  await expect(page.locator('#buildVersion')).toHaveText('v0.29.1');
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.29.1 · EMBER PATH ALIGNMENT');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.30.0');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.30.0 · RESOURCE CLARITY');
   const release=await page.evaluate(()=>{
     const api=window.__everDeeperTest;
     api.reset();api.save();
@@ -33,12 +33,27 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
     };
   });
   expect(release).toEqual({
-    build:{version:'0.29.1',name:'EMBER PATH ALIGNMENT'},
+    build:{version:'0.30.0',name:'RESOURCE CLARITY'},
     music:'assets/audio/ever-deeper-drift-loop.mp3',
     retiredMarkup:false,
     retiredStorage:false,
     currentStorage:true
   });
+});
+
+test('all resource symbols use the shared production drop assets',async({page})=>{
+  await page.goto('/');
+  await page.waitForFunction(()=>window.__everDeeperTest);
+  const contract=await page.evaluate(()=>window.__everDeeperTest.snapshot().resourceRendering);
+  expect(Object.keys(contract.paths)).toHaveLength(21);
+  expect(contract).toMatchObject({completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,objectiveIcons:true,inventoryIcons:true,storageIcons:true,recipeIcons:true,ledgerIcons:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false});
+  const decoded=await page.evaluate(paths=>Promise.all(Object.values(paths).map(src=>new Promise(resolve=>{const image=new Image();image.onload=()=>resolve({src,width:image.naturalWidth,height:image.naturalHeight});image.onerror=()=>resolve({src,width:0,height:0});image.src=src}))),contract.paths);
+  expect(decoded.every(asset=>asset.width===256&&asset.height>=194)).toBe(true);
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.unlockAllAreas();api.grantGold(100);api.setPickaxeLevel(4);api.grantMined('emberstone',1);api.grantCargo('emberstone',7);api.step(.001);api.openInventory()});
+  await expect(page.locator('#objectiveRequirements [data-resource="emberstone"] img')).toHaveAttribute('src',/emberstone-drop\.png/);
+  await expect(page.locator('#inventoryGrid [data-resource="emberstone"] img')).toHaveAttribute('src',/emberstone-drop\.png/);
+  await expect(page.locator('.resource.gold [data-resource="gold"] img')).toHaveAttribute('src',/gold-drop\.png/);
+  expect(await page.locator('.resource-gem').count()).toBe(0);
 });
 
 test('premium walk sheets are clean, directional, lazy, and reduced-motion safe',async({page})=>{

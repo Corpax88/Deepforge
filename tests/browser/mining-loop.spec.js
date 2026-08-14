@@ -1,5 +1,7 @@
 const {test,expect}=require('@playwright/test');
 
+const COMPLETE_DROP_PATHS={stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',emberstone:'assets/drops/emberstone-drop.png',sunslag:'assets/drops/sunslag-drop.png',astralite:'assets/drops/astralite-drop.png',crownstone:'assets/drops/crownstone-drop.png',deepstone:'assets/drops/deepstone-drop.png',rootiron:'assets/drops/rootiron-drop.png',ambercore:'assets/drops/ambercore-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',magmaite:'assets/drops/magmaite-drop.png',furnaceheart:'assets/drops/furnaceheart-drop.png',voidglass:'assets/drops/voidglass-drop.png',singularity:'assets/drops/singularity-drop.png',burrowsteel:'assets/drops/burrowsteel-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png',infernium:'assets/drops/infernium-drop.png'};
+
 const SURFACE_MOONGLASS_RENDERING={
   ground:'assets/surface/moonglass-ground.png',
   crystals:'assets/surface/moonglass-crystals.png',
@@ -504,7 +506,8 @@ test('Ember Mastery enforces both Sunslag and gold requirements',async({page})=>
   });
   await expect(page.locator('#contextTitle')).toHaveText('Tempered');
   await expect(page.locator('#contextButton')).toBeDisabled();
-  await expect(page.locator('#contextDetail')).toContainText('SUNSLAG 0 / 200');
+  await expect(page.locator('#contextDetail [data-resource="sunslag"] img')).toHaveAttribute('src',/sunslag-drop\.png/);
+  await expect(page.locator('#contextDetail')).toContainText('0 / 200');
 
   await page.evaluate(()=>window.__everDeeperTest.grantGold(450));
   await expect(page.locator('#contextButton')).toBeDisabled();
@@ -1153,11 +1156,12 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.29.1',name:'EMBER PATH ALIGNMENT'});
-  expect(snapshot.assetVersion).toBe('0291');
+  expect(snapshot.build).toEqual({version:'0.30.0',name:'RESOURCE CLARITY'});
+  expect(snapshot.assetVersion).toBe('0300');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true,emberMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
-  expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png',emberstone:'assets/drops/emberstone-drop.png',sunslag:'assets/drops/sunslag-drop.png',magmaite:'assets/drops/magmaite-drop.png',furnaceheart:'assets/drops/furnaceheart-drop.png',infernium:'assets/drops/infernium-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
+  expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:COMPLETE_DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
+  expect(snapshot.resourceRendering).toMatchObject({paths:COMPLETE_DROP_PATHS,completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,objectiveIcons:true,inventoryIcons:true,storageIcons:true,recipeIcons:true,ledgerIcons:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false});
   expect(snapshot.starterGateRendering).toEqual({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepSealMark:'assets/surface/emberdeep-seal-mark.png',animatedMoonglassTransition:true,animatedEmberdeepTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false});
   expect(snapshot.discoveryRendering).toEqual({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true,routineDiscoveryText:false,rareDiscoveryText:false});
   expect(snapshot.bonusVeinRendering).toEqual({worldLabels:false,textPrompts:false,sleepingCracks:true,movingReadyPulse:true,radialTimer:true,completionBurst:true});
@@ -1177,11 +1181,11 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.29.1');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.30.0');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.29.1 · EMBER PATH ALIGNMENT');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.30.0 · RESOURCE CLARITY');
 });
 
 test('settings opens first and keeps audio choices separate from stats',async({page})=>{
@@ -1508,11 +1512,31 @@ test('Rootwound Depth 2 uses the complete production asset set',async({page})=>{
   expect(art.every(asset=>asset.width>=300&&asset.height>=300)).toBe(true);
 });
 
-test('v0.29.1 exposes the complete production contracts and premium walk renderer',async({page})=>{
+test('real resource art is shared by goals, bags, recipes, stats and world drops',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    const api=window.__everDeeperTest;api.unlockAllAreas();api.grantGold(100);api.setPickaxeLevel(4);api.grantMined('emberstone',1);api.grantCargo('emberstone',7);api.grantCargo('rootiron',3);api.step(.001);api.openInventory();
+  });
+  await expect(page.locator('.resource.gold .topbar-resource img')).toHaveAttribute('src',/gold-drop\.png/);
+  await expect(page.locator('#objectiveRequirements [data-resource="emberstone"] img')).toHaveAttribute('src',/emberstone-drop\.png/);
+  await expect(page.locator('#inventoryGrid [data-resource="emberstone"] img')).toHaveAttribute('src',/emberstone-drop\.png/);
+  await expect(page.locator('#inventoryGrid [data-resource="rootiron"] img')).toHaveAttribute('src',/rootiron-drop\.png/);
+  expect(await page.locator('.resource-gem').count()).toBe(0);
+  await page.locator('#inventoryCloseButton').click();
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.unlockStarfall();api.setPickaxeLevel(5);api.setPosition(3505,155)});
+  await expect(page.locator('[data-starforge="crusher"] [data-resource="astralite"] img')).toHaveAttribute('src',/astralite-drop\.png/);
+  await expect(page.locator('[data-starforge="crusher"] [data-resource="crownstone"] img')).toHaveAttribute('src',/crownstone-drop\.png/);
+  await page.locator('#menuButton').click();await page.locator('#statsTab').click();
+  await expect(page.locator('.ledger-resource-label [data-resource="emberstone"] img')).toHaveAttribute('src',/emberstone-drop\.png/);
+  const contract=await page.evaluate(()=>window.__everDeeperTest.snapshot().resourceRendering);
+  expect(contract).toMatchObject({paths:COMPLETE_DROP_PATHS,completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false});
+});
+
+test('v0.30.0 exposes the complete production contracts and premium walk renderer',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.29.1',name:'EMBER PATH ALIGNMENT'});
-  expect(snapshot.assetVersion).toBe('0291');
+  expect(snapshot.build).toEqual({version:'0.30.0',name:'RESOURCE CLARITY'});
+  expect(snapshot.assetVersion).toBe('0300');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.surfaceEmberdeepRendering).toEqual(SURFACE_EMBERDEEP_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);
@@ -1520,7 +1544,7 @@ test('v0.29.1 exposes the complete production contracts and premium walk rendere
   expect(snapshot.prismaticRendering).toEqual(PRISMATIC_RENDERING);
   expect(snapshot.moltenRendering).toEqual(MOLTEN_RENDERING);
 
-  const paths=pngPaths({surfaceMoonglass:SURFACE_MOONGLASS_RENDERING,surfaceEmberdeep:SURFACE_EMBERDEEP_RENDERING,moonglass:MOONGLASS_RENDERING,emberdeep:EMBERDEEP_RENDERING,prismatic:PRISMATIC_RENDERING,molten:MOLTEN_RENDERING});
+  const paths=pngPaths({resources:COMPLETE_DROP_PATHS,surfaceMoonglass:SURFACE_MOONGLASS_RENDERING,surfaceEmberdeep:SURFACE_EMBERDEEP_RENDERING,moonglass:MOONGLASS_RENDERING,emberdeep:EMBERDEEP_RENDERING,prismatic:PRISMATIC_RENDERING,molten:MOLTEN_RENDERING});
   const art=await inspectPngs(page,paths);
   expect(paths.length).toBeGreaterThanOrEqual(65);
   expect(art).toHaveLength(paths.length);
