@@ -1153,13 +1153,13 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.28.2',name:'EMBERDEEP COMPLETE'});
-  expect(snapshot.assetVersion).toBe('0282');
+  expect(snapshot.build).toEqual({version:'0.28.3',name:'EMBERDEEP COMPLETE'});
+  expect(snapshot.assetVersion).toBe('0283');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true,emberMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png',emberstone:'assets/drops/emberstone-drop.png',sunslag:'assets/drops/sunslag-drop.png',magmaite:'assets/drops/magmaite-drop.png',furnaceheart:'assets/drops/furnaceheart-drop.png',infernium:'assets/drops/infernium-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
   expect(snapshot.starterGateRendering).toEqual({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepSealMark:'assets/surface/emberdeep-seal-mark.png',animatedMoonglassTransition:true,animatedEmberdeepTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false});
-  expect(snapshot.discoveryRendering).toEqual({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true});
+  expect(snapshot.discoveryRendering).toEqual({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true,routineDiscoveryText:false,rareDiscoveryText:true});
   expect(snapshot.bonusVeinRendering).toEqual({worldLabels:false,textPrompts:false,sleepingCracks:true,movingReadyPulse:true,radialTimer:true,completionBurst:true});
   expect(snapshot.mineralNodeRenderScale).toBe(.85);
   expect(snapshot.assetRendering).toEqual({stone:['node'],copper:['wall','node'],gold:['wall','node']});
@@ -1177,11 +1177,11 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.28.2');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.28.3');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.28.2 · EMBERDEEP COMPLETE');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.28.3 · EMBERDEEP COMPLETE');
 });
 
 test('settings opens first and keeps audio choices separate from stats',async({page})=>{
@@ -1508,11 +1508,11 @@ test('Rootwound Depth 2 uses the complete production asset set',async({page})=>{
   expect(art.every(asset=>asset.width>=300&&asset.height>=300)).toBe(true);
 });
 
-test('v0.28.2 exposes the complete Moonglass, Emberdeep, Prismatic, and Molten production contracts',async({page})=>{
+test('v0.28.3 exposes the complete Moonglass, Emberdeep, Prismatic, and Molten production contracts',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.28.2',name:'EMBERDEEP COMPLETE'});
-  expect(snapshot.assetVersion).toBe('0282');
+  expect(snapshot.build).toEqual({version:'0.28.3',name:'EMBERDEEP COMPLETE'});
+  expect(snapshot.assetVersion).toBe('0283');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.surfaceEmberdeepRendering).toEqual(SURFACE_EMBERDEEP_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);
