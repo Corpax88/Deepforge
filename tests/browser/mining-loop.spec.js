@@ -1059,8 +1059,8 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.26.13',name:'PATH CONNECTIONS'});
-  expect(snapshot.assetVersion).toBe('02613');
+  expect(snapshot.build).toEqual({version:'0.26.14',name:'ROAD JUNCTION BLEND'});
+  expect(snapshot.assetVersion).toBe('02614');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
@@ -1083,11 +1083,11 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.26.13');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.26.14');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.26.13 · PATH CONNECTIONS');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.26.14 · ROAD JUNCTION BLEND');
 });
 
 test('settings opens first and keeps audio choices separate from stats',async({page})=>{
@@ -1413,11 +1413,11 @@ test('Rootwound Depth 2 uses the complete production asset set',async({page})=>{
   expect(art.every(asset=>asset.width>=300&&asset.height>=300)).toBe(true);
 });
 
-test('v0.26.13 exposes the complete Moonglass and Prismatic production contracts',async({page})=>{
+test('v0.26.14 exposes the complete Moonglass and Prismatic production contracts',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build.version).toBe('0.26.13');
-  expect(snapshot.assetVersion).toBe('02613');
+  expect(snapshot.build.version).toBe('0.26.14');
+  expect(snapshot.assetVersion).toBe('02614');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);
   expect(snapshot.prismaticRendering).toEqual(PRISMATIC_RENDERING);

@@ -12,14 +12,14 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   const logo=page.locator('.brand-logo');
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('alt','Ever Deeper');
-  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=02613');
+  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=02614');
   const logoState=await logo.evaluate(image=>({complete:image.complete,width:image.naturalWidth,height:image.naturalHeight,bounds:image.getBoundingClientRect().toJSON()}));
   expect(logoState).toMatchObject({complete:true,width:800,height:297});
   expect(logoState.bounds.width).toBeGreaterThanOrEqual(124);
   expect(logoState.bounds.right).toBeLessThanOrEqual(await page.evaluate(()=>innerWidth));
 
-  await expect(page.locator('#buildVersion')).toHaveText('v0.26.13');
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.26.13 · PATH CONNECTIONS');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.26.14');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.26.14 · ROAD JUNCTION BLEND');
   const release=await page.evaluate(()=>{
     const api=window.__everDeeperTest;
     api.reset();api.save();
@@ -33,7 +33,7 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
     };
   });
   expect(release).toEqual({
-    build:{version:'0.26.13',name:'PATH CONNECTIONS'},
+    build:{version:'0.26.14',name:'ROAD JUNCTION BLEND'},
     music:'assets/audio/ever-deeper-drift-loop.mp3',
     retiredMarkup:false,
     retiredStorage:false,

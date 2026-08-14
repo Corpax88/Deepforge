@@ -20,12 +20,12 @@ function auditBrandRemoval(directory){
 auditBrandRemoval(repositoryRoot);
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'02613');
+assert.equal(latest.version,'02614');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=02613/);
-assert.match(html,/script\.js\?v=02613/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=02613/);
+assert.match(html,/style\.css\?v=02614/);
+assert.match(html,/script\.js\?v=02614/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=02614/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -147,12 +147,12 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.26.13');
-assert.equal(api.snapshot().build.name,'PATH CONNECTIONS');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.13');
-assert.equal(api.snapshot().assetVersion,'02613');
+assert.equal(api.snapshot().build.version,'0.26.14');
+assert.equal(api.snapshot().build.name,'ROAD JUNCTION BLEND');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.14');
+assert.equal(api.snapshot().assetVersion,'02614');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=02613',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=02614',volume:1,loop:true,paused:false}));
 assert.equal(api.setAudioSetting('music',false),false);assert.equal(api.snapshot().music.enabled,false);assert.equal(api.snapshot().music.started,false);
 assert.equal(api.setAudioSetting('effects',false),false);assert.equal(api.snapshot().music.effectsEnabled,false);
 assert.equal(api.setAudioSetting('music',true),true);assert.equal(api.setAudioSetting('effects',true),true);
