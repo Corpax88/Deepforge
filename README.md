@@ -1,6 +1,6 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.28.4 - Text-Free Ore Discovery**
+Current build: **Ever Deeper v0.28.5 - Stronger Drill Vibration**
 
 Emberdeep now has a complete production-art pass across the blended surface biome, sinking seal, permanent gate mark, mine approach, portal, chests and bonus fault. Emberdeep Works and Molten Depths have their own floors, walls, barriers, hidden chambers, stations, readable ore hints, mineable nodes, drops, natural lighting and Infernium drill gate.
 
