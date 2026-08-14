@@ -22,12 +22,13 @@ assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCro
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'0285');
+assert.equal(latest.version,'0290');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0285/);
-assert.match(html,/script\.js\?v=0285/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0285/);
+assert.match(html,/style\.css\?v=0290/);
+assert.match(html,/script\.js\?v=0290/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0290/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0290/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -47,6 +48,8 @@ function assertPng(relative,width,height,{alpha=true,maxBytes=250000}={}){
 }
 const playerAssets=['assets/characters/miner-b.png','assets/characters/miner-b-drill-burrower.png','assets/characters/miner-b-drill-pulse.png','assets/characters/miner-b-drill-deepcore.png','assets/tools/pickaxe-worn.png','assets/tools/pickaxe-iron.png','assets/tools/pickaxe-runed.png','assets/tools/pickaxe-moonglass.png','assets/tools/pickaxe-ember.png','assets/tools/starforge-crusher.png','assets/tools/starforge-swift.png','assets/tools/starforge-prospector.png'];
 for(const relative of playerAssets){const path=require('node:path').join(__dirname,'..',relative),png=fs.readFileSync(path);assert.equal(png.toString('ascii',1,4),'PNG');assert.equal(png[25],6,relative+' must use RGBA');assert.ok(png.length<250000,relative+' exceeds mobile asset budget')}
+const playerWalkAssets=['assets/characters/miner-b-walk.png','assets/characters/miner-b-drill-burrower-walk.png','assets/characters/miner-b-drill-pulse-walk.png','assets/characters/miner-b-drill-deepcore-walk.png'];
+for(const relative of playerWalkAssets)assertPng(relative,1536,1024,{maxBytes:1500000});
 const pocketAsset=fs.readFileSync(require('node:path').join(__dirname,'..','assets/mossvein/magic-crystal-pocket.png'));
 assert.equal(pocketAsset.toString('ascii',1,4),'PNG');assert.ok([4,6].includes(pocketAsset[25])||pocketAsset.includes(Buffer.from('tRNS')),'crystal pocket must preserve alpha');assert.ok(pocketAsset.length<250000,'crystal pocket exceeds mobile asset budget');
 const starterProductionAssets=['assets/surface/assay-station.png','assets/surface/forge-station.png','assets/surface/storage-chest.png','assets/surface/wayfarer-shop.png','assets/surface/treasure-cache-closed.png','assets/surface/treasure-cache-open.png','assets/surface/moonglass-gate.png','assets/surface/mossvein-mine-path.png','assets/mossvein/buried-cache.png','assets/mossvein/mining-rush-shrine.png','assets/drops/stone-drop.png','assets/drops/copper-drop.png','assets/drops/gold-drop.png'];
@@ -172,7 +175,7 @@ function createElement(id){
   };
 }
 
-function createRuntime(){
+function createRuntime({failWalkSheets=false,reducedMotion=false}={}){
   const elements=new Map();
   const element=id=>{if(!elements.has(id))elements.set(id,createElement(id));return elements.get(id)};
   const gradient={addColorStop(){}};
@@ -180,9 +183,9 @@ function createRuntime(){
   const canvasContext=new Proxy({}, {get:(_target,key)=>key==='createLinearGradient'||key==='createRadialGradient'?()=>gradient:key==='measureText'?()=>({width:0}):key==='drawImage'?(image,...args)=>drawCalls.push({src:image.src||'[canvas]',args}):()=>{},set:()=>true});
   element('gameCanvas').getContext=()=>canvasContext;
   const document={hidden:false,getElementById:element,addEventListener(){},createElement:tag=>tag==='canvas'?{width:1,height:1,src:'[lightmap]',getContext:()=>canvasContext}:createElement('dynamic-'+tag)};
-  const window={devicePixelRatio:2,addEventListener(){},confirm:()=>true};
+  const window={devicePixelRatio:2,addEventListener(){},confirm:()=>true,matchMedia:()=>({matches:reducedMotion,addEventListener(){},addListener(){}})};
   class TestAudio{constructor(src){this.src=src;this.volume=1;this.loop=false;this.paused=true;this.preload='';this.playsInline=false}play(){this.paused=false;return Promise.resolve()}pause(){this.paused=true}}
-  class TestImage{constructor(){this.complete=true;this.naturalWidth=512;this.naturalHeight=512;this.decoding='async';this.onload=null;this._src=''}set src(value){this._src=value;if(value.includes('magic-crystal-pocket')){this.naturalWidth=640;this.naturalHeight=358}else if(value.includes('miner-b-drill-burrower')){this.naturalWidth=348;this.naturalHeight=512}else if(value.includes('miner-b-drill-pulse')){this.naturalWidth=361;this.naturalHeight=512}else if(value.includes('miner-b-drill-deepcore')){this.naturalWidth=354;this.naturalHeight=512}else if(value.includes('miner-b')){this.naturalWidth=315;this.naturalHeight=512}else this.naturalWidth=512;queueMicrotask(()=>this.onload&&this.onload())}get src(){return this._src}}
+  class TestImage{constructor(){this.complete=true;this.naturalWidth=512;this.naturalHeight=512;this.decoding='async';this.onload=null;this._src=''}set src(value){this._src=value;if(value.includes('-walk.png')){this.naturalWidth=failWalkSheets?0:1536;this.naturalHeight=failWalkSheets?0:1024;this.complete=!failWalkSheets}else if(value.includes('magic-crystal-pocket')){this.naturalWidth=640;this.naturalHeight=358}else if(value.includes('miner-b-drill-burrower')){this.naturalWidth=348;this.naturalHeight=512}else if(value.includes('miner-b-drill-pulse')){this.naturalWidth=361;this.naturalHeight=512}else if(value.includes('miner-b-drill-deepcore')){this.naturalWidth=354;this.naturalHeight=512}else if(value.includes('miner-b')){this.naturalWidth=315;this.naturalHeight=512}else this.naturalWidth=512;queueMicrotask(()=>this.onload&&this.onload())}get src(){return this._src}}
   const browserStorage={
     get length(){return storage.size},key:index=>Array.from(storage.keys())[index]??null,
     getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)
@@ -200,12 +203,12 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.28.5');
-assert.equal(api.snapshot().build.name,'EMBERDEEP COMPLETE');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.28.5');
-assert.equal(api.snapshot().assetVersion,'0285');
+assert.equal(api.snapshot().build.version,'0.29.0');
+assert.equal(api.snapshot().build.name,'PREMIUM WALK CYCLE');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.29.0');
+assert.equal(api.snapshot().assetVersion,'0290');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0285',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0290',volume:1,loop:true,paused:false}));
 assert.equal(api.setAudioSetting('music',false),false);assert.equal(api.snapshot().music.enabled,false);assert.equal(api.snapshot().music.started,false);
 assert.equal(api.setAudioSetting('effects',false),false);assert.equal(api.snapshot().music.effectsEnabled,false);
 assert.equal(api.setAudioSetting('music',true),true);assert.equal(api.setAudioSetting('effects',true),true);
@@ -229,7 +232,7 @@ assert.equal(JSON.stringify(api.snapshot().discoveryRendering),JSON.stringify({c
 assert.equal(JSON.stringify(api.snapshot().miningFeedbackRendering),JSON.stringify({routineImpactRings:false,routineBreakRings:false,drillVibration:true,drillVibrationMaxOffset:2.05,cameraShake:false}));
 assert.equal(JSON.stringify(api.snapshot().bonusVeinRendering),JSON.stringify({worldLabels:false,textPrompts:false,sleepingCracks:true,movingReadyPulse:true,radialTimer:true,completionBurst:true}));
 assert.doesNotMatch(source,/vein\.label|BONUS VEIN|COOLED/);
-assert.equal(JSON.stringify(api.snapshot().characterRendering),JSON.stringify({baseAsset:'assets/characters/miner-b.png',activeToolKey:'pickaxe-worn',activeRenderAsset:'assets/tools/pickaxe-worn.png',toolLayerCount:8,drillCompositeCount:3,gripCrop:{x:246,y:307,w:69,h:101},gripPivot:{x:14,y:24},gripPoint:{x:42,y:50},layeredTools:true,animatedGrip:true,bodyReaction:true,sharedGripAnchor:true,fullDrillComposites:true,legacyDrillLimbCrops:false,legacyCanvasCharacter:false,legacyCanvasTools:false}));
+assert.equal(JSON.stringify(api.snapshot().characterRendering),JSON.stringify({baseAsset:'assets/characters/miner-b.png',activeToolKey:'pickaxe-worn',activeRenderAsset:'assets/tools/pickaxe-worn.png',walkSheets:{base:'assets/characters/miner-b-walk.png','drill-burrower':'assets/characters/miner-b-drill-burrower-walk.png','drill-pulse':'assets/characters/miner-b-drill-pulse-walk.png','drill-deepcore':'assets/characters/miner-b-drill-deepcore-walk.png'},activeWalkAsset:'assets/characters/miner-b-walk.png',walkGrid:{columns:6,rows:4,cellSize:256,directions:['down','left','right','up']},walkRenderSize:120,toolLayerCount:8,drillCompositeCount:3,gripCrop:{x:246,y:307,w:69,h:101},gripPivot:{x:14,y:24},gripPoint:{x:42,y:50},layeredTools:true,animatedGrip:true,bodyReaction:true,sharedGripAnchor:true,fullDrillComposites:true,directionalWalk:true,distanceDrivenWalk:true,holsteredWalkTools:true,lazyDrillWalkSheets:true,staticMiningFallback:true,reducedMotion:false,legacyDrillLimbCrops:false,legacyCanvasCharacter:false,legacyCanvasTools:false}));
 function assertRendered(drawCalls,paths){for(const path of paths)assert.ok(drawCalls.some(call=>call.src.includes(path)),path+' must render')}
 function renderAt(testRuntime,testApi,x,y,paths){testApi.setPosition(x,y);testRuntime.drawCalls.length=0;testApi.renderOnce();assertRendered(testRuntime.drawCalls,paths)}
 function terrainIndexForRock(snapshot,rock){const cols=Math.ceil(snapshot.mine.width/snapshot.mine.terrain.tileSize);return Math.floor(rock.y/snapshot.mine.terrain.tileSize)*cols+Math.floor(rock.x/snapshot.mine.terrain.tileSize)}
@@ -345,17 +348,34 @@ api.setPickaxeLevel(2);api.setPosition(980,205);runtime.drawCalls.length=0;api.r
 api.openChest('moss_ironbound');assert.equal(api.snapshot().state.openedChests.moss_ironbound,true);runtime.drawCalls.length=0;api.renderOnce();assert.ok(runtime.drawCalls.some(call=>call.src.includes('treasure-cache-open.png')));api.reset();
 api.setPosition(1045,650);runtime.drawCalls.length=0;api.renderOnce();assert.ok(runtime.drawCalls.some(call=>call.src.includes('moonglass-gate.png')));api.reset();
 const pickaxeKeys=['pickaxe-worn','pickaxe-iron','pickaxe-runed','pickaxe-moonglass','pickaxe-ember'];
-function assertPickaxeLayers(key){runtime.drawCalls.length=0;api.renderOnce();assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b.png')).length,5);const tools=runtime.drawCalls.filter(call=>call.src.includes('assets/tools/'));assert.equal(tools.length,1);assert.ok(tools[0].src.includes(key+'.png'))}
-function assertDrillComposite(key){runtime.drawCalls.length=0;api.renderOnce();const composites=runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b-drill-'));assert.equal(composites.length,1);assert.ok(composites[0].src.includes(key+'.png'));assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b.png')).length,0);assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/tools/')).length,0)}
-for(let level=1;level<=5;level++){api.setDrillLevel(0);api.setPickaxeLevel(level);assert.equal(api.snapshot().characterRendering.activeToolKey,pickaxeKeys[level-1]);assertPickaxeLayers(pickaxeKeys[level-1])}
-for(const variant of ['crusher','swift','prospector']){api.setDrillLevel(0);api.setStarforgeVariant(variant);assert.equal(api.snapshot().characterRendering.activeToolKey,'starforge-'+variant);assertPickaxeLayers('starforge-'+variant)}
-for(const [level,key] of [[1,'drill-burrower'],[2,'drill-pulse'],[3,'drill-deepcore']]){api.setDrillLevel(level);assert.equal(api.snapshot().characterRendering.activeToolKey,key);assert.equal(api.snapshot().characterRendering.activeRenderAsset,'assets/characters/miner-b-'+key+'.png');assertDrillComposite(key)}
+function activeWalkCall(path){const calls=runtime.drawCalls.filter(call=>call.src.includes(path));assert.equal(calls.length,1,path+' must draw one clipped walk frame');assert.equal(calls[0].args.length,8);return calls[0]}
+function assertPickaxeWalk(key){runtime.drawCalls.length=0;api.renderOnce();activeWalkCall('assets/characters/miner-b-walk.png');assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b.png')&&!call.src.includes('-walk.png')).length,0);const tools=runtime.drawCalls.filter(call=>call.src.includes('assets/tools/'));assert.equal(tools.length,1);assert.ok(tools[0].src.includes(key+'.png'))}
+function assertDrillWalk(key){runtime.drawCalls.length=0;api.renderOnce();activeWalkCall('assets/characters/miner-b-'+key+'-walk.png');assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/tools/')).length,0);assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b-'+key+'.png')).length,0)}
+function assertStaticPickaxeLayers(key){runtime.drawCalls.length=0;api.renderOnce();assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b.png')&&!call.src.includes('-walk.png')).length,5);const tools=runtime.drawCalls.filter(call=>call.src.includes('assets/tools/'));assert.equal(tools.length,1);assert.ok(tools[0].src.includes(key+'.png'));assert.equal(runtime.drawCalls.some(call=>call.src.includes('-walk.png')),false)}
+function assertStaticDrillComposite(key){runtime.drawCalls.length=0;api.renderOnce();const composites=runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b-'+key+'.png'));assert.equal(composites.length,1);assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/tools/')).length,0);assert.equal(runtime.drawCalls.some(call=>call.src.includes('-walk.png')),false)}
+for(let level=1;level<=5;level++){api.setDrillLevel(0);api.setPickaxeLevel(level);assert.equal(api.snapshot().characterRendering.activeToolKey,pickaxeKeys[level-1]);assertPickaxeWalk(pickaxeKeys[level-1])}
+for(const variant of ['crusher','swift','prospector']){api.setDrillLevel(0);api.setStarforgeVariant(variant);assert.equal(api.snapshot().characterRendering.activeToolKey,'starforge-'+variant);assertPickaxeWalk('starforge-'+variant)}
+for(const [level,key] of [[1,'drill-burrower'],[2,'drill-pulse'],[3,'drill-deepcore']]){api.setDrillLevel(level);assert.equal(api.snapshot().characterRendering.activeToolKey,key);assert.equal(api.snapshot().characterRendering.activeRenderAsset,'assets/characters/miner-b-'+key+'.png');assert.equal(api.snapshot().characterRendering.activeWalkAsset,'assets/characters/miner-b-'+key+'-walk.png');assertDrillWalk(key)}
 api.setDrillLevel(0);api.setPickaxeLevel(1);
 let pose=api.clearSwing();assert.equal(JSON.stringify(pose),JSON.stringify({toolAngle:-.2,armAngle:0,armX:0,armY:0,bodyAngle:0,bodyY:0,active:false}));
-pose=api.setSwingProgress(.18);assert.ok(pose.toolAngle<-.99);assert.ok(pose.armAngle<-.12);assert.ok(pose.armX<0);assert.ok(pose.bodyAngle<0);assertPickaxeLayers('pickaxe-worn');
-pose=api.setSwingProgress(.38);assert.ok(pose.toolAngle>.5);assert.ok(pose.armAngle>.1);assert.ok(pose.armX>0);assert.ok(pose.bodyAngle>0);assertPickaxeLayers('pickaxe-worn');
-api.setDrillLevel(3);pose=api.setSwingProgress(.2);assert.equal(pose.toolAngle,0);assert.ok(pose.armX<0);assert.equal(pose.active,true);assertDrillComposite('drill-deepcore');
+pose=api.setSwingProgress(.18);assert.ok(pose.toolAngle<-.99);assert.ok(pose.armAngle<-.12);assert.ok(pose.armX<0);assert.ok(pose.bodyAngle<0);assertStaticPickaxeLayers('pickaxe-worn');
+pose=api.setSwingProgress(.38);assert.ok(pose.toolAngle>.5);assert.ok(pose.armAngle>.1);assert.ok(pose.armX>0);assert.ok(pose.bodyAngle>0);assertStaticPickaxeLayers('pickaxe-worn');
+api.setDrillLevel(3);pose=api.setSwingProgress(.2);assert.equal(pose.toolAngle,0);assert.ok(pose.armX<0);assert.equal(pose.active,true);assertStaticDrillComposite('drill-deepcore');
+api.setReducedMotion(true);pose=api.setSwingProgress(.2);assert.equal(JSON.stringify({armX:pose.armX,armY:pose.armY,bodyAngle:pose.bodyAngle}),JSON.stringify({armX:0,armY:0,bodyAngle:0}),'reduced motion suppresses high-frequency drill vibration');api.setReducedMotion(false);
 api.clearSwing();api.setDrillLevel(0);
+
+const directionRows={down:0,left:1,right:2,up:3},vectors={down:[0,1],left:[-1,0],right:[1,0],up:[0,-1]};
+api.reset();api.setPosition(600,700);
+for(const direction of Object.keys(directionRows)){
+  api.setMoveVector(...vectors[direction]);const distanceBefore=api.snapshot().player.walkDistance;api.step(.08);const walking=api.snapshot().player;
+  assert.equal(walking.direction,direction);assert.equal(walking.moving,true);assert.ok(walking.walkDistance>distanceBefore);assert.ok(walking.walkFrame>=0&&walking.walkFrame<6);
+  runtime.drawCalls.length=0;api.renderOnce();const call=activeWalkCall('assets/characters/miner-b-walk.png');assert.equal(call.args[0],walking.walkFrame*256);assert.equal(call.args[1],directionRows[direction]*256);assert.deepEqual(call.args.slice(2,4),[256,256]);api.stopMove();api.step(.001);
+}
+api.reset();api.setPosition(600,700);api.setMoveVector(1,0);api.step(.2);assert.equal(api.snapshot().player.walkFrame,2);api.stopMove();api.step(.001);assert.equal(api.snapshot().player.walkFrame,3,'stopping settles on the nearest planted-foot contact');api.setMoveVector(1,0);api.step(.02);assert.ok(api.snapshot().player.walkFrame>=3,'resuming from contact must not rewind a leg frame');api.stopMove();
+api.setMoveVector(1,0);api.step(.02);api.setMoveVector(1,1);api.step(.04);assert.equal(api.snapshot().player.direction,'right','equal diagonal keeps the current horizontal direction');api.setMoveVector(.4,1);api.step(.04);assert.equal(api.snapshot().player.direction,'down','direction hysteresis yields only when the other axis clearly wins');api.stopMove();
+api.setPosition(52,500);const blockedDistance=api.snapshot().player.walkDistance;api.setMoveVector(-1,0);api.step(.12);assert.equal(api.snapshot().player.moving,false);assert.equal(api.snapshot().player.walkDistance,blockedDistance,'blocked input must not animate planted boots');api.stopMove();
+api.setPosition(600,700);api.setReducedMotion(true);api.setMoveVector(1,0);const reducedX=api.snapshot().player.x;api.step(.08);assert.ok(api.snapshot().player.x>reducedX,'reduced motion must not stop movement');assert.equal(api.snapshot().player.walkFrame,0);runtime.drawCalls.length=0;api.renderOnce();assert.equal(activeWalkCall('assets/characters/miner-b-walk.png').args[0],0);api.stopMove();api.setReducedMotion(false);
+const failedWalkRuntime=createRuntime({failWalkSheets:true}),failedWalkApi=failedWalkRuntime.api;failedWalkRuntime.drawCalls.length=0;failedWalkApi.renderOnce();assert.equal(failedWalkRuntime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b.png')&&!call.src.includes('-walk.png')).length,5,'static character must remain the loading/error fallback');assert.equal(failedWalkRuntime.drawCalls.some(call=>call.src.includes('assets/tools/pickaxe-worn.png')),true);
 api.reset();
 assert.equal(api.snapshot().mineralNodeRenderScale,.85);
 assert.equal(api.snapshot().lighting.enabled,false);
