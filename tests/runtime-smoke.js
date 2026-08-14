@@ -20,12 +20,12 @@ function auditBrandRemoval(directory){
 auditBrandRemoval(repositoryRoot);
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'0263');
+assert.equal(latest.version,'0264');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0263/);
-assert.match(html,/script\.js\?v=0263/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0263/);
+assert.match(html,/style\.css\?v=0264/);
+assert.match(html,/script\.js\?v=0264/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0264/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -54,6 +54,7 @@ for(const name of rootwoundAssets){const png=fs.readFileSync(require('node:path'
 const moonglassSurfaceAssets={
   'assets/surface/moonglass-ground.png':[512,512,{alpha:false,maxBytes:220000}],
   'assets/surface/moonglass-gate-mark.png':[512,341,{maxBytes:100000}],
+  'assets/entrances/depth-work-lamp.png':[512,358,{maxBytes:100000}],
   'assets/surface/moonglass-crystals.png':[512,256,{maxBytes:100000}],
   'assets/surface/moonglass-bloom-bed.png':[640,280,{maxBytes:120000}],
   'assets/surface/crystal-cache-closed.png':[384,334,{maxBytes:120000}],
@@ -143,12 +144,12 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.26.3');
+assert.equal(api.snapshot().build.version,'0.26.4');
 assert.equal(api.snapshot().build.name,'MOONGLASS COMPLETE');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.3');
-assert.equal(api.snapshot().assetVersion,'0263');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.4');
+assert.equal(api.snapshot().assetVersion,'0264');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0263',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0264',volume:1,loop:true,paused:false}));
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true,moonMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
@@ -258,9 +259,17 @@ let glowingRock=lightingApi.snapshot().rocks.find(rock=>rock.scene==='mossMine'&
 assert.ok(glowingRock);const lightMine=lightingApi.snapshot().mine,lightCols=Math.ceil(lightMine.width/lightMine.terrain.tileSize),lightIndex=Math.floor(glowingRock.y/lightMine.terrain.tileSize)*lightCols+Math.floor(glowingRock.x/lightMine.terrain.tileSize);
 for(let hit=0;hit<8;hit++)lightingApi.mineTerrainCell(lightIndex);glowingRock=lightingApi.snapshot().rocks.find(rock=>rock.id===glowingRock.id);assert.equal(glowingRock.exposed,true);lightingApi.setPosition(glowingRock.x,glowingRock.y);lightingApi.renderOnce();
 const caveLighting=lightingApi.snapshot().lighting;
-assert.equal(JSON.stringify({enabled:caveLighting.enabled,technique:caveLighting.technique,occlusion:caveLighting.occlusion,bufferScale:caveLighting.bufferScale,maxOreLights:caveLighting.maxOreLights}),JSON.stringify({enabled:true,technique:'low-resolution-raycast-lightmap',occlusion:true,bufferScale:.34,maxOreLights:16}));
-assert.ok(caveLighting.bufferWidth>0&&caveLighting.bufferHeight>0);assert.ok(caveLighting.oreLights>0&&caveLighting.oreLights<=16);assert.ok(caveLighting.rayChecks>0);
+assert.equal(JSON.stringify({enabled:caveLighting.enabled,technique:caveLighting.technique,occlusion:caveLighting.occlusion,bufferScale:caveLighting.bufferScale,maxOreLights:caveLighting.maxOreLights,maxNaturalLights:caveLighting.maxNaturalLights}),JSON.stringify({enabled:true,technique:'low-resolution-raycast-lightmap',occlusion:true,bufferScale:.34,maxOreLights:16,maxNaturalLights:22}));
+assert.ok(caveLighting.bufferWidth>0&&caveLighting.bufferHeight>0);assert.ok(caveLighting.oreLights>0&&caveLighting.oreLights<=16);assert.ok(caveLighting.naturalLights>0&&caveLighting.naturalLights<=22);assert.ok(caveLighting.sources.some(source=>source.kind==='rockOre'));assert.ok(caveLighting.rayChecks>0);
+assert.ok(caveLighting.hierarchy.stone<caveLighting.hierarchy.rockOre&&caveLighting.hierarchy.rockOre<caveLighting.hierarchy.wallOre);
+assert.ok(caveLighting.hierarchy.wallOre<caveLighting.hierarchy.depthLamp&&caveLighting.hierarchy.depthLamp<caveLighting.hierarchy.bonusCrystalCollected&&caveLighting.hierarchy.bonusCrystalCollected<caveLighting.hierarchy.bonusCrystal);
+const naturallyLitStone=lightingApi.snapshot().rocks.find(rock=>rock.scene==='mossMine'&&rock.depth===1&&rock.type==='stone'&&!rock.broken&&!rock.barrierId);assert.ok(naturallyLitStone);exposeRock(lightingApi,naturallyLitStone);lightingApi.setPosition(naturallyLitStone.x,naturallyLitStone.y);lightingApi.renderOnce();const stoneLight=lightingApi.snapshot().lighting.sources.find(source=>source.kind==='stone');assert.ok(stoneLight);assert.equal(stoneLight.intensity,caveLighting.hierarchy.stone);
+let wallOre=lightingApi.snapshot().rocks.find(rock=>rock.scene==='mossMine'&&rock.depth===1&&rock.depositId&&!rock.cavernId&&!rock.exposed&&!rock.broken);assert.ok(wallOre);const wallCols=Math.ceil(lightMine.width/lightMine.terrain.tileSize),wallIndex=Math.floor(wallOre.y/lightMine.terrain.tileSize)*wallCols+Math.floor(wallOre.x/lightMine.terrain.tileSize);for(const neighbor of [wallIndex-1,wallIndex+1,wallIndex-wallCols,wallIndex+wallCols]){lightingApi.mineTerrainCell(neighbor);lightingApi.mineTerrainCell(neighbor);if(lightingApi.snapshot().mine.terrain.mineralHints.some(hint=>hint.rockId===wallOre.id))break}assert.ok(lightingApi.snapshot().mine.terrain.mineralHints.some(hint=>hint.rockId===wallOre.id));lightingApi.setPosition(wallOre.x,wallOre.y);lightingApi.renderOnce();const wallLight=lightingApi.snapshot().lighting.sources.find(source=>source.kind==='wallOre');assert.ok(wallLight);assert.ok(wallLight.intensity>=caveLighting.hierarchy.wallOre);
 const lightingBenchmarkStarted=process.hrtime.bigint();for(let frame=0;frame<90;frame++)lightingApi.renderOnce();const lightingAverageMs=Number(process.hrtime.bigint()-lightingBenchmarkStarted)/1e6/90;assert.ok(lightingAverageMs<16.7,'lighting render budget exceeded: '+lightingAverageMs.toFixed(2)+'ms');
+const litCache=lightingApi.snapshot().mine.discovery.caverns.find(cavern=>cavern.reward.kind==='cache');for(let hit=0;hit<4&&!lightingApi.snapshot().mine.discovery.caverns.find(cavern=>cavern.id===litCache.id).discovered;hit++)lightingApi.mineTerrainCell(litCache.boundaryIndex);lightingApi.setPosition(litCache.x,litCache.y);lightingApi.renderOnce();
+let bonusLight=lightingApi.snapshot().lighting.sources.find(source=>source.kind==='bonusCrystal');assert.ok(bonusLight);assert.equal(bonusLight.intensity,caveLighting.hierarchy.bonusCrystal);assert.equal(lightingApi.claimPocketReward(litCache.reward.id),true);lightingApi.renderOnce();
+bonusLight=lightingApi.snapshot().lighting.sources.find(source=>source.kind==='bonusCrystalCollected');assert.ok(bonusLight);assert.equal(bonusLight.intensity,caveLighting.hierarchy.bonusCrystalCollected);
+assert.equal(lightingApi.discoverDepthEntrance(),true);const litEntrance=lightingApi.snapshot().mine.depthEntrance;lightingApi.setPosition(litEntrance.x,litEntrance.y);lightingRuntime.drawCalls.length=0;lightingApi.renderOnce();const lampLight=lightingApi.snapshot().lighting.sources.find(source=>source.kind==='depthLamp');assert.ok(lampLight);assert.equal(lampLight.intensity,caveLighting.hierarchy.depthLamp);assert.equal(lightingApi.snapshot().lighting.depthLampAsset,'assets/entrances/depth-work-lamp.png');assertRendered(lightingRuntime.drawCalls,['assets/entrances/depth-work-lamp.png']);
 storage.clear();for(const [key,value] of storageBeforeLighting)storage.set(key,value);
 api.enterMine('mossMine');
 assert.equal(api.snapshot().mine.visualPass,'mossvein-production-art-v2');

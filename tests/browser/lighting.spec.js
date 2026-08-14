@@ -1,6 +1,6 @@
 const {test,expect}=require('@playwright/test');
 
-test('caves use an occluded mobile lightmap with colored ore lights',async({page})=>{
+test('caves use an occluded mobile lightmap with a readable natural-light hierarchy',async({page})=>{
   await page.goto('/');
   await page.waitForFunction(()=>window.__everDeeperTest);
 
@@ -13,12 +13,14 @@ test('caves use an occluded mobile lightmap with colored ore lights',async({page
     snapshot=api.snapshot();const target=snapshot.mine.terrain.target;
     for(let index=0;index<12;index++)api.renderOnce();const samples=[];
     for(let index=0;index<30;index++){const started=performance.now();api.renderOnce();samples.push(performance.now()-started)}
-    samples.sort((a,b)=>a-b);
+    samples.sort((a,b)=>a-b);const lighting=api.snapshot().lighting,blockedDistance=api.sampleHeadlampRay();
+    const cache=api.snapshot().mine.discovery.caverns.find(cavern=>cavern.reward.kind==='cache');for(let hit=0;hit<4&&!api.snapshot().mine.discovery.caverns.find(cavern=>cavern.id===cache.id).discovered;hit++)api.mineTerrainCell(cache.boundaryIndex);api.setPosition(cache.x,cache.y);api.renderOnce();const activeBonus=api.snapshot().lighting.sources.find(source=>source.kind==='bonusCrystal');api.claimPocketReward(cache.reward.id);api.renderOnce();const collectedBonus=api.snapshot().lighting.sources.find(source=>source.kind==='bonusCrystalCollected');
+    api.discoverDepthEntrance();const entrance=api.snapshot().mine.depthEntrance;api.setPosition(entrance.x,entrance.y);api.renderOnce();const depthLamp=api.snapshot().lighting.sources.find(source=>source.kind==='depthLamp');
     return{
-      lighting:api.snapshot().lighting,
+      lighting,activeBonus,collectedBonus,depthLamp,
       oreLights,
       target:!!target,
-      blockedDistance:api.sampleHeadlampRay(),
+      blockedDistance,
       averageMs:samples.reduce((total,value)=>total+value,0)/samples.length,
       p95Ms:samples[Math.floor(samples.length*.95)]
     };
@@ -26,10 +28,20 @@ test('caves use an occluded mobile lightmap with colored ore lights',async({page
 
   expect(result.target).toBe(true);
   expect(result.blockedDistance).toBeLessThan(result.lighting.beamLength);
-  expect(result.lighting).toMatchObject({enabled:true,technique:'low-resolution-raycast-lightmap',occlusion:true,bufferScale:.34,maxOreLights:16});
+  expect(result.lighting).toMatchObject({enabled:true,technique:'low-resolution-raycast-lightmap',occlusion:true,bufferScale:.34,maxOreLights:16,maxNaturalLights:22,depthLampAsset:'assets/entrances/depth-work-lamp.png'});
   expect(result.lighting.rayChecks).toBeGreaterThan(0);
   expect(result.oreLights).toBeGreaterThan(0);
   expect(result.oreLights).toBeLessThanOrEqual(16);
+  expect(result.lighting.naturalLights).toBeGreaterThan(0);
+  expect(result.lighting.sources.some(source=>source.kind==='rockOre')).toBe(true);
+  expect(result.lighting.hierarchy.stone).toBeLessThan(result.lighting.hierarchy.rockOre);
+  expect(result.lighting.hierarchy.rockOre).toBeLessThan(result.lighting.hierarchy.wallOre);
+  expect(result.lighting.hierarchy.wallOre).toBeLessThan(result.lighting.hierarchy.depthLamp);
+  expect(result.lighting.hierarchy.depthLamp).toBeLessThan(result.lighting.hierarchy.bonusCrystalCollected);
+  expect(result.lighting.hierarchy.bonusCrystalCollected).toBeLessThan(result.lighting.hierarchy.bonusCrystal);
+  expect(result.activeBonus.intensity).toBe(result.lighting.hierarchy.bonusCrystal);
+  expect(result.collectedBonus.intensity).toBe(result.lighting.hierarchy.bonusCrystalCollected);
+  expect(result.depthLamp.intensity).toBe(result.lighting.hierarchy.depthLamp);
   expect(result.averageMs).toBeLessThan(25);
   expect(result.p95Ms).toBeLessThan(40);
 });

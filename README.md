@@ -1,6 +1,6 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.26.3 - Moonglass Complete**
+Current build: **Ever Deeper v0.26.4 - Moonglass Complete**
 
 Moonglass now has a complete production-art pass across the surface biome, mine portal, chests, labyrinth barriers and hidden chambers, plus the full Prismatic Depths loop with its own portal, stations, resources, wall hints, drops, and Phase Crystal drill gate.
 
