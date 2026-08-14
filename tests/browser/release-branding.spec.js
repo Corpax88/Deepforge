@@ -49,7 +49,7 @@ test('all resource symbols use the shared production drop assets',async({page})=
   expect(contract).toMatchObject({completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,objectiveIcons:true,inventoryIcons:true,storageIcons:true,recipeIcons:true,ledgerIcons:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false});
   const decoded=await page.evaluate(paths=>Promise.all(Object.values(paths).map(src=>new Promise(resolve=>{const image=new Image();image.onload=()=>resolve({src,width:image.naturalWidth,height:image.naturalHeight});image.onerror=()=>resolve({src,width:0,height:0});image.src=src}))),contract.paths);
   expect(decoded.every(asset=>asset.width===256&&asset.height>=194)).toBe(true);
-  await page.evaluate(()=>{const api=window.__everDeeperTest;api.unlockAllAreas();api.grantGold(100);api.setPickaxeLevel(4);api.grantMined('emberstone',1);api.grantCargo('emberstone',7);api.step(.001);api.openInventory()});
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.reset();api.grantCargo('stone',1);api.sellCargo();api.unlockAllAreas();api.grantGold(100);api.setPickaxeLevel(4);api.grantMined('moonglass',1);api.grantMined('emberstone',1);api.grantCargo('emberstone',7);api.step(.001);api.openInventory()});
   await expect(page.locator('#objectiveRequirements [data-resource="emberstone"] img')).toHaveAttribute('src',/emberstone-drop\.png/);
   await expect(page.locator('#inventoryGrid [data-resource="emberstone"] img')).toHaveAttribute('src',/emberstone-drop\.png/);
   await expect(page.locator('.resource.gold [data-resource="gold"] img')).toHaveAttribute('src',/gold-drop\.png/);

@@ -1515,7 +1515,7 @@ test('Rootwound Depth 2 uses the complete production asset set',async({page})=>{
 test('real resource art is shared by goals, bags, recipes, stats and world drops',async({page})=>{
   await freshGame(page);
   await page.evaluate(()=>{
-    const api=window.__everDeeperTest;api.unlockAllAreas();api.grantGold(100);api.setPickaxeLevel(4);api.grantMined('emberstone',1);api.grantCargo('emberstone',7);api.grantCargo('rootiron',3);api.step(.001);api.openInventory();
+    const api=window.__everDeeperTest;api.grantCargo('stone',1);api.sellCargo();api.unlockAllAreas();api.grantGold(100);api.setPickaxeLevel(4);api.grantMined('moonglass',1);api.grantMined('emberstone',1);api.grantCargo('emberstone',7);api.grantCargo('rootiron',3);api.step(.001);api.openInventory();
   });
   await expect(page.locator('.resource.gold .topbar-resource img')).toHaveAttribute('src',/gold-drop\.png/);
   await expect(page.locator('#objectiveRequirements [data-resource="emberstone"] img')).toHaveAttribute('src',/emberstone-drop\.png/);
