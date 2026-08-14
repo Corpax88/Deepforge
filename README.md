@@ -1,6 +1,6 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.29.0 - Premium Walk Cycle**
+Current build: **Ever Deeper v0.29.1 - Ember Path Alignment**
 
 Emberdeep now has a complete production-art pass across the blended surface biome, sinking seal, permanent gate mark, mine approach, portal, chests and bonus fault. Emberdeep Works and Molten Depths have their own floors, walls, barriers, hidden chambers, stations, readable ore hints, mineable nodes, drops, natural lighting and Infernium drill gate.
 

@@ -4,16 +4,16 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0290';
+  const ASSET_VERSION='0291';
   const MOONGLASS_SURFACE_BLEND=190;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=190;
   const EMBERDEEP_GATE_TRANSITION_DURATION=1.8;
   const DEPTH_PORTAL_RESOURCE_CLEARANCE=136;
   const DEPTH_STATION_RESOURCE_CLEARANCE=132;
-  const EMBERDEEP_MINE_PATH_BOUNDS=Object.freeze({x:2440,y:788,w:500,h:222});
+  const EMBERDEEP_MINE_PATH_BOUNDS=Object.freeze({x:2456,y:772,w:500,h:222});
   const EMBERDEEP_MINE_PATH_ROTATION=-.105;
-  const EMBERDEEP_MINE_PATH_PIVOT=Object.freeze({x:2940,y:825});
+  const EMBERDEEP_MINE_PATH_PIVOT=Object.freeze({x:2956,y:809});
   const DEPTH_LAMP_OFFSETS=Object.freeze({default:Object.freeze({x:72,y:22}),emberMine:Object.freeze({x:29,y:-57})});
   const LIGHTING=Object.freeze({
     bufferScale:.34,darknessDepth1:.71,darknessDepth2:.78,
@@ -284,7 +284,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.29.0',name:'PREMIUM WALK CYCLE'};
+  const BUILD={version:'0.29.1',name:'EMBER PATH ALIGNMENT'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='EVER DEEPER v'+BUILD.version+' · '+BUILD.name;
 
