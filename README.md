@@ -1,6 +1,6 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.23.0 - Rootwound Depths**
+Current build: **Ever Deeper v0.24.0 - Mossvein Polish**
 
 Mossvein Depth 2 now uses its complete Rootwound production set: seamless deep-earth floor, root-bound terrain walls, Rootiron/Deepstone/Ambercore/Burrowsteel nodes, a buried Rootiron wall vein, the amber-lit shaft, ore exchange, and drill forge. Their former canvas-drawn Depth 2 counterparts no longer render in Rootwound.
 

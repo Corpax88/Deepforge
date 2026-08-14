@@ -20,12 +20,12 @@ function auditBrandRemoval(directory){
 auditBrandRemoval(repositoryRoot);
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'0230');
+assert.equal(latest.version,'0240');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0230/);
-assert.match(html,/script\.js\?v=0230/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0230/);
+assert.match(html,/style\.css\?v=0240/);
+assert.match(html,/script\.js\?v=0240/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0240/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -38,6 +38,8 @@ const playerAssets=['assets/characters/miner-b.png','assets/characters/miner-b-d
 for(const relative of playerAssets){const path=require('node:path').join(__dirname,'..',relative),png=fs.readFileSync(path);assert.equal(png.toString('ascii',1,4),'PNG');assert.equal(png[25],6,relative+' must use RGBA');assert.ok(png.length<250000,relative+' exceeds mobile asset budget')}
 const pocketAsset=fs.readFileSync(require('node:path').join(__dirname,'..','assets/mossvein/magic-crystal-pocket.png'));
 assert.equal(pocketAsset.toString('ascii',1,4),'PNG');assert.ok([4,6].includes(pocketAsset[25])||pocketAsset.includes(Buffer.from('tRNS')),'crystal pocket must preserve alpha');assert.ok(pocketAsset.length<250000,'crystal pocket exceeds mobile asset budget');
+const starterProductionAssets=['assets/surface/assay-station.png','assets/surface/forge-station.png','assets/surface/storage-chest.png','assets/surface/wayfarer-shop.png','assets/surface/treasure-cache-closed.png','assets/surface/treasure-cache-open.png','assets/surface/moonglass-gate.png','assets/mossvein/buried-cache.png','assets/mossvein/mining-rush-shrine.png','assets/drops/stone-drop.png','assets/drops/copper-drop.png','assets/drops/gold-drop.png'];
+for(const relative of starterProductionAssets){const png=fs.readFileSync(require('node:path').join(__dirname,'..',relative));assert.equal(png.toString('ascii',1,4),'PNG');assert.ok([4,6].includes(png[25])||png.includes(Buffer.from('tRNS')),relative+' must preserve transparency');assert.ok(png.length<180000,relative+' exceeds mobile asset budget')}
 const rootwoundAssets=['floor.png','wall.png','rootiron-node.png','deepstone-node.png','ambercore-node.png','burrowsteel-node.png','rootiron-wall.png','depth-shaft.png','sell-station.png','drill-forge.png'];
 for(const name of rootwoundAssets){const png=fs.readFileSync(require('node:path').join(__dirname,'..','assets/rootwound',name));assert.equal(png.toString('ascii',1,4),'PNG');assert.ok(png.length<250000,name+' exceeds mobile asset budget');if(name!=='floor.png')assert.ok([4,6].includes(png[25])||png.includes(Buffer.from('tRNS')),name+' must preserve transparency')}
 const storage=new Map();
@@ -80,18 +82,27 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.23.0');
-assert.equal(api.snapshot().build.name,'ROOTWOUND DEPTHS');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.23.0');
-assert.equal(api.snapshot().assetVersion,'0230');
+assert.equal(api.snapshot().build.version,'0.24.0');
+assert.equal(api.snapshot().build.name,'MOSSVEIN POLISH');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.24.0');
+assert.equal(api.snapshot().assetVersion,'0240');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0230',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0240',volume:1,loop:true,paused:false}));
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
+assert.equal(JSON.stringify(api.snapshot().starterRendering),JSON.stringify({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false}));
+assert.equal(JSON.stringify(api.snapshot().starterGateRendering),JSON.stringify({moonglassGate:'assets/surface/moonglass-gate.png',legacyStarterGate:false}));
 assert.equal(JSON.stringify(api.snapshot().rootwoundRendering),JSON.stringify({floor:'assets/rootwound/floor.png',wall:'assets/rootwound/wall.png',nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:'assets/rootwound/rootiron-wall.png',shaft:'assets/rootwound/depth-shaft.png',sellStation:'assets/rootwound/sell-station.png',drillForge:'assets/rootwound/drill-forge.png',legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false}));
-assert.equal(JSON.stringify(api.snapshot().discoveryRendering),JSON.stringify({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',legacyCavernRings:false,biomeGlow:true}));
+assert.equal(JSON.stringify(api.snapshot().discoveryRendering),JSON.stringify({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true}));
 assert.equal(JSON.stringify(api.snapshot().characterRendering),JSON.stringify({baseAsset:'assets/characters/miner-b.png',activeToolKey:'pickaxe-worn',activeRenderAsset:'assets/tools/pickaxe-worn.png',toolLayerCount:8,drillCompositeCount:3,gripCrop:{x:246,y:307,w:69,h:101},gripPivot:{x:14,y:24},gripPoint:{x:42,y:50},layeredTools:true,animatedGrip:true,bodyReaction:true,sharedGripAnchor:true,fullDrillComposites:true,legacyDrillLimbCrops:false,legacyCanvasCharacter:false,legacyCanvasTools:false}));
+api.setPosition(455,350);runtime.drawCalls.length=0;api.renderOnce();
+for(const asset of ['assay-station.png','forge-station.png','storage-chest.png','wayfarer-shop.png'])assert.ok(runtime.drawCalls.some(call=>call.src.includes(asset)),asset+' must render in the starter place');
+for(const type of ['stone','copper','gold'])api.spawnGroundDrops(type,1,455,350);
+runtime.drawCalls.length=0;api.renderOnce();for(const type of ['stone','copper','gold'])assert.ok(runtime.drawCalls.some(call=>call.src.includes(type+'-drop.png')),type+' drop asset must render');
+api.setPickaxeLevel(2);api.setPosition(980,205);runtime.drawCalls.length=0;api.renderOnce();assert.ok(runtime.drawCalls.some(call=>call.src.includes('treasure-cache-closed.png')));
+api.openChest('moss_ironbound');assert.equal(api.snapshot().state.openedChests.moss_ironbound,true);runtime.drawCalls.length=0;api.renderOnce();assert.ok(runtime.drawCalls.some(call=>call.src.includes('treasure-cache-open.png')));api.reset();
+api.setPosition(1045,650);runtime.drawCalls.length=0;api.renderOnce();assert.ok(runtime.drawCalls.some(call=>call.src.includes('moonglass-gate.png')));api.reset();
 const pickaxeKeys=['pickaxe-worn','pickaxe-iron','pickaxe-runed','pickaxe-moonglass','pickaxe-ember'];
 function assertPickaxeLayers(key){runtime.drawCalls.length=0;api.renderOnce();assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b.png')).length,5);const tools=runtime.drawCalls.filter(call=>call.src.includes('assets/tools/'));assert.equal(tools.length,1);assert.ok(tools[0].src.includes(key+'.png'))}
 function assertDrillComposite(key){runtime.drawCalls.length=0;api.renderOnce();const composites=runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b-drill-'));assert.equal(composites.length,1);assert.ok(composites[0].src.includes(key+'.png'));assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/characters/miner-b.png')).length,0);assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/tools/')).length,0)}
@@ -162,11 +173,14 @@ const cacheCavern=before.mine.discovery.caverns.find(item=>item.reward.kind==='c
 assert.ok(before.mine.discovery.caverns.every(item=>['cache','crystal','motherlode','shrine'].includes(item.reward.kind)));
 const cargoBefore=Object.values(before.state.cargo).reduce((total,amount)=>total+amount,0);
 api.mineTerrainCell(cacheCavern.boundaryIndex);api.mineTerrainCell(cacheCavern.boundaryIndex);
-api.setPosition(cacheCavern.x,cacheCavern.y);api.claimPocketReward(cacheCavern.reward.id);api.save();
+api.setPosition(cacheCavern.x,cacheCavern.y);runtime.drawCalls.length=0;api.renderOnce();assert.ok(runtime.drawCalls.some(call=>call.src.includes('assets/mossvein/buried-cache.png')));
+api.claimPocketReward(cacheCavern.reward.id);api.save();
 after=api.snapshot();
 assert.equal(after.mine.discovery.caverns.find(item=>item.id===cacheCavern.id).reward.claimed,true);
 assert.equal(after.feedback.lastPocketReward.kind,'cache');
 assert.ok(Object.values(after.state.cargo).reduce((total,amount)=>total+amount,0)>cargoBefore||after.groundDrops.some(drop=>drop.sourcePocket===cacheCavern.reward.id));
+const shrineCavern=after.mine.discovery.caverns.find(item=>item.reward.kind==='shrine');
+api.mineTerrainCell(shrineCavern.boundaryIndex);api.mineTerrainCell(shrineCavern.boundaryIndex);api.setPosition(shrineCavern.x,shrineCavern.y);runtime.drawCalls.length=0;api.renderOnce();assert.ok(runtime.drawCalls.some(call=>call.src.includes('assets/mossvein/mining-rush-shrine.png')));
 
 const motherlodeCavern=after.mine.discovery.caverns.find(item=>item.reward.kind==='motherlode');
 api.mineTerrainCell(motherlodeCavern.boundaryIndex);api.mineTerrainCell(motherlodeCavern.boundaryIndex);
