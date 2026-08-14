@@ -1,6 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.24.0 - Mossvein Polish**
+Current build: **Ever Deeper v0.25.0 - Cave Lighting**
+
+Every cave now uses a low-resolution raycast lightmap: the miner's helmet projects a warm, directional beam that stops against solid terrain, nearby darkness remains readable, and exposed ores emit restrained light in their own material colors. The light buffer is capped at 34% resolution and 16 visible ore lights to keep the effect mobile-safe.
 
 Mossvein Depth 2 now uses its complete Rootwound production set: seamless deep-earth floor, root-bound terrain walls, Rootiron/Deepstone/Ambercore/Burrowsteel nodes, a buried Rootiron wall vein, the amber-lit shaft, ore exchange, and drill forge. Their former canvas-drawn Depth 2 counterparts no longer render in Rootwound.
 

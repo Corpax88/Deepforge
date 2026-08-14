@@ -4,7 +4,15 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0240';
+  const ASSET_VERSION='0250';
+  const LIGHTING=Object.freeze({
+    bufferScale:.34,darknessDepth1:.78,darknessDepth2:.86,
+    ambientRadius:132,beamLength:590,beamHalfAngle:.52,beamCoreHalfAngle:.3,
+    maxOreLights:16,rayStep:20,ambientRays:36,beamRays:34,oreRays:16
+  });
+  const lightCanvas=typeof document.createElement==='function'?document.createElement('canvas'):null;
+  const lightCtx=lightCanvas&&lightCanvas.getContext?lightCanvas.getContext('2d',{alpha:true}):null;
+  let lightingRayChecks=0,lightingOreCount=0;
   const MUSIC_PATH='assets/audio/ever-deeper-drift-loop.mp3?v='+ASSET_VERSION;
   // iOS may ignore HTMLAudioElement volume. The asset itself is mastered at -28 LUFS.
   const MUSIC_VOLUME=1;
@@ -148,7 +156,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.24.0',name:'MOSSVEIN POLISH'};
+  const BUILD={version:'0.25.0',name:'CAVE LIGHTING'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='EVER DEEPER v'+BUILD.version+' · '+BUILD.name;
 
@@ -698,6 +706,10 @@
     dpr=Math.min(2,window.devicePixelRatio||1);
     canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
     ctx.setTransform(dpr,0,0,dpr,0,0);
+    if(lightCanvas){
+      lightCanvas.width=Math.max(1,Math.ceil(viewWidth*LIGHTING.bufferScale));
+      lightCanvas.height=Math.max(1,Math.ceil(viewHeight*LIGHTING.bufferScale));
+    }
     updateCamera(true);
   }
 
@@ -1303,6 +1315,91 @@
 
   function worldToScreen(x,y){return{x:x-camera.x,y:y-camera.y}}
   function screenToWorld(x,y){return{x:x/viewZoom+camera.x,y:y/viewZoom+camera.y}}
+
+  function colorWithAlpha(color,alpha){
+    const value=String(color||'#ffffff').replace('#','');
+    const hex=value.length===3?value.split('').map(part=>part+part).join(''):value;
+    const number=parseInt(hex.slice(0,6),16);if(!Number.isFinite(number))return'rgba(255,255,255,'+alpha+')';
+    return'rgba('+((number>>16)&255)+','+((number>>8)&255)+','+(number&255)+','+alpha+')';
+  }
+
+  function lightBlockedAt(x,y,terrain,solids,world){
+    lightingRayChecks++;
+    if(x<0||y<0||x>=world.width||y>=world.height)return true;
+    if(terrain&&terrainTypeAt(terrain,Math.floor(x/MINE_TILE_SIZE),Math.floor(y/MINE_TILE_SIZE)))return true;
+    for(const solid of solids)if(x>=solid.x&&x<=solid.x+solid.w&&y>=solid.y&&y<=solid.y+solid.h)return true;
+    return false;
+  }
+
+  function traceLightDistance(originX,originY,angle,length,terrain,solids,world){
+    const dx=Math.cos(angle),dy=Math.sin(angle),step=LIGHTING.rayStep;
+    for(let travelled=step;travelled<=length;travelled+=step){
+      if(lightBlockedAt(originX+dx*travelled,originY+dy*travelled,terrain,solids,world))return Math.max(5,travelled-step*.3);
+    }
+    return length;
+  }
+
+  function traceLightPolygon(originX,originY,startAngle,angleSpan,rays,length,terrain,solids,world,traceOriginX=originX,traceOriginY=originY){
+    const points=[];
+    for(let index=0;index<=rays;index++){
+      const angle=startAngle+angleSpan*index/rays,reach=traceLightDistance(traceOriginX,traceOriginY,angle,length,terrain,solids,world);
+      points.push(worldToScreen(originX+Math.cos(angle)*reach,originY+Math.sin(angle)*reach));
+    }
+    return points;
+  }
+
+  function fillLightPolygon(target,origin,points,fillStyle){
+    if(!points.length)return;
+    target.beginPath();target.moveTo(origin.x,origin.y);for(const point of points)target.lineTo(point.x,point.y);target.closePath();target.fillStyle=fillStyle;target.fill();
+  }
+
+  function visibleOreLights(terrain,solids,world){
+    const lights=[];
+    for(const rock of currentRocks()){
+      if(rock.broken||!rockIsExposed(rock)||rock.type==='stone'||rock.type==='deepstone')continue;
+      const screen=worldToScreen(rock.x,rock.y),data=ROCK_TYPES[rock.type],radius=data.rare?118:data.depth2?96:84;
+      if(screen.x+radius<0||screen.y+radius<0||screen.x-radius>viewWidth||screen.y-radius>viewHeight)continue;
+      lights.push({worldX:rock.x,worldY:rock.y,x:screen.x,y:screen.y,color:data.edge,radius,intensity:data.rare ? .58 : data.depth2 ? .44 : .36,rare:!!data.rare});
+    }
+    const centerX=camera.x+viewWidth*.5,centerY=camera.y+viewHeight*.5;
+    lights.sort((a,b)=>((a.worldX-centerX)**2+(a.worldY-centerY)**2)-((b.worldX-centerX)**2+(b.worldY-centerY)**2));
+    lights.length=Math.min(lights.length,LIGHTING.maxOreLights);
+    for(const light of lights)light.points=traceLightPolygon(light.worldX,light.worldY,-Math.PI,Math.PI*2,LIGHTING.oreRays,light.radius,terrain,solids,world);
+    return lights;
+  }
+
+  function drawMineLighting(){
+    if(!lightCtx||!lightCanvas||!currentMine())return;
+    const terrain=currentTerrain(),solids=activeMineSolids(),world=currentWorld(),move=updateInputVector();
+    const moving=Math.abs(move.x)+Math.abs(move.y)>.02,bob=moving?Math.sin(player.walk)*2:Math.sin(time*2.4)*1.2;
+    const aimLength=Math.hypot(player.aimX,player.aimY)||1,dirX=player.aimX/aimLength,dirY=player.aimY/aimLength,angle=Math.atan2(dirY,dirX);
+    const originWorld={x:player.x+player.facing*20,y:player.y-58+bob},traceOriginWorld={x:player.x+player.facing*8,y:player.y-12+bob},origin=worldToScreen(originWorld.x,originWorld.y);
+    lightingRayChecks=0;
+    const ambientPoints=traceLightPolygon(originWorld.x,originWorld.y,-Math.PI,Math.PI*2,LIGHTING.ambientRays,LIGHTING.ambientRadius,terrain,solids,world,traceOriginWorld.x,traceOriginWorld.y);
+    const outerPoints=traceLightPolygon(originWorld.x,originWorld.y,angle-LIGHTING.beamHalfAngle,LIGHTING.beamHalfAngle*2,LIGHTING.beamRays,LIGHTING.beamLength,terrain,solids,world,traceOriginWorld.x,traceOriginWorld.y);
+    const corePoints=traceLightPolygon(originWorld.x,originWorld.y,angle-LIGHTING.beamCoreHalfAngle,LIGHTING.beamCoreHalfAngle*2,Math.round(LIGHTING.beamRays*.7),LIGHTING.beamLength*.92,terrain,solids,world,traceOriginWorld.x,traceOriginWorld.y);
+    const oreLights=visibleOreLights(terrain,solids,world);lightingOreCount=oreLights.length;
+
+    lightCtx.setTransform(1,0,0,1,0,0);lightCtx.clearRect(0,0,lightCanvas.width,lightCanvas.height);
+    lightCtx.setTransform(LIGHTING.bufferScale,0,0,LIGHTING.bufferScale,0,0);lightCtx.globalCompositeOperation='source-over';
+    lightCtx.fillStyle=currentDepth===2?'rgba(1,2,4,'+LIGHTING.darknessDepth2+')':'rgba(2,4,5,'+LIGHTING.darknessDepth1+')';lightCtx.fillRect(0,0,viewWidth,viewHeight);
+    lightCtx.globalCompositeOperation='destination-out';
+    const ambient=lightCtx.createRadialGradient(origin.x,origin.y,0,origin.x,origin.y,LIGHTING.ambientRadius);ambient.addColorStop(0,'rgba(0,0,0,.98)');ambient.addColorStop(.52,'rgba(0,0,0,.72)');ambient.addColorStop(1,'rgba(0,0,0,0)');fillLightPolygon(lightCtx,origin,ambientPoints,ambient);
+    const beamEnd={x:origin.x+dirX*LIGHTING.beamLength,y:origin.y+dirY*LIGHTING.beamLength};
+    const outer=lightCtx.createLinearGradient(origin.x,origin.y,beamEnd.x,beamEnd.y);outer.addColorStop(0,'rgba(0,0,0,.44)');outer.addColorStop(.72,'rgba(0,0,0,.3)');outer.addColorStop(1,'rgba(0,0,0,0)');fillLightPolygon(lightCtx,origin,outerPoints,outer);
+    const core=lightCtx.createLinearGradient(origin.x,origin.y,beamEnd.x,beamEnd.y);core.addColorStop(0,'rgba(0,0,0,.9)');core.addColorStop(.68,'rgba(0,0,0,.76)');core.addColorStop(1,'rgba(0,0,0,.08)');fillLightPolygon(lightCtx,origin,corePoints,core);
+    for(const light of oreLights){
+      const glow=lightCtx.createRadialGradient(light.x,light.y,1,light.x,light.y,light.radius);glow.addColorStop(0,'rgba(0,0,0,'+light.intensity+')');glow.addColorStop(.35,'rgba(0,0,0,'+(light.intensity*.62)+')');glow.addColorStop(1,'rgba(0,0,0,0)');fillLightPolygon(lightCtx,light,light.points,glow);
+    }
+    lightCtx.globalCompositeOperation='source-over';
+
+    ctx.save();ctx.drawImage(lightCanvas,0,0,lightCanvas.width,lightCanvas.height,0,0,viewWidth,viewHeight);ctx.globalCompositeOperation='screen';
+    const warm=ctx.createLinearGradient(origin.x,origin.y,beamEnd.x,beamEnd.y);warm.addColorStop(0,'rgba(255,218,145,.095)');warm.addColorStop(.7,'rgba(255,201,112,.045)');warm.addColorStop(1,'rgba(255,190,95,0)');fillLightPolygon(ctx,origin,corePoints,warm);
+    for(const light of oreLights){
+      const tint=ctx.createRadialGradient(light.x,light.y,0,light.x,light.y,light.radius);tint.addColorStop(0,colorWithAlpha(light.color,light.rare ? .26 : .18));tint.addColorStop(.34,colorWithAlpha(light.color,light.rare ? .12 : .075));tint.addColorStop(1,colorWithAlpha(light.color,0));fillLightPolygon(ctx,light,light.points,tint);
+    }
+    const lens=ctx.createRadialGradient(origin.x,origin.y,0,origin.x,origin.y,21);lens.addColorStop(0,'rgba(255,248,201,.95)');lens.addColorStop(.22,'rgba(255,219,139,.52)');lens.addColorStop(1,'rgba(255,192,87,0)');ctx.fillStyle=lens;ctx.fillRect(origin.x-22,origin.y-22,44,44);ctx.restore();
+  }
 
   function updateObjectiveOcclusion(){
     const p=worldToScreen(player.x,player.y),playerX=p.x*viewZoom,playerY=p.y*viewZoom;
@@ -2170,7 +2267,7 @@
       if(currentDepth===1)drawMineEntrance(false,currentMine());
       if(currentDepth===2||state.discoveredDepthEntrances[currentScene])drawDepthEntrance();
       if(currentDepth===2)drawDepthStations();
-      drawBaseModules();drawRocks();drawWorldLabels();drawVisualGuide();drawEffects(false);drawGroundDrops();drawMineAtmosphere();drawPlayer();drawEffects(true);
+      drawBaseModules();drawRocks();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);drawMineLighting();drawWorldLabels();drawVisualGuide();
     }else{
       drawGround();drawBiomeStructure();drawDecorations();drawStations();drawSurfaceMineEntrances();drawGate();drawVeins();drawRocks();drawChests();drawWorldLabels();drawVisualGuide();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
     }
@@ -2459,16 +2556,6 @@
       if(!deep&&n>.66){ctx.fillStyle='rgba(91,139,69,.3)';ctx.beginPath();ctx.ellipse(0,-h*.2,22,5,.1,0,Math.PI*2);ctx.fill()}ctx.restore();
     }
     ctx.restore();ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle=deep?'#9d6b43':'#716d50';ctx.globalAlpha=.7;ctx.lineWidth=4;ctx.strokeRect(2,2,wall.w-4,wall.h-4);ctx.restore();
-  }
-
-  function drawMineAtmosphere(){
-    const mine=currentMineVisual();if(!isMossveinVisual(mine))return;
-    const p=worldToScreen(player.x,player.y),radius=Math.max(viewWidth,viewHeight)*.94;
-    ctx.save();const shade=ctx.createRadialGradient(p.x,p.y,120,p.x,p.y,radius);
-    shade.addColorStop(0,'rgba(3,8,5,0)');shade.addColorStop(.58,currentDepth===2?'rgba(12,7,4,.025)':'rgba(2,7,4,.018)');shade.addColorStop(1,currentDepth===2?'rgba(5,3,2,.24)':'rgba(1,5,3,.18)');
-    ctx.fillStyle=shade;ctx.fillRect(0,0,viewWidth,viewHeight);ctx.globalCompositeOperation='screen';
-    const lamp=ctx.createRadialGradient(p.x-8,p.y-14,0,p.x-8,p.y-14,250);lamp.addColorStop(0,'rgba(255,216,139,.16)');lamp.addColorStop(.34,'rgba(219,164,83,.07)');lamp.addColorStop(1,'rgba(255,190,85,0)');
-    ctx.fillStyle=lamp;ctx.fillRect(p.x-260,p.y-265,520,520);ctx.restore();
   }
 
   function drawMineGround(){
@@ -3167,6 +3254,7 @@
       effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower()),depthMainHits:currentMine()&&currentDepth===2?armoredHitsRequired(DEPTH2_RESOURCE_PROFILES[currentScene].main,currentPower(),currentShellPower()):null},
       goal:mainGoal(),guide:(()=>{const guide=visualGuide();return guide?{...guide,distance:distance(player.x,player.y,guide.x,guide.y),visible:distance(player.x,player.y,guide.x,guide.y)>guide.closeRadius}:null})(),markerStyle:{bonusVeinRings:false},toolMode:state.drillLevel?'drill':'pickaxe',protectedCargo:protectedDrillCargo(),sellableCargo:sellableCargo(),movement:{level:state.movementSpeedLevel,multiplier:movementSpeedMultiplier(),nextCost:movementSpeedCost()},miningRush:{...miningRush},lootSweep:{remaining:lootSweepRemaining(),nextAt:state.nextLootSweepAt},
       player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,
+      lighting:{enabled:!!currentMine()&&!!lightCtx,technique:'low-resolution-raycast-lightmap',occlusion:true,bufferScale:LIGHTING.bufferScale,bufferWidth:lightCanvas?lightCanvas.width:0,bufferHeight:lightCanvas?lightCanvas.height:0,darkness:currentDepth===2?LIGHTING.darknessDepth2:LIGHTING.darknessDepth1,beamLength:LIGHTING.beamLength,beamHalfAngle:LIGHTING.beamHalfAngle,maxOreLights:LIGHTING.maxOreLights,oreLights:currentMine()?lightingOreCount:0,rayChecks:currentMine()?lightingRayChecks:0},
       mine:currentMine()?{
         id:currentMine().id,name:currentMineVisual().name,depth:currentDepth,width:currentMine().width,height:currentMine().height,style:currentMineVisual().style,visualPass:isRootwoundProduction()?'rootwound-production-assets-v1':isMossveinVisual(currentMineVisual())?'mossvein-production-art-v2':'legacy',dirt:currentMineVisual().dirt,floor:currentMineVisual().floor,solids:currentDepth===1?currentMine().solids:[],solidCount:currentDepth===1?currentMine().solids.length:0,barrierIds:currentDepth===1?currentMine().barriers.map(barrier=>barrier.id):[],labels:currentDepth===1?currentMine().labels.map(label=>label[0]):[],
         depthEntrance:{...depthEntrances[currentScene],discovered:!!state.discoveredDepthEntrances[currentScene],boundaryIndex:mineTerrain[currentScene][1].depthEntrance?[...mineTerrain[currentScene][1].depthEntrance.boundary][0]:null},depthStations:currentDepth===2?depthStations():null,depthResources:currentDepth===2?{...DEPTH2_RESOURCE_PROFILES[currentScene]}:null,
@@ -3183,6 +3271,7 @@
     startMusic:()=>{startBackgroundMusic();return backgroundMusic?{src:backgroundMusic.src,volume:backgroundMusic.volume,loop:backgroundMusic.loop,paused:backgroundMusic.paused}:null},
     setPosition:(x,y)=>{const world=currentWorld();player.x=clamp(Number(x),52,world.width-52);player.y=clamp(Number(y),70,world.height-58);updateCamera(true);uiDirty=true},
     setAim:(x,y)=>{const length=Math.hypot(Number(x)||0,Number(y)||0);if(length){player.aimX=Number(x)/length;player.aimY=Number(y)/length;player.facing=player.aimX<0?-1:1}},
+    sampleHeadlampRay:()=>{const angle=Math.atan2(player.aimY,player.aimX);return traceLightDistance(player.x+player.facing*8,player.y-12,angle,LIGHTING.beamLength,currentTerrain(),activeMineSolids(),currentWorld())},
     setSwingProgress:value=>{const progress=clamp(Number(value)||0,0,1);player.swing={elapsed:progress,duration:1,hit:false,precision:false,target:'rock'};return{...playerRenderPose()}},
     clearSwing:()=>{player.swing=null;return{...playerRenderPose()}},
     mineOnce:()=>{if(player.swingCooldown>0)update(player.swingCooldown+.001);if(startSwing(true)){update(currentCooldown());update(.021);return true}return false},

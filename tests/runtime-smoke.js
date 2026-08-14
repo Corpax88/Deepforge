@@ -20,12 +20,12 @@ function auditBrandRemoval(directory){
 auditBrandRemoval(repositoryRoot);
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'0240');
+assert.equal(latest.version,'0250');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0240/);
-assert.match(html,/script\.js\?v=0240/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0240/);
+assert.match(html,/style\.css\?v=0250/);
+assert.match(html,/script\.js\?v=0250/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0250/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -59,9 +59,9 @@ function createRuntime(){
   const element=id=>{if(!elements.has(id))elements.set(id,createElement(id));return elements.get(id)};
   const gradient={addColorStop(){}};
   const drawCalls=[];
-  const canvasContext=new Proxy({}, {get:(_target,key)=>key==='createLinearGradient'||key==='createRadialGradient'?()=>gradient:key==='measureText'?()=>({width:0}):key==='drawImage'?(image,...args)=>drawCalls.push({src:image.src,args}):()=>{},set:()=>true});
+  const canvasContext=new Proxy({}, {get:(_target,key)=>key==='createLinearGradient'||key==='createRadialGradient'?()=>gradient:key==='measureText'?()=>({width:0}):key==='drawImage'?(image,...args)=>drawCalls.push({src:image.src||'[canvas]',args}):()=>{},set:()=>true});
   element('gameCanvas').getContext=()=>canvasContext;
-  const document={hidden:false,getElementById:element,addEventListener(){}};
+  const document={hidden:false,getElementById:element,addEventListener(){},createElement:tag=>tag==='canvas'?{width:1,height:1,src:'[lightmap]',getContext:()=>canvasContext}:createElement('dynamic-'+tag)};
   const window={devicePixelRatio:2,addEventListener(){},confirm:()=>true};
   class TestAudio{constructor(src){this.src=src;this.volume=1;this.loop=false;this.paused=true;this.preload='';this.playsInline=false}play(){this.paused=false;return Promise.resolve()}pause(){this.paused=true}}
   class TestImage{constructor(){this.complete=true;this.naturalWidth=512;this.naturalHeight=512;this.decoding='async';this.onload=null;this._src=''}set src(value){this._src=value;if(value.includes('magic-crystal-pocket')){this.naturalWidth=640;this.naturalHeight=358}else if(value.includes('miner-b-drill-burrower')){this.naturalWidth=348;this.naturalHeight=512}else if(value.includes('miner-b-drill-pulse')){this.naturalWidth=361;this.naturalHeight=512}else if(value.includes('miner-b-drill-deepcore')){this.naturalWidth=354;this.naturalHeight=512}else if(value.includes('miner-b')){this.naturalWidth=315;this.naturalHeight=512}else this.naturalWidth=512;queueMicrotask(()=>this.onload&&this.onload())}get src(){return this._src}}
@@ -82,12 +82,12 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.24.0');
-assert.equal(api.snapshot().build.name,'MOSSVEIN POLISH');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.24.0');
-assert.equal(api.snapshot().assetVersion,'0240');
+assert.equal(api.snapshot().build.version,'0.25.0');
+assert.equal(api.snapshot().build.name,'CAVE LIGHTING');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.25.0');
+assert.equal(api.snapshot().assetVersion,'0250');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0240',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0250',volume:1,loop:true,paused:false}));
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
 assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
@@ -117,6 +117,7 @@ api.setDrillLevel(3);pose=api.setSwingProgress(.2);assert.equal(pose.toolAngle,0
 api.clearSwing();api.setDrillLevel(0);
 api.reset();
 assert.equal(api.snapshot().mineralNodeRenderScale,.85);
+assert.equal(api.snapshot().lighting.enabled,false);
 let openingGuide=api.snapshot().guide;
 assert.equal(openingGuide.kind,'rock');assert.equal(openingGuide.scene,'surface');assert.equal(openingGuide.visible,true);
 api.setPosition(openingGuide.x,openingGuide.y);assert.equal(api.snapshot().guide.visible,false);
@@ -132,11 +133,21 @@ api.claimPocketReward(fallenPocket.reward.id);
 assert.equal(api.snapshot().state.claimedPocketRewards[fallenPocket.reward.id],true);
 api.exitMine();
 
+const storageBeforeLighting=new Map(storage),lightingRuntime=createRuntime(),lightingApi=lightingRuntime.api;lightingApi.enterMine('mossMine');
+let glowingRock=lightingApi.snapshot().rocks.find(rock=>rock.scene==='mossMine'&&rock.depth===1&&rock.type!=='stone'&&rock.type!=='deepstone'&&!rock.cavernId&&!rock.broken);
+assert.ok(glowingRock);const lightMine=lightingApi.snapshot().mine,lightCols=Math.ceil(lightMine.width/lightMine.terrain.tileSize),lightIndex=Math.floor(glowingRock.y/lightMine.terrain.tileSize)*lightCols+Math.floor(glowingRock.x/lightMine.terrain.tileSize);
+for(let hit=0;hit<8;hit++)lightingApi.mineTerrainCell(lightIndex);glowingRock=lightingApi.snapshot().rocks.find(rock=>rock.id===glowingRock.id);assert.equal(glowingRock.exposed,true);lightingApi.setPosition(glowingRock.x,glowingRock.y);lightingApi.renderOnce();
+const caveLighting=lightingApi.snapshot().lighting;
+assert.equal(JSON.stringify({enabled:caveLighting.enabled,technique:caveLighting.technique,occlusion:caveLighting.occlusion,bufferScale:caveLighting.bufferScale,maxOreLights:caveLighting.maxOreLights}),JSON.stringify({enabled:true,technique:'low-resolution-raycast-lightmap',occlusion:true,bufferScale:.34,maxOreLights:16}));
+assert.ok(caveLighting.bufferWidth>0&&caveLighting.bufferHeight>0);assert.ok(caveLighting.oreLights>0&&caveLighting.oreLights<=16);assert.ok(caveLighting.rayChecks>0);
+const lightingBenchmarkStarted=process.hrtime.bigint();for(let frame=0;frame<90;frame++)lightingApi.renderOnce();const lightingAverageMs=Number(process.hrtime.bigint()-lightingBenchmarkStarted)/1e6/90;assert.ok(lightingAverageMs<16.7,'lighting render budget exceeded: '+lightingAverageMs.toFixed(2)+'ms');
+storage.clear();for(const [key,value] of storageBeforeLighting)storage.set(key,value);
 api.enterMine('mossMine');
 assert.equal(api.snapshot().mine.visualPass,'mossvein-production-art-v2');
 api.setPosition(180,503);api.setAim(.899,-.438);
 let before=api.snapshot(),target=before.mine.terrain.target;
 assert.ok(target);
+assert.ok(api.sampleHeadlampRay()<caveLighting.beamLength);
 api.mineTerrainCell(target.index);
 let after=api.snapshot();
 assert.equal(after.mine.terrain.target.index,target.index);
@@ -317,4 +328,4 @@ runtime=createRuntime();after=runtime.api.snapshot();assert.equal(after.state.ba
 const migrationState={...after.state,gold:424242};
 storage.clear();storage.set('retiredMiningPrototypeSave',JSON.stringify(migrationState));runtime=createRuntime();after=runtime.api.snapshot();
 assert.equal(after.state.gold,424242);assert.equal(storage.has('retiredMiningPrototypeSave'),false);assert.equal(storage.has('everDeeperPrototypeV2'),true);
-console.log('Runtime smoke passed: Ever Deeper branding, save migration, progression, guidance, movable base, rendering, and reload.');
+console.log('Runtime smoke passed: Ever Deeper branding, save migration, progression, guidance, movable base, rendering, lighting, and reload. Light pass '+lightingAverageMs.toFixed(2)+'ms average.');

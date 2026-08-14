@@ -949,8 +949,8 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.24.0',name:'MOSSVEIN POLISH'});
-  expect(snapshot.assetVersion).toBe('0240');
+  expect(snapshot.build).toEqual({version:'0.25.0',name:'CAVE LIGHTING'});
+  expect(snapshot.assetVersion).toBe('0250');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
@@ -972,11 +972,11 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.24.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.25.0');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.24.0 · MOSSVEIN POLISH');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.25.0 · CAVE LIGHTING');
 });
 
 test('one text-free visual guide leads to the next action and fades nearby',async({page})=>{
