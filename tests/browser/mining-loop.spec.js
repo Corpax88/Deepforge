@@ -217,8 +217,9 @@ test('Moonglass progression unlocks Emberdeep and its armored ore',async({page},
   });
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot.state.pickaxeLevel).toBe(4);
-  await page.evaluate(()=>window.__everDeeperTest.grantMined('emberstone',11));
+  await page.evaluate(()=>window.__everDeeperTest.grantCargo('emberstone',199));
   await expect(page.locator('#objectiveText')).toHaveText('Forge the Ember Pickaxe');
+  await expect(page.locator('#objectiveRequirements')).toContainText('200/200');
   await page.evaluate(()=>window.__everDeeperTest.grantGold(650));
   await useStation(page,455,250);
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
@@ -412,16 +413,17 @@ test('Ember Mastery enforces both Sunslag and gold requirements',async({page})=>
   });
   await expect(page.locator('#contextTitle')).toHaveText('Tempered');
   await expect(page.locator('#contextButton')).toBeDisabled();
-  await expect(page.locator('#contextDetail')).toContainText('SUNSLAG 0 / 1');
+  await expect(page.locator('#contextDetail')).toContainText('SUNSLAG 0 / 200');
 
   await page.evaluate(()=>window.__everDeeperTest.grantGold(450));
   await expect(page.locator('#contextButton')).toBeDisabled();
-  await page.evaluate(()=>window.__everDeeperTest.grantMined('sunslag',1));
+  await page.evaluate(()=>window.__everDeeperTest.grantCargo('sunslag',200));
   await expect(page.locator('#contextButton')).toBeEnabled();
   await page.locator('#contextButton').click();
 
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot.state.emberMastery).toBe(1);
+  expect(snapshot.state.cargo.sunslag).toBe(0);
   expect(snapshot.state.gold).toBe(0);
   expect(snapshot.effectivePickaxe).toMatchObject({power:38,cooldown:.215,shellPower:.85,sunslagHits:4});
   await expect(page.locator('#pickaxeName')).toHaveText('Ember Pickaxe +1');
@@ -432,7 +434,7 @@ test('all five Ember Mastery ranks improve mining and persist',async({page},test
   await page.evaluate(()=>{
     window.__everDeeperTest.unlockAllAreas();
     window.__everDeeperTest.setPickaxeLevel(5);
-    window.__everDeeperTest.grantMined('sunslag',15);
+    window.__everDeeperTest.grantCargo('sunslag',1000);
     window.__everDeeperTest.grantGold(8650);
     window.__everDeeperTest.setPosition(455,250);
   });
@@ -473,6 +475,7 @@ test('Depth Master breaks Sunslag shell and core with one normal swing',async({p
     window.__everDeeperTest.unlockAllAreas();
     window.__everDeeperTest.setPickaxeLevel(5);
     window.__everDeeperTest.grantMined('sunslag',15);
+    window.__everDeeperTest.grantCargo('sunslag',1000);
     window.__everDeeperTest.grantGold(8650);
     window.__everDeeperTest.setPosition(455,250);
   });
@@ -498,7 +501,7 @@ test('Ember Mastery 5 opens Starfall Depths and its new resource loop persists',
   await page.evaluate(()=>{
     window.__everDeeperTest.unlockAllAreas();
     window.__everDeeperTest.setPickaxeLevel(5);
-    window.__everDeeperTest.grantMined('sunslag',15);
+    window.__everDeeperTest.grantCargo('sunslag',1000);
     window.__everDeeperTest.grantGold(8650);
     window.__everDeeperTest.setPosition(3295,650);
   });
@@ -665,8 +668,8 @@ test('Starforge crafts and swaps three distinct endgame pickaxes',async({page},t
     window.__everDeeperTest.unlockAllAreas();
     window.__everDeeperTest.unlockStarfall();
     window.__everDeeperTest.setPickaxeLevel(5);
-    window.__everDeeperTest.grantCargo('astralite',17);
-    window.__everDeeperTest.grantCargo('crownstone',4);
+    window.__everDeeperTest.grantCargo('astralite',600);
+    window.__everDeeperTest.grantCargo('crownstone',600);
     window.__everDeeperTest.setPosition(3505,155);
   });
   await expect(page.locator('#contextPanel')).toBeVisible();
@@ -739,7 +742,7 @@ test('Ember Mastery remains readable on an iPhone viewport',async({page},testInf
   await page.evaluate(()=>{
     window.__everDeeperTest.unlockAllAreas();
     window.__everDeeperTest.setPickaxeLevel(5);
-    window.__everDeeperTest.grantMined('sunslag',3);
+    window.__everDeeperTest.grantCargo('sunslag',200);
     window.__everDeeperTest.grantGold(1300);
     window.__everDeeperTest.setPosition(455,250);
   });
@@ -776,20 +779,20 @@ test('pickaxe-gated treasure chest opens into physical loot and persists',async(
 
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot.state.openedChests.moss_ironbound).toBe(true);
-  expect(snapshot.groundDrops.filter(drop=>drop.sourceChest==='moss_ironbound')).toHaveLength(6);
-  expect(snapshot.state.pendingChestLoot.moss_ironbound).toEqual({copper:5,gold:1});
+  expect(snapshot.groundDrops.filter(drop=>drop.sourceChest==='moss_ironbound')).toHaveLength(3);
+  expect(snapshot.state.pendingChestLoot.moss_ironbound).toEqual({coin:75});
 
   await page.evaluate(()=>window.__everDeeperTest.save());
   await page.reload();
   await page.waitForFunction(()=>window.__everDeeperTest);
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot.state.openedChests.moss_ironbound).toBe(true);
-  expect(snapshot.groundDrops.filter(drop=>drop.sourceChest==='moss_ironbound')).toHaveLength(6);
+  expect(snapshot.groundDrops.filter(drop=>drop.sourceChest==='moss_ironbound')).toHaveLength(3);
 
   await page.evaluate(()=>window.__everDeeperTest.collectGroundDrops());
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.state.cargo.copper).toBe(5);
-  expect(snapshot.state.cargo.gold).toBe(1);
+  expect(snapshot.state.gold).toBe(75);
+  expect(Object.values(snapshot.state.cargo).reduce((total,amount)=>total+amount,0)).toBe(0);
   expect(snapshot.state.pendingChestLoot.moss_ironbound).toBeUndefined();
 });
 
@@ -811,8 +814,8 @@ test('deeper chest tiers require their matching progression milestone',async({pa
   expect(snapshot.chests.find(chest=>chest.id==='star_coffer').ready).toBe(false);
 
   await page.evaluate(()=>{
-    window.__everDeeperTest.grantCargo('astralite',6);
-    window.__everDeeperTest.grantCargo('crownstone',1);
+    window.__everDeeperTest.grantCargo('astralite',200);
+    window.__everDeeperTest.grantCargo('crownstone',200);
     window.__everDeeperTest.forgeStarVariant('crusher');
   });
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
@@ -1059,8 +1062,8 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.26.14',name:'ROAD JUNCTION BLEND'});
-  expect(snapshot.assetVersion).toBe('02614');
+  expect(snapshot.build).toEqual({version:'0.27.0',name:'MATERIAL PACING'});
+  expect(snapshot.assetVersion).toBe('0270');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:{stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png'},legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
@@ -1083,11 +1086,11 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.26.14');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.27.0');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.26.14 · ROAD JUNCTION BLEND');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.27.0 · MATERIAL PACING');
 });
 
 test('settings opens first and keeps audio choices separate from stats',async({page})=>{
@@ -1413,11 +1416,11 @@ test('Rootwound Depth 2 uses the complete production asset set',async({page})=>{
   expect(art.every(asset=>asset.width>=300&&asset.height>=300)).toBe(true);
 });
 
-test('v0.26.14 exposes the complete Moonglass and Prismatic production contracts',async({page})=>{
+test('v0.27.0 exposes the complete Moonglass and Prismatic production contracts',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build.version).toBe('0.26.14');
-  expect(snapshot.assetVersion).toBe('02614');
+  expect(snapshot.build.version).toBe('0.27.0');
+  expect(snapshot.assetVersion).toBe('0270');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);
   expect(snapshot.prismaticRendering).toEqual(PRISMATIC_RENDERING);

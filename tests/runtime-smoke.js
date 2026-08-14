@@ -20,12 +20,12 @@ function auditBrandRemoval(directory){
 auditBrandRemoval(repositoryRoot);
 assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCrop|drillRearAnchor|assets\/tools\/drill-/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
-assert.equal(latest.version,'02614');
+assert.equal(latest.version,'0270');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=02614/);
-assert.match(html,/script\.js\?v=02614/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=02614/);
+assert.match(html,/style\.css\?v=0270/);
+assert.match(html,/script\.js\?v=0270/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0270/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -147,12 +147,12 @@ function createRuntime(){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.26.14');
-assert.equal(api.snapshot().build.name,'ROAD JUNCTION BLEND');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.26.14');
-assert.equal(api.snapshot().assetVersion,'02614');
+assert.equal(api.snapshot().build.version,'0.27.0');
+assert.equal(api.snapshot().build.name,'MATERIAL PACING');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.27.0');
+assert.equal(api.snapshot().assetVersion,'0270');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=02614',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0270',volume:1,loop:true,paused:false}));
 assert.equal(api.setAudioSetting('music',false),false);assert.equal(api.snapshot().music.enabled,false);assert.equal(api.snapshot().music.started,false);
 assert.equal(api.setAudioSetting('effects',false),false);assert.equal(api.snapshot().music.effectsEnabled,false);
 assert.equal(api.setAudioSetting('music',true),true);assert.equal(api.setAudioSetting('effects',true),true);
@@ -471,6 +471,18 @@ const secondChest=after.state.base.chests[1];assert.equal(secondChest.packed,tru
 const forge={...after.state.base.forge};api.setPosition(forge.x,forge.y);assert.equal(api.packBaseModule('forge'),true);api.enterMine('mossMine');assert.equal(api.placeBaseModule('forge'),true);after=api.snapshot();assert.equal(after.state.base.forge.scene,'mossMine');assert.equal(after.state.base.forge.packed,false);
 const movedChest={...after.state.base.chests[1]};api.exitMine();api.setPosition(movedChest.x,movedChest.y);assert.equal(api.packBaseModule(movedChest.id),true);api.enterMine('mossMine');assert.equal(api.placeBaseModule(movedChest.id),true);api.save();
 runtime=createRuntime();after=runtime.api.snapshot();assert.equal(after.state.base.forge.scene,'mossMine');assert.equal(after.state.base.chests.find(chest=>chest.id===movedChest.id).scene,'mossMine');assert.equal(Object.values(after.state.base.chests[0].items).reduce((total,amount)=>total+amount,0),20);
+
+api=runtime.api;api.reset();api.openChest('moss_supply');api.collectGroundDrops();api.unlockAllAreas();api.setPickaxeLevel(4);api.grantGold(625);api.grantMined('moonglass',1);api.grantMined('emberstone',1);api.grantCargo('emberstone',199);api.setPosition(455,250);api.step(.01);api.interact();after=api.snapshot();
+assert.equal(after.state.pickaxeLevel,4);assert.equal(JSON.stringify(after.goal.requirements),JSON.stringify([{type:'emberstone',amount:200,current:199}]));assert.equal(after.protectedCargo.emberstone,199);
+api.grantCargo('emberstone',1);api.interact();after=api.snapshot();assert.equal(after.state.pickaxeLevel,5);assert.equal(after.state.cargo.emberstone,0);
+api.grantGold(450);api.grantCargo('sunslag',199);api.interact();assert.equal(api.snapshot().state.emberMastery,0);api.grantCargo('sunslag',1);api.interact();after=api.snapshot();assert.equal(after.state.emberMastery,1);assert.equal(after.state.cargo.sunslag,0);
+
+api.reset();api.unlockStarfall();api.grantCargo('astralite',199);api.grantCargo('crownstone',199);api.forgeStarVariant('crusher');assert.equal(api.snapshot().state.starforgeVariant,null);
+api.grantCargo('astralite',1);api.grantCargo('crownstone',1);api.forgeStarVariant('crusher');after=api.snapshot();assert.equal(after.state.starforgeVariant,'crusher');assert.equal(after.state.cargo.astralite,0);assert.equal(after.state.cargo.crownstone,0);
+
+api.reset();api.setPickaxeLevel(2);api.openChest('moss_ironbound');after=api.snapshot();assert.equal(JSON.stringify(after.state.pendingChestLoot.moss_ironbound),JSON.stringify({coin:75}));assert.equal(after.groundDrops.filter(drop=>drop.sourceChest==='moss_ironbound').length,3);
+api.collectGroundDrops();after=api.snapshot();assert.equal(after.state.gold,75);assert.equal(Object.values(after.state.cargo).reduce((total,amount)=>total+amount,0),0);assert.equal(after.state.pendingChestLoot.moss_ironbound,undefined);
+
 const migrationState={...after.state,gold:424242};
 storage.clear();storage.set('retiredMiningPrototypeSave',JSON.stringify(migrationState));runtime=createRuntime();after=runtime.api.snapshot();
 assert.equal(after.state.gold,424242);assert.equal(storage.has('retiredMiningPrototypeSave'),false);assert.equal(storage.has('everDeeperPrototypeV2'),true);

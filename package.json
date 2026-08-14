@@ -1,6 +1,6 @@
 {
   "name": "ever-deeper",
-  "version": "0.26.14",
+  "version": "0.27.0",
   "private": true,
   "description": "A mobile-first fantasy mining game prototype.",
   "scripts": {
