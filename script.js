@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0356';
+  const ASSET_VERSION='0357';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -391,8 +391,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.35.6',name:'VISIBLE WALL FIT'};
+  const BUILD={version:'0.35.7',name:'QUIET MISSES'};
   const PATCH_NOTES=[
+    {version:'0.35.7',date:'16 AUG 2026',title:'Quiet Misses',items:['Holding Mine without a valid target is now silent instead of repeating the empty-hit sound.','A fresh manual press still gives one short miss response so the control never feels broken.','Successful pickaxe tink and drill impact sounds are unchanged.']},
     {version:'0.35.6',date:'16 AUG 2026',title:'Visible Wall Fit',items:['Surface wall collision now matches the actual painted width of each premium boundary PNG.','The oversized invisible strip beside opened gates is removed while the visible cliff remains solid.','Closed gates still block across their full portal footprint.']},
     {version:'0.35.5',date:'15 AUG 2026',title:'Pickaxe Tink',items:['Pickaxe mining now lands with a short, bright metallic tink instead of the previous heavy synthetic impact.','Repeated swings form a clean tink-tink-tink rhythm, while drills retain their separate heavier sound.','Material and pickaxe tier still add subtle pitch variation without muddying the hit.']},
     {version:'0.35.4',date:'15 AUG 2026',title:'Passage Fit',items:['Opened-gate floor marks now fill the complete passage using the visible bounds of their premium PNGs.','Boundary collision now follows each painted cliff edge, so the miner can no longer stand inside the rock face.','Closed gates block across their full visual footprint while remaining easy to approach and open.']},
@@ -1718,7 +1719,7 @@
   function startSwing(manualPress){
     if(player.swing||player.swingCooldown>0)return false;
     const rock=nearestRock(MINING_RANGE),terrainTarget=rock?null:nearestTerrainCell(MINING_RANGE);
-    if(!rock&&!terrainTarget){sound('empty');if(!input.mineHeld)showToast(currentMine()?'Face the mountain to dig.':'Move closer to a rock.');player.swingCooldown=.16;return false}
+    if(!rock&&!terrainTarget){if(manualPress)sound('empty');if(!input.mineHeld)showToast(currentMine()?'Face the mountain to dig.':'Move closer to a rock.');player.swingCooldown=.16;return false}
     if(terrainTarget){
       player.facing=terrainTarget.x>=player.x?1:-1;player.hitRockId=null;player.hitTerrainIndex=terrainTarget.index;
       player.swing={elapsed:0,duration:currentCooldown(),hit:false,precision:false,target:'terrain'};
