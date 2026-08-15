@@ -12,14 +12,14 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   const logo=page.locator('.brand-logo');
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('alt','Ever Deeper');
-  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0300');
+  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0310');
   const logoState=await logo.evaluate(image=>({complete:image.complete,width:image.naturalWidth,height:image.naturalHeight,bounds:image.getBoundingClientRect().toJSON()}));
   expect(logoState).toMatchObject({complete:true,width:800,height:297});
   expect(logoState.bounds.width).toBeGreaterThanOrEqual(124);
   expect(logoState.bounds.right).toBeLessThanOrEqual(await page.evaluate(()=>innerWidth));
 
-  await expect(page.locator('#buildVersion')).toHaveText('v0.30.0');
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.30.0 · RESOURCE CLARITY');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.31.0');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.31.0 · STARFALL COMPLETE');
   const release=await page.evaluate(()=>{
     const api=window.__everDeeperTest;
     api.reset();api.save();
@@ -33,7 +33,7 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
     };
   });
   expect(release).toEqual({
-    build:{version:'0.30.0',name:'RESOURCE CLARITY'},
+    build:{version:'0.31.0',name:'STARFALL COMPLETE'},
     music:'assets/audio/ever-deeper-drift-loop.mp3',
     retiredMarkup:false,
     retiredStorage:false,
@@ -54,6 +54,29 @@ test('all resource symbols use the shared production drop assets',async({page})=
   await expect(page.locator('#inventoryGrid [data-resource="emberstone"] img')).toHaveAttribute('src',/emberstone-drop\.png/);
   await expect(page.locator('.resource.gold [data-resource="gold"] img')).toHaveAttribute('src',/gold-drop\.png/);
   expect(await page.locator('.resource-gem').count()).toBe(0);
+});
+
+test('Deepcore routes the final expedition through Starfall and into Voidstar',async({page})=>{
+  await page.goto('/');
+  await page.waitForFunction(()=>window.__everDeeperTest);
+  const route=await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.reset();api.unlockAllAreas();api.unlockStarfall();api.setDrillLevel(3);
+    const surface=api.snapshot();
+    api.enterMine('starMine');const searching=api.snapshot();
+    api.discoverDepthEntrance();const descent=api.snapshot();
+    api.enterDepth();const voidstar=api.snapshot();
+    return{
+      surface:{goal:surface.goal,guide:surface.guide&&{kind:surface.guide.kind,destination:surface.guide.destination}},
+      searching:{goal:searching.goal,guide:searching.guide},
+      descent:{goal:descent.goal,guide:descent.guide&&{kind:descent.guide.kind,scene:descent.guide.scene,depth:descent.guide.depth}},
+      voidstar:{goal:voidstar.goal,guide:voidstar.guide&&{kind:voidstar.guide.kind,resource:voidstar.guide.resource},visualPass:voidstar.mine.visualPass}
+    };
+  });
+  expect(route.surface).toEqual({goal:{title:'Enter Starfall Hollow',detail:'THE FINAL DESCENT AWAITS'},guide:{kind:'mine-entrance',destination:'starMine'}});
+  expect(route.searching).toEqual({goal:{title:'Find the hidden Voidstar entrance',detail:'DIG DEEPER'},guide:null});
+  expect(route.descent).toEqual({goal:{title:'Enter Voidstar Depths',detail:'DEEPCORE DRILL READY'},guide:{kind:'depth-entrance',scene:'starMine',depth:1}});
+  expect(route.voidstar).toEqual({goal:{title:'Mine a Singularity Core',detail:'THE FINAL DISCOVERY'},guide:{kind:'rock',resource:'singularity'},visualPass:'voidstar-production-assets-v1'});
 });
 
 test('premium walk sheets are clean, directional, lazy, and reduced-motion safe',async({page})=>{

@@ -23,13 +23,13 @@ assert.doesNotMatch(source,/function drawRockBody/,'resource nodes must not reta
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'0300');
+assert.equal(latest.version,'0310');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0300/);
-assert.match(html,/script\.js\?v=0300/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0300/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0300/);
+assert.match(html,/style\.css\?v=0310/);
+assert.match(html,/script\.js\?v=0310/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0310/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0310/);
 assert.match(html,/<title>Ever Deeper<\/title>/);
 assert.match(source,/MUSIC_PATH='assets\/audio\/ever-deeper-drift-loop\.mp3\?v='/);
 assert.match(source,/backgroundMusic\.loop=true/);
@@ -165,7 +165,51 @@ const emberdeepDropAssets={
   'assets/drops/furnaceheart-drop.png':[256,256,{maxBytes:60000}],
   'assets/drops/infernium-drop.png':[256,256,{maxBytes:60000}]
 };
-for(const [relative,[assetWidth,assetHeight,options]] of Object.entries({...moonglassSurfaceAssets,...moonglassMineAssets,...prismaticAssets,...moonglassDropAssets,...emberdeepSurfaceAssets,...emberdeepMineAssets,...moltenAssets,...emberdeepDropAssets}))assertPng(relative,assetWidth,assetHeight,options);
+const starfallSurfaceAssets={
+  'assets/surface/starfall-ground.png':[512,512,{alpha:false,maxBytes:220000}],
+  'assets/surface/starfall-shard-clusters.png':[512,256,{maxBytes:120000}],
+  'assets/surface/starfall-lattice-bed.png':[640,280,{maxBytes:120000}],
+  'assets/surface/starfall-mine-path.png':[768,341,{maxBytes:180000}],
+  'assets/surface/starfall-seal.png':[512,470,{maxBytes:180000}],
+  'assets/surface/starfall-seal-mark.png':[512,341,{maxBytes:120000}],
+  'assets/entrances/starfall-entrance.png':[512,466,{maxBytes:180000}],
+  'assets/surface/astral-cache-closed.png':[384,334,{maxBytes:140000}],
+  'assets/surface/astral-cache-open.png':[384,350,{maxBytes:140000}],
+  'assets/surface/celestial-coffer-closed.png':[384,334,{maxBytes:140000}],
+  'assets/surface/celestial-coffer-open.png':[384,350,{maxBytes:140000}],
+  'assets/surface/starforge-station.png':[512,512,{maxBytes:180000}]
+};
+const starfallMineAssets={
+  'assets/starfall/floor.png':[512,512,{alpha:false,maxBytes:220000}],
+  'assets/starfall/wall.png':[512,366,{maxBytes:150000}],
+  'assets/starfall/route-marker.png':[512,256,{maxBytes:120000}],
+  'assets/starfall/crystal-pocket.png':[640,358,{maxBytes:180000}],
+  'assets/starfall/buried-cache.png':[384,273,{maxBytes:120000}],
+  'assets/starfall/mining-rush-shrine.png':[459,512,{maxBytes:150000}],
+  'assets/starfall/astralite-node.png':[512,466,{maxBytes:180000}],
+  'assets/starfall/crownstone-node.png':[512,512,{maxBytes:180000}],
+  'assets/starfall/astralite-wall.png':[341,512,{maxBytes:100000}],
+  'assets/starfall/crownstone-wall.png':[341,512,{maxBytes:100000}],
+  'assets/starfall/astral-bridge-lock.png':[384,512,{maxBytes:140000}],
+  'assets/starfall/crownstone-ward.png':[384,512,{maxBytes:140000}]
+};
+const voidstarAssets={
+  'assets/voidstar/floor.png':[512,512,{alpha:false,maxBytes:220000}],
+  'assets/voidstar/wall.png':[512,366,{maxBytes:150000}],
+  'assets/voidstar/depth-portal.png':[512,444,{maxBytes:180000}],
+  'assets/voidstar/sell-station.png':[512,455,{maxBytes:180000}],
+  'assets/voidstar/drill-forge.png':[512,512,{maxBytes:180000}],
+  'assets/voidstar/crystal-pocket.png':[640,358,{maxBytes:180000}],
+  'assets/voidstar/buried-cache.png':[384,273,{maxBytes:120000}],
+  'assets/voidstar/mining-rush-shrine.png':[459,512,{maxBytes:150000}],
+  'assets/voidstar/voidglass-node.png':[512,466,{maxBytes:180000}],
+  'assets/voidstar/deepstone-node.png':[512,457,{maxBytes:180000}],
+  'assets/voidstar/singularity-node.png':[512,512,{maxBytes:180000}],
+  'assets/voidstar/voidglass-wall.png':[341,512,{maxBytes:100000}],
+  'assets/voidstar/deepstone-wall.png':[341,512,{maxBytes:100000}],
+  'assets/voidstar/singularity-wall.png':[341,512,{maxBytes:100000}]
+};
+for(const [relative,[assetWidth,assetHeight,options]] of Object.entries({...moonglassSurfaceAssets,...moonglassMineAssets,...prismaticAssets,...moonglassDropAssets,...emberdeepSurfaceAssets,...emberdeepMineAssets,...moltenAssets,...emberdeepDropAssets,...starfallSurfaceAssets,...starfallMineAssets,...voidstarAssets}))assertPng(relative,assetWidth,assetHeight,options);
 const storage=new Map();
 
 function createElement(id){
@@ -206,33 +250,39 @@ function createRuntime({failWalkSheets=false,reducedMotion=false}={}){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.30.0');
-assert.equal(api.snapshot().build.name,'RESOURCE CLARITY');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.30.0');
-assert.equal(api.snapshot().assetVersion,'0300');
+assert.equal(api.snapshot().build.version,'0.31.0');
+assert.equal(api.snapshot().build.name,'STARFALL COMPLETE');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.31.0');
+assert.equal(api.snapshot().assetVersion,'0310');
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0300',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0310',volume:1,loop:true,paused:false}));
 assert.equal(api.setAudioSetting('music',false),false);assert.equal(api.snapshot().music.enabled,false);assert.equal(api.snapshot().music.started,false);
 assert.equal(api.setAudioSetting('effects',false),false);assert.equal(api.snapshot().music.effectsEnabled,false);
 assert.equal(api.setAudioSetting('music',true),true);assert.equal(api.setAudioSetting('effects',true),true);
 assert.equal(JSON.stringify(api.snapshot().assetRendering),JSON.stringify({stone:['node'],copper:['wall','node'],gold:['wall','node']}));
-assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true,moonMine:true,emberMine:true}));
+assert.equal(JSON.stringify(api.snapshot().entranceAssetRendering),JSON.stringify({mossMine:true,moonMine:true,emberMine:true,starMine:true}));
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
 assert.equal(JSON.stringify(api.snapshot().starterRendering),JSON.stringify({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:completeDropPaths,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false}));
 assert.equal(JSON.stringify({...api.snapshot().resourceRendering,paths:undefined,bounds:undefined}),JSON.stringify({completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,objectiveIcons:true,inventoryIcons:true,storageIcons:true,recipeIcons:true,ledgerIcons:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false}));
 assert.equal(JSON.stringify(api.snapshot().resourceRendering.paths),JSON.stringify(completeDropPaths));
-assert.equal(JSON.stringify(api.snapshot().starterGateRendering),JSON.stringify({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepSealMark:'assets/surface/emberdeep-seal-mark.png',animatedMoonglassTransition:true,animatedEmberdeepTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false}));
+assert.equal(JSON.stringify(api.snapshot().starterGateRendering),JSON.stringify({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepSealMark:'assets/surface/emberdeep-seal-mark.png',starfallSeal:'assets/surface/starfall-seal.png',starfallSealMark:'assets/surface/starfall-seal-mark.png',animatedMoonglassTransition:true,animatedEmberdeepTransition:true,animatedStarfallTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false}));
 assert.equal(JSON.stringify(api.snapshot().rootwoundRendering),JSON.stringify({floor:'assets/rootwound/floor.png',wall:'assets/rootwound/wall.png',nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:'assets/rootwound/rootiron-wall.png',shaft:'assets/rootwound/depth-shaft.png',sellStation:'assets/rootwound/sell-station.png',drillForge:'assets/rootwound/drill-forge.png',legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false}));
 const expectedMoonglassRendering={surfaceGround:'assets/surface/moonglass-ground.png',surfaceCrystals:'assets/surface/moonglass-crystals.png',bloomBed:'assets/surface/moonglass-bloom-bed.png',entrance:'assets/entrances/moonglass-entrance.png',gateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',openBoundaryGatesRemoved:true,animatedGateTransition:true,smoothMossveinBlend:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:'assets/surface/crystal-cache-closed.png',open:'assets/surface/crystal-cache-open.png'},reliquary:{closed:'assets/surface/moonglass-reliquary-closed.png',open:'assets/surface/moonglass-reliquary-open.png'}},floor:'assets/moonglass/floor.png',wall:'assets/moonglass/wall.png',routeMarker:'assets/moonglass/route-marker.png',pocket:'assets/moonglass/crystal-pocket.png',cache:'assets/moonglass/buried-cache.png',shrine:'assets/moonglass/mining-rush-shrine.png',nodes:{moonglass:'assets/moonglass/moonglass-node.png',starshard:'assets/moonglass/starshard-node.png'},wallHints:{moonglass:'assets/moonglass/moonglass-wall.png',starshard:'assets/moonglass/starshard-wall.png'},barriers:{moon_prism_gate:'assets/moonglass/prismatic-fault.png',moon_star_lock:'assets/moonglass/starbound-geode.png'},drops:{moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png'},legacySurfaceDecorations:false,legacyMineFloor:false,legacyMineTerrain:false,legacyMineWalls:false,legacyBarriers:false,legacyPocketRewards:false,legacyResourceNodes:false};
 const expectedPrismaticRendering={floor:'assets/prismatic/floor.png',wall:'assets/prismatic/wall.png',shaft:'assets/prismatic/depth-portal.png',sellStation:'assets/prismatic/sell-station.png',drillForge:'assets/prismatic/drill-forge.png',pocket:'assets/prismatic/crystal-pocket.png',cache:'assets/prismatic/buried-cache.png',shrine:'assets/prismatic/mining-rush-shrine.png',nodes:{prismite:'assets/prismatic/prismite-node.png',deepstone:'assets/rootwound/deepstone-node.png',lunacore:'assets/prismatic/lunacore-node.png',phasecrystal:'assets/prismatic/phasecrystal-node.png'},wallHints:{prismite:'assets/prismatic/prismite-wall.png',deepstone:'assets/prismatic/deepstone-wall.png',lunacore:'assets/prismatic/lunacore-wall.png',phasecrystal:'assets/prismatic/phasecrystal-wall.png'},drops:{deepstone:'assets/drops/deepstone-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png'},legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyPocketRewards:false,legacyResourceNodes:false};
 const expectedSurfaceEmberdeepRendering={ground:'assets/surface/emberdeep-ground.png',slag:'assets/surface/emberdeep-slag-clusters.png',faultBed:'assets/surface/emberdeep-fault-bed.png',minePath:'assets/surface/emberdeep-mine-path.png',minePathBounds:{x:2456,y:772,w:500,h:222},minePathRotation:-.105,minePathPivot:{x:2956,y:809},minePathMouthTarget:{x:2480,y:1015},entrance:'assets/entrances/emberdeep-entrance.png',entrancePosition:{x:2480,y:970,radius:112},entranceFlipped:true,gateSeal:'assets/surface/emberdeep-seal.png',gateMark:'assets/surface/emberdeep-seal-mark.png',animatedGateTransition:true,smoothMoonglassBlend:true,continuousBlendUnderlay:true,backgroundSlagDistinct:true,chests:{foundry:{closed:'assets/surface/foundry-lockbox-closed.png',open:'assets/surface/foundry-lockbox-open.png'},vault:{closed:'assets/surface/ember-vault-closed.png',open:'assets/surface/ember-vault-open.png'}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyGate:false};
 const expectedEmberdeepRendering={floor:'assets/emberdeep/floor.png',wall:'assets/emberdeep/wall.png',routeMarker:'assets/emberdeep/route-marker.png',pocket:'assets/emberdeep/crystal-pocket.png',cache:'assets/emberdeep/buried-cache.png',shrine:'assets/emberdeep/mining-rush-shrine.png',nodes:{emberstone:'assets/emberdeep/emberstone-node.png',moonglass:'assets/moonglass/moonglass-node.png',sunslag:'assets/emberdeep/sunslag-node.png'},wallHints:{emberstone:'assets/emberdeep/emberstone-wall.png',moonglass:'assets/moonglass/moonglass-wall.png',sunslag:'assets/emberdeep/sunslag-wall.png'},barriers:{ember_bulkhead:'assets/emberdeep/cinder-bulkhead.png',ember_crucible_lock:'assets/emberdeep/crucible-seal.png'},drops:{emberstone:'assets/drops/emberstone-drop.png',moonglass:'assets/drops/moonglass-drop.png',sunslag:'assets/drops/sunslag-drop.png'},legacyMineFloor:false,legacyMineTerrain:false,legacyMineWalls:false,legacyBarriers:false,legacyPocketRewards:false,legacyResourceNodes:false};
 const expectedMoltenRendering={floor:'assets/molten/floor.png',wall:'assets/molten/wall.png',shaft:'assets/molten/depth-portal.png',sellStation:'assets/molten/sell-station.png',drillForge:'assets/molten/drill-forge.png',pocket:'assets/molten/crystal-pocket.png',cache:'assets/molten/buried-cache.png',shrine:'assets/molten/mining-rush-shrine.png',nodes:{magmaite:'assets/molten/magmaite-node.png',deepstone:'assets/molten/deepstone-node.png',furnaceheart:'assets/molten/furnaceheart-node.png',infernium:'assets/molten/infernium-node.png'},wallHints:{magmaite:'assets/molten/magmaite-wall.png',deepstone:'assets/molten/deepstone-wall.png',furnaceheart:'assets/molten/furnaceheart-wall.png',infernium:'assets/molten/infernium-wall.png'},drops:{deepstone:'assets/drops/deepstone-drop.png',magmaite:'assets/drops/magmaite-drop.png',furnaceheart:'assets/drops/furnaceheart-drop.png',infernium:'assets/drops/infernium-drop.png'},legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyPocketRewards:false,legacyResourceNodes:false};
+const expectedSurfaceStarfallRendering={ground:'assets/surface/starfall-ground.png',shards:'assets/surface/starfall-shard-clusters.png',latticeBed:'assets/surface/starfall-lattice-bed.png',minePath:'assets/surface/starfall-mine-path.png',minePathBounds:{x:3450,y:760,w:650,h:289},minePathMouthTarget:{x:3505,y:1000},entrance:'assets/entrances/starfall-entrance.png',entrancePosition:{x:3505,y:1000,radius:112},gateSeal:'assets/surface/starfall-seal.png',gateMark:'assets/surface/starfall-seal-mark.png',starforge:'assets/surface/starforge-station.png',chests:{astralCache:{closed:'assets/surface/astral-cache-closed.png',open:'assets/surface/astral-cache-open.png'},celestialCoffer:{closed:'assets/surface/celestial-coffer-closed.png',open:'assets/surface/celestial-coffer-open.png'}},animatedGateTransition:true,smoothEmberdeepBlend:true,continuousBlendUnderlay:true,backgroundShardsDistinct:true,legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyGate:false,legacyStarforge:false};
+const expectedStarfallRendering={floor:'assets/starfall/floor.png',wall:'assets/starfall/wall.png',routeMarker:'assets/starfall/route-marker.png',pocket:'assets/starfall/crystal-pocket.png',cache:'assets/starfall/buried-cache.png',shrine:'assets/starfall/mining-rush-shrine.png',nodes:{astralite:'assets/starfall/astralite-node.png',crownstone:'assets/starfall/crownstone-node.png'},wallHints:{astralite:'assets/starfall/astralite-wall.png',crownstone:'assets/starfall/crownstone-wall.png'},barriers:{star_bridge_lock:'assets/starfall/astral-bridge-lock.png',star_crown_lock:'assets/starfall/crownstone-ward.png'},drops:{astralite:'assets/drops/astralite-drop.png',crownstone:'assets/drops/crownstone-drop.png'},legacyFloor:false,legacyTerrain:false,legacyWalls:false,legacyBarriers:false,legacyRewards:false,legacyNodes:false};
+const expectedVoidstarRendering={floor:'assets/voidstar/floor.png',wall:'assets/voidstar/wall.png',shaft:'assets/voidstar/depth-portal.png',sellStation:'assets/voidstar/sell-station.png',drillForge:'assets/voidstar/drill-forge.png',pocket:'assets/voidstar/crystal-pocket.png',cache:'assets/voidstar/buried-cache.png',shrine:'assets/voidstar/mining-rush-shrine.png',nodes:{voidglass:'assets/voidstar/voidglass-node.png',deepstone:'assets/voidstar/deepstone-node.png',singularity:'assets/voidstar/singularity-node.png'},wallHints:{voidglass:'assets/voidstar/voidglass-wall.png',deepstone:'assets/voidstar/deepstone-wall.png',singularity:'assets/voidstar/singularity-wall.png'},drops:{deepstone:'assets/drops/deepstone-drop.png',voidglass:'assets/drops/voidglass-drop.png',singularity:'assets/drops/singularity-drop.png'},legacyFloor:false,legacyTerrain:false,legacyWalls:false,legacyRewards:false,legacyNodes:false,legacyShaft:false,legacyStations:false};
 assert.equal(JSON.stringify(api.snapshot().moonglassRendering),JSON.stringify(expectedMoonglassRendering));
 assert.equal(JSON.stringify(api.snapshot().prismaticRendering),JSON.stringify(expectedPrismaticRendering));
 assert.equal(JSON.stringify(api.snapshot().surfaceEmberdeepRendering),JSON.stringify(expectedSurfaceEmberdeepRendering));
 assert.equal(JSON.stringify(api.snapshot().emberdeepRendering),JSON.stringify(expectedEmberdeepRendering));
 assert.equal(JSON.stringify(api.snapshot().moltenRendering),JSON.stringify(expectedMoltenRendering));
+assert.equal(JSON.stringify(api.snapshot().surfaceStarfallRendering),JSON.stringify(expectedSurfaceStarfallRendering));
+assert.equal(JSON.stringify(api.snapshot().starfallRendering),JSON.stringify(expectedStarfallRendering));
+assert.equal(JSON.stringify(api.snapshot().voidstarRendering),JSON.stringify(expectedVoidstarRendering));
 assert.equal(JSON.stringify(api.snapshot().discoveryRendering),JSON.stringify({crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:'assets/mossvein/buried-cache.png',shrineAsset:'assets/mossvein/mining-rush-shrine.png',legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true,routineDiscoveryText:false,rareDiscoveryText:false}));
 assert.equal(JSON.stringify(api.snapshot().miningFeedbackRendering),JSON.stringify({routineImpactRings:false,routineBreakRings:false,drillVibration:true,drillVibrationMaxOffset:2.05,cameraShake:false}));
 assert.equal(JSON.stringify(api.snapshot().bonusVeinRendering),JSON.stringify({worldLabels:false,textPrompts:false,sleepingCracks:true,movingReadyPulse:true,radialTimer:true,completionBurst:true}));
@@ -345,6 +395,43 @@ for(const seed of [2481359640,1044298914]){
 }
 storage.clear();for(const [key,value] of storageBeforeEmberdeepRendering)storage.set(key,value);
 
+const storageBeforeStarfallRendering=new Map(storage),starfallRuntime=createRuntime(),starfallApi=starfallRuntime.api;
+starfallApi.reset();let starfallSnapshot=starfallApi.snapshot(),starfallSurfaceRocks=starfallSnapshot.rocks.filter(rock=>rock.scene==='surface');
+assert.equal(starfallSurfaceRocks.some(rock=>Math.hypot(rock.x-3505,rock.y-1000)<150),false,'Starfall entrance must remain clear of resource nodes');
+assert.ok(starfallSurfaceRocks.some(rock=>rock.type==='astralite'&&!rock.veinId&&rock.x===4100&&rock.y===560),'the relocated Astralite node must stay clear of the cave branch and lattice');
+assert.equal(JSON.stringify(starfallSurfaceRocks.filter(rock=>rock.veinId==='starfall_lattice').map(rock=>[rock.x,rock.y])),JSON.stringify([[3720,880],[3810,930],[3900,890]]),'Starfall Lattice nodes must align with the three astral sockets');
+starfallApi.startStarfallGateTransition();renderAt(starfallRuntime,starfallApi,3360,650,['assets/surface/starfall-seal.png','assets/surface/starfall-seal-mark.png']);
+assert.equal(JSON.stringify(starfallApi.snapshot().starfallGateTransition),JSON.stringify({active:true,progress:0}));starfallApi.step(1.05);
+renderAt(starfallRuntime,starfallApi,3440,780,['assets/surface/starfall-seal.png','assets/surface/starfall-seal-mark.png','assets/entrances/starfall-entrance.png']);
+assert.ok(starfallApi.snapshot().starfallGateTransition.progress>.5&&starfallApi.snapshot().starfallGateTransition.progress<1);starfallApi.step(.8);
+renderAt(starfallRuntime,starfallApi,3505,1000,['assets/surface/starfall-seal-mark.png','assets/surface/starfall-ground.png','assets/surface/starfall-mine-path.png','assets/entrances/starfall-entrance.png']);
+assert.equal(JSON.stringify(starfallApi.snapshot().starfallGateTransition),JSON.stringify({active:false,progress:1}));assert.ok(!starfallRuntime.drawCalls.some(call=>call.src.includes('assets/surface/starfall-seal.png')),'the sunk Starfall seal must leave only its astral mark');
+renderAt(starfallRuntime,starfallApi,3810,930,['assets/surface/starfall-ground.png','assets/surface/starfall-lattice-bed.png','assets/starfall/astralite-node.png']);
+renderAt(starfallRuntime,starfallApi,3505,155,['assets/surface/starforge-station.png']);
+starfallSnapshot=starfallApi.snapshot();const astralCache=starfallSnapshot.chests.find(chest=>chest.id==='star_cache'),celestialCoffer=starfallSnapshot.chests.find(chest=>chest.id==='star_coffer');
+starfallApi.setPickaxeLevel(5);
+renderAt(starfallRuntime,starfallApi,astralCache.x,astralCache.y,['assets/surface/astral-cache-closed.png']);starfallApi.openChest('star_cache');renderAt(starfallRuntime,starfallApi,astralCache.x,astralCache.y,['assets/surface/astral-cache-open.png']);
+starfallApi.setStarforgeVariant('crusher');renderAt(starfallRuntime,starfallApi,celestialCoffer.x,celestialCoffer.y,['assets/surface/celestial-coffer-closed.png']);starfallApi.openChest('star_coffer');renderAt(starfallRuntime,starfallApi,celestialCoffer.x,celestialCoffer.y,['assets/surface/celestial-coffer-open.png']);
+
+starfallApi.enterMine('starMine');starfallSnapshot=starfallApi.snapshot();assert.equal(starfallSnapshot.mine.visualPass,'starfall-production-assets-v1');
+renderAt(starfallRuntime,starfallApi,160,750,['assets/starfall/floor.png','assets/entrances/starfall-entrance.png']);
+renderAt(starfallRuntime,starfallApi,900,725,['assets/starfall/floor.png','assets/starfall/wall.png','assets/starfall/route-marker.png','assets/starfall/astral-bridge-lock.png','assets/starfall/astralite-node.png']);
+renderAt(starfallRuntime,starfallApi,1650,460,['assets/starfall/crownstone-ward.png']);
+let buriedAstralite=starfallSnapshot.rocks.find(rock=>rock.scene==='starMine'&&rock.depth===1&&rock.type==='astralite'&&rock.depositId&&!rock.cavernId&&!rock.exposed);assert.ok(buriedAstralite);const starfallCols=Math.ceil(starfallSnapshot.mine.width/starfallSnapshot.mine.terrain.tileSize),astraliteIndex=terrainIndexForRock(starfallSnapshot,buriedAstralite);
+for(const neighbor of [astraliteIndex-1,astraliteIndex+1,astraliteIndex-starfallCols,astraliteIndex+starfallCols]){for(let hit=0;hit<4;hit++)starfallApi.mineTerrainCell(neighbor);if(starfallApi.snapshot().mine.terrain.mineralHints.some(hint=>hint.rockId===buriedAstralite.id))break}assert.ok(starfallApi.snapshot().mine.terrain.mineralHints.some(hint=>hint.rockId===buriedAstralite.id));renderAt(starfallRuntime,starfallApi,buriedAstralite.x,buriedAstralite.y,['assets/starfall/astralite-wall.png']);exposeRock(starfallApi,buriedAstralite);renderAt(starfallRuntime,starfallApi,buriedAstralite.x,buriedAstralite.y,['assets/starfall/astralite-node.png']);
+const starfallCache=starfallApi.snapshot().mine.discovery.caverns.find(cavern=>cavern.reward.kind==='cache');starfallApi.mineTerrainCell(starfallCache.boundaryIndex);renderAt(starfallRuntime,starfallApi,starfallCache.x,starfallCache.y,['assets/starfall/crystal-pocket.png','assets/starfall/buried-cache.png']);
+const starfallShrine=starfallApi.snapshot().mine.discovery.caverns.find(cavern=>cavern.reward.kind==='shrine');starfallApi.mineTerrainCell(starfallShrine.boundaryIndex);renderAt(starfallRuntime,starfallApi,starfallShrine.x,starfallShrine.y,['assets/starfall/crystal-pocket.png','assets/starfall/mining-rush-shrine.png']);
+
+assert.equal(starfallApi.discoverDepthEntrance(),true);starfallApi.setDrillLevel(2);starfallSnapshot=starfallApi.snapshot();starfallApi.setPosition(starfallSnapshot.mine.depthEntrance.x,starfallSnapshot.mine.depthEntrance.y);starfallApi.step(.05);
+assert.equal(starfallRuntime.elements.get('contextTitle').textContent,'Voidstar Depths');assert.equal(starfallRuntime.elements.get('contextButton').disabled,true);assert.match(starfallRuntime.elements.get('contextButton').textContent,/DEEPCORE/i);assert.match(starfallRuntime.elements.get('objectiveText').textContent,/Deepcore/i);assert.equal(starfallApi.enterDepth(),false);assert.equal(starfallApi.snapshot().depth,1);
+starfallApi.setDrillLevel(3);assert.equal(starfallApi.enterDepth(),true);starfallSnapshot=starfallApi.snapshot();assert.equal(starfallSnapshot.mine.visualPass,'voidstar-production-assets-v1');assert.equal(JSON.stringify(starfallSnapshot.mine.depthResources),JSON.stringify({main:'voidglass',secondary:'deepstone',rare:'singularity'}));
+renderAt(starfallRuntime,starfallApi,starfallSnapshot.mine.depthEntrance.x,starfallSnapshot.mine.depthEntrance.y,['assets/voidstar/floor.png','assets/voidstar/wall.png','assets/voidstar/depth-portal.png','assets/voidstar/sell-station.png','assets/voidstar/drill-forge.png']);
+for(const [type,path] of [['voidglass','assets/voidstar/voidglass-node.png'],['deepstone','assets/voidstar/deepstone-node.png'],['singularity','assets/voidstar/singularity-node.png']]){const rock=starfallApi.snapshot().rocks.find(item=>item.scene==='starMine'&&item.depth===2&&item.type===type&&item.depositId&&!item.cavernId&&!item.broken);assert.ok(rock,type+' production node is missing');exposeRock(starfallApi,rock);renderAt(starfallRuntime,starfallApi,rock.x,rock.y,[path])}
+assert.equal(starfallApi.snapshot().state.victory,false);assert.equal(starfallApi.snapshot().progression.finalVictory.completed,false);
+const singularity=starfallApi.snapshot().mine.discovery.deposits.find(deposit=>deposit.type==='singularity');assert.ok(singularity);starfallApi.breakDepositRock(singularity.id,0);starfallApi.collectGroundDrops();starfallApi.save();starfallSnapshot=starfallApi.snapshot();assert.equal(starfallSnapshot.state.victory,true);assert.equal(starfallSnapshot.progression.finalVictory.completed,true);
+const starfallReload=createRuntime().api;assert.equal(starfallReload.snapshot().state.victory,true);assert.equal(starfallReload.snapshot().progression.finalVictory.completed,true);assert.equal(starfallReload.snapshot().surfaceStarfallRendering.gateMark,'assets/surface/starfall-seal-mark.png');
+storage.clear();for(const [key,value] of storageBeforeStarfallRendering)storage.set(key,value);
+
 api.setPosition(455,350);runtime.drawCalls.length=0;api.renderOnce();
 for(const asset of ['assay-station.png','forge-station.png','storage-chest.png','wayfarer-shop.png'])assert.ok(runtime.drawCalls.some(call=>call.src.includes(asset)),asset+' must render in the starter place');
 for(const type of ['stone','copper','gold'])api.spawnGroundDrops(type,1,455,350);
@@ -396,7 +483,7 @@ let fallenPocket=api.snapshot().mine.discovery.caverns.find(item=>item.name==='F
 api.mineTerrainCell(fallenPocket.boundaryIndex);api.mineTerrainCell(fallenPocket.boundaryIndex);
 api.setPosition(fallenPocket.x,fallenPocket.y);
 runtime.drawCalls.length=0;assert.doesNotThrow(()=>api.renderOnce());
-assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/mossvein/magic-crystal-pocket.png')).length,1);
+assert.equal(runtime.drawCalls.filter(call=>call.src.includes('assets/starfall/crystal-pocket.png')).length,1);
 api.claimPocketReward(fallenPocket.reward.id);
 assert.equal(api.snapshot().state.claimedPocketRewards[fallenPocket.reward.id],true);
 api.exitMine();
@@ -562,10 +649,16 @@ api.enterMine('emberMine');if(!api.snapshot().mine.depthEntrance.discovered)asse
 after=api.snapshot();const emberGate=after.mine.discovery.deposits.find(deposit=>deposit.type==='infernium');
 assert.ok(emberGate);assert.equal(emberGate.requiresDrillLevel,2);gatedHit=api.hitDepositRock(emberGate.id,0);assert.notDeepEqual(gatedHit.after,gatedHit.before);
 api.grantCargo('infernium',10);api.grantGold(7200);after=api.snapshot();assert.equal(after.goal.detail,'READY AT ANY DEPTH 2 DRILL FORGE');
-api.upgradeDrill();after=api.snapshot();assert.equal(after.state.drillLevel,3);assert.equal(after.effectivePickaxe.name,'Deepcore Drill');assert.equal(after.goal.title,'Deepcore Drill mastered');api.save();
+api.upgradeDrill();after=api.snapshot();assert.equal(after.state.drillLevel,3);assert.equal(after.effectivePickaxe.name,'Deepcore Drill');assert.equal(JSON.stringify(after.goal),JSON.stringify({title:'Enter Starfall Hollow',detail:'THE FINAL DESCENT AWAITS'}));
+let {distance:emberDepthRouteDistance,visible:emberDepthRouteVisible,...emberDepthRoute}=after.guide;assert.equal(JSON.stringify(emberDepthRoute),JSON.stringify({kind:'depth-exit',scene:'emberMine',depth:2,x:after.mine.depthEntrance.x,y:after.mine.depthEntrance.y,color:'#ffd080',closeRadius:108}));assert.ok(emberDepthRouteDistance>108);assert.equal(emberDepthRouteVisible,true);api.save();
 
-runtime=createRuntime();api=runtime.api;after=api.snapshot();assert.equal(after.state.drillLevel,3);assert.equal(after.effectivePickaxe.name,'Deepcore Drill');
-assert.equal(api.exitDepth(),true);api.exitMine();
+runtime=createRuntime();api=runtime.api;after=api.snapshot();assert.equal(after.state.drillLevel,3);assert.equal(after.effectivePickaxe.name,'Deepcore Drill');assert.equal(JSON.stringify(after.goal),JSON.stringify({title:'Enter Starfall Hollow',detail:'THE FINAL DESCENT AWAITS'}));assert.equal(after.guide.kind,'depth-exit');assert.equal(after.guide.scene,'emberMine');assert.equal(after.guide.depth,2);
+assert.equal(api.exitDepth(),true);after=api.snapshot();let {distance:emberMineRouteDistance,visible:emberMineRouteVisible,...emberMineRoute}=after.guide;assert.equal(JSON.stringify(emberMineRoute),JSON.stringify({kind:'mine-exit',scene:'emberMine',depth:1,x:145,y:1030,color:'#ffc06f',closeRadius:108}));assert.ok(emberMineRouteDistance>=0);assert.equal(typeof emberMineRouteVisible,'boolean');
+api.exitMine();after=api.snapshot();assert.equal(JSON.stringify(after.goal),JSON.stringify({title:'Enter Starfall Hollow',detail:'THE FINAL DESCENT AWAITS'}));let {distance:surfaceStarfallDistance,visible:surfaceStarfallVisible,...surfaceStarfallGuide}=after.guide;assert.equal(JSON.stringify(surfaceStarfallGuide),JSON.stringify({kind:'mine-entrance',scene:'surface',depth:1,x:3505,y:1000,color:'#f0ddff',closeRadius:112,destination:'starMine'}));assert.ok(surfaceStarfallDistance>112);assert.equal(surfaceStarfallVisible,true);
+
+api.enterMine('starMine');after=api.snapshot();assert.equal(JSON.stringify(after.goal),JSON.stringify({title:'Find the hidden Voidstar entrance',detail:'DIG DEEPER'}));assert.equal(after.mine.depthEntrance.discovered,false);assert.equal(after.guide,null);
+const voidstarEntrance={x:after.mine.depthEntrance.x,y:after.mine.depthEntrance.y};assert.equal(api.discoverDepthEntrance(),true);after=api.snapshot();assert.equal(JSON.stringify(after.goal),JSON.stringify({title:'Enter Voidstar Depths',detail:'DEEPCORE DRILL READY'}));let {distance:voidstarEntranceDistance,visible:voidstarEntranceVisible,...voidstarEntranceGuide}=after.guide;assert.equal(JSON.stringify(voidstarEntranceGuide),JSON.stringify({kind:'depth-entrance',scene:'starMine',depth:1,x:voidstarEntrance.x,y:voidstarEntrance.y,color:'#f2d8ff',closeRadius:108}));assert.ok(voidstarEntranceDistance>=0);assert.equal(typeof voidstarEntranceVisible,'boolean');
+assert.equal(api.enterDepth(),true);after=api.snapshot();assert.equal(JSON.stringify(after.goal),JSON.stringify({title:'Mine a Singularity Core',detail:'THE FINAL DISCOVERY'}));assert.equal(JSON.stringify(after.progression.finalVictory),JSON.stringify({completed:false,requiresDrill:'Deepcore Drill',resource:'singularity',scene:'starMine',depth:2}));assert.equal(after.guide.kind,'rock');assert.equal(after.guide.scene,'starMine');assert.equal(after.guide.depth,2);assert.equal(after.guide.resource,'singularity');assert.equal(after.guide.color,'#f3bfff');assert.equal(after.guide.closeRadius,88);const guidedSingularity=after.rocks.find(rock=>rock.id===after.guide.rockId);assert.ok(guidedSingularity);assert.equal(guidedSingularity.type,'singularity');assert.equal(guidedSingularity.x,after.guide.x);assert.equal(guidedSingularity.y,after.guide.y);assert.equal(api.exitDepth(),true);api.exitMine();
 const gatedByScene={mossMine:'burrowsteel',moonMine:'phasecrystal',emberMine:'infernium'};
 for(const scene of ['mossMine','moonMine','emberMine','starMine']){
   api.enterMine(scene);before=api.snapshot();
@@ -616,4 +709,4 @@ api.collectGroundDrops();after=api.snapshot();assert.equal(after.state.gold,75);
 const migrationState={...after.state,gold:424242};
 storage.clear();storage.set('retiredMiningPrototypeSave',JSON.stringify(migrationState));runtime=createRuntime();after=runtime.api.snapshot();
 assert.equal(after.state.gold,424242);assert.equal(storage.has('retiredMiningPrototypeSave'),false);assert.equal(storage.has('everDeeperPrototypeV2'),true);
-console.log('Runtime smoke passed: Ever Deeper branding, Moonglass/Prismatic and Emberdeep/Molten production rendering, collision-safe depth portals, save migration, progression, lighting, and reload. Light pass '+lightingAverageMs.toFixed(2)+'ms average.');
+console.log('Runtime smoke passed: Ever Deeper branding; Moonglass/Prismatic, Emberdeep/Molten, and Starfall/Voidstar production rendering; collision-safe depth portals; save migration; final progression; lighting; and reload. Light pass '+lightingAverageMs.toFixed(2)+'ms average.');

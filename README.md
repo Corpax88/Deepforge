@@ -1,6 +1,10 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.30.0 - Resource Clarity**
+Current build: **Ever Deeper v0.31.0 - Starfall Complete**
+
+Starfall is now a complete production-art world: its own seamless surface, an untouched biome road with a naturally joined cave branch, a correctly oriented Starfall Hollow entrance, sinking Master Seal and permanent astral ground mark, celestial chests, Starforge station, lattice sockets, and distinct background formations. Starfall Hollow and Voidstar Depths have dedicated floors, walls, barriers, chambers, stations, portals, buried wall hints, mineable nodes, and rewards.
+
+The final expedition now has a real ending. After mastering the Deepcore Drill, the text-free guide returns the player to Starfall Hollow; the discovered Voidstar shaft remains locked to lower drills, and mining the first Singularity Core in Voidstar permanently records the Ever Deeper victory.
 
 Emberdeep now has a complete production-art pass across the blended surface biome, sinking seal, permanent gate mark, mine approach, portal, chests and bonus fault. Emberdeep Works and Molten Depths have their own floors, walls, barriers, hidden chambers, stations, readable ore hints, mineable nodes, drops, natural lighting and Infernium drill gate.
 
