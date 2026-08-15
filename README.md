@@ -1,8 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.34.3 - Free-Move Controls**
+Current build: **Ever Deeper v0.34.4 - Readable Cave Text**
 
-The movement joystick now appears wherever the player first presses in the playfield, then follows that drag while a second thumb remains free to mine. The old fixed-corner activation area is gone.
+All cave text now renders above the lighting pass, so labels stay readable without aiming the mining helmet at them. The floating movement joystick remains available anywhere in the playfield.
 
 Fifty persistent achievements now cover mining, precision, resources, exploration, treasure, veins, equipment, Depth 2, and the final victory. Every unlock has its own transparent reliquary sprite, an earned-at record with a clear reason, and a hero-following five-turn reveal that settles before it can be claimed.
 

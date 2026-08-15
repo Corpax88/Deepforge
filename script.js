@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0343';
+  const ASSET_VERSION='0344';
   const MOONGLASS_SURFACE_BLEND=190;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=190;
@@ -28,6 +28,29 @@
   const lightCanvas=typeof document.createElement==='function'?document.createElement('canvas'):null;
   const lightCtx=lightCanvas&&lightCanvas.getContext?lightCanvas.getContext('2d',{alpha:true}):null;
   let lightingRayChecks=0,lightingOreCount=0,lightingLastSources=[];
+  const readableTextQueue=[];
+  let readableTextCapture=false;
+
+  function queueReadableText(kind,text,x,y,maxWidth){
+    if(!readableTextCapture)return;
+    const matrix=typeof ctx.getTransform==='function'?ctx.getTransform():null,transform=matrix?{a:matrix.a,b:matrix.b,c:matrix.c,d:matrix.d,e:matrix.e,f:matrix.f}:null;
+    readableTextQueue.push({kind,text,x,y,maxWidth,transform,fillStyle:ctx.fillStyle,strokeStyle:ctx.strokeStyle,font:ctx.font,textAlign:ctx.textAlign,textBaseline:ctx.textBaseline,direction:ctx.direction,globalAlpha:ctx.globalAlpha,lineWidth:ctx.lineWidth,lineCap:ctx.lineCap,lineJoin:ctx.lineJoin,miterLimit:ctx.miterLimit,shadowColor:ctx.shadowColor,shadowBlur:ctx.shadowBlur,shadowOffsetX:ctx.shadowOffsetX,shadowOffsetY:ctx.shadowOffsetY,globalCompositeOperation:ctx.globalCompositeOperation});
+  }
+  function readableFillText(text,x,y,maxWidth){
+    if(maxWidth===undefined)ctx.fillText(text,x,y);else ctx.fillText(text,x,y,maxWidth);
+    queueReadableText('fill',text,x,y,maxWidth);
+  }
+  function readableStrokeText(text,x,y,maxWidth){
+    if(maxWidth===undefined)ctx.strokeText(text,x,y);else ctx.strokeText(text,x,y,maxWidth);
+    queueReadableText('stroke',text,x,y,maxWidth);
+  }
+  function drawReadableTextOverlay(){
+    for(const item of readableTextQueue){
+      ctx.save();if(item.transform)ctx.setTransform(item.transform.a,item.transform.b,item.transform.c,item.transform.d,item.transform.e,item.transform.f);ctx.fillStyle=item.fillStyle;ctx.strokeStyle=item.strokeStyle;ctx.font=item.font;ctx.textAlign=item.textAlign;ctx.textBaseline=item.textBaseline;ctx.direction=item.direction;ctx.globalAlpha=item.globalAlpha;ctx.lineWidth=item.lineWidth;ctx.lineCap=item.lineCap;ctx.lineJoin=item.lineJoin;ctx.miterLimit=item.miterLimit;ctx.shadowColor=item.shadowColor;ctx.shadowBlur=item.shadowBlur;ctx.shadowOffsetX=item.shadowOffsetX;ctx.shadowOffsetY=item.shadowOffsetY;ctx.globalCompositeOperation=item.globalCompositeOperation;
+      if(item.kind==='stroke'){if(item.maxWidth===undefined)ctx.strokeText(item.text,item.x,item.y);else ctx.strokeText(item.text,item.x,item.y,item.maxWidth)}else if(item.maxWidth===undefined)ctx.fillText(item.text,item.x,item.y);else ctx.fillText(item.text,item.x,item.y,item.maxWidth);
+      ctx.restore();
+    }
+  }
   const MUSIC_PATH='assets/audio/ever-deeper-drift-loop.mp3?v='+ASSET_VERSION;
   // iOS may ignore HTMLAudioElement volume. The asset itself is mastered at -28 LUFS.
   const MUSIC_VOLUME=1;
@@ -354,8 +377,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.34.3',name:'DEEPGLASS PREMIUM'};
+  const BUILD={version:'0.34.4',name:'DEEPGLASS PREMIUM'};
   const PATCH_NOTES=[
+    {version:'0.34.4',date:'15 AUG 2026',title:'Readable Cave Text',items:['All cave text now renders above the lighting pass.','Labels remain readable without aiming the mining helmet at them.']},
     {version:'0.34.3',date:'15 AUG 2026',title:'Free-Move Controls',items:['The movement joystick now appears wherever you press in the playfield.','Movement and mining remain independent for smooth two-thumb control.']},
     {version:'0.34.2',date:'15 AUG 2026',title:'News from the Depths',items:['Patch Notes now live inside Settings.','Browse the latest changes without leaving the game.']},
     {version:'0.34.1',date:'15 AUG 2026',title:'Ember & Starforge Pacing',items:['Ember Pickaxe now requires 100 Emberstone.','Each Ember Mastery rank now requires 100 Sunslag.','Each Starforge form requires 200 Astralite and 200 Crownstone.']},
@@ -2921,14 +2945,15 @@
   }
 
   function draw(){
+    readableTextQueue.length=0;readableTextCapture=false;
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
     ctx.save();ctx.scale(viewZoom,viewZoom);
     if(currentMine()){
-      drawMineGround();drawMineTerrain();drawMineWalls();
+      readableTextCapture=true;drawMineGround();drawMineTerrain();drawMineWalls();
       if(currentDepth===1)drawMineEntrance(false,currentMine());
       if(currentDepth===2||state.discoveredDepthEntrances[currentScene])drawDepthEntrance();
       if(currentDepth===2)drawDepthStations();
-      drawBaseModules();drawRocks();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);drawMineLighting();drawWorldLabels();drawVisualGuide();
+      drawBaseModules();drawRocks();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);readableTextCapture=false;drawMineLighting();drawWorldLabels();drawVisualGuide();drawReadableTextOverlay();
     }else{
       lightingLastSources=[];lightingOreCount=0;drawGround();drawBiomeStructure();drawDecorations();drawStations();drawSurfaceMineEntrances();drawGate();drawVeins();drawRocks();drawChests();drawWorldLabels();drawVisualGuide();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
     }
@@ -3330,7 +3355,7 @@
   function drawMoonBarrier(barrier,p,locked){
     const art=activeMineProductionArt(),image=art&&art.barriers&&art.barriers[barrier.id],mine=currentMineVisual();if(!imageReady(image))return false;
     const height=barrier.h+28,width=height*(image.naturalWidth/image.naturalHeight);ctx.save();ctx.translate(p.x+barrier.w*.5,p.y+barrier.h*.5);ctx.fillStyle='rgba(0,0,0,.42)';ctx.beginPath();ctx.ellipse(0,barrier.h*.5-3,Math.min(92,width*.43),14,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=locked?1:.88;ctx.drawImage(image,-width*.5,-height*.5,width,height);ctx.globalAlpha=1;
-    ctx.fillStyle='rgba(4,8,10,.9)';ctx.fillRect(-86,-barrier.h*.5-35,172,24);ctx.strokeStyle=locked?mine.accent:mine.detail;ctx.lineWidth=1;ctx.strokeRect(-86,-barrier.h*.5-35,172,24);ctx.fillStyle=locked?mine.detail:'#fff1cf';ctx.textAlign='center';ctx.font='900 9px Georgia';ctx.fillText(locked?PICKAXES[barrier.requiresPickaxe].name.toUpperCase()+' REQUIRED':'BREAK: '+barrier.label.toUpperCase(),0,-barrier.h*.5-19);ctx.restore();return true;
+    ctx.fillStyle='rgba(4,8,10,.9)';ctx.fillRect(-86,-barrier.h*.5-35,172,24);ctx.strokeStyle=locked?mine.accent:mine.detail;ctx.lineWidth=1;ctx.strokeRect(-86,-barrier.h*.5-35,172,24);ctx.fillStyle=locked?mine.detail:'#fff1cf';ctx.textAlign='center';ctx.font='900 9px Georgia';readableFillText(locked?PICKAXES[barrier.requiresPickaxe].name.toUpperCase()+' REQUIRED':'BREAK: '+barrier.label.toUpperCase(),0,-barrier.h*.5-19);ctx.restore();return true;
   }
 
   function drawMineGround(){
@@ -3376,7 +3401,7 @@
       if(imageReady(pocket)){
         const pocketWidth=pocketHeight*(pocket.naturalWidth/pocket.naturalHeight);ctx.globalAlpha=claimed?.46:1;ctx.shadowColor=mine.detail;ctx.shadowBlur=claimed?4:13;ctx.drawImage(pocket,-pocketWidth/2,-pocketHeight/2,pocketWidth,pocketHeight);ctx.shadowBlur=0;
       }
-      ctx.globalAlpha=1;const labelY=-pocketHeight/2-9;ctx.fillStyle='rgba(5,8,7,.84)';ctx.fillRect(-68,labelY-10,136,19);ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 9px Georgia';ctx.fillText(cavern.name.toUpperCase(),0,labelY+3);ctx.restore();
+      ctx.globalAlpha=1;const labelY=-pocketHeight/2-9;ctx.fillStyle='rgba(5,8,7,.84)';ctx.fillRect(-68,labelY-10,136,19);ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 9px Georgia';readableFillText(cavern.name.toUpperCase(),0,labelY+3);ctx.restore();
       drawPocketReward(cavern,origin);
     }
     ctx.restore();
@@ -3392,7 +3417,7 @@
       const maxWidth=reward.kind==='shrine'?120:94,maxHeight=reward.kind==='shrine'?118:76,scale=Math.min(maxWidth/production.naturalWidth,maxHeight/production.naturalHeight),width=production.naturalWidth*scale,height=production.naturalHeight*scale;
       ctx.save();ctx.translate(cavern.x,cavern.y+30);ctx.fillStyle='rgba(0,0,0,.34)';ctx.beginPath();ctx.ellipse(0,35,width*.36,10,0,0,Math.PI*2);ctx.fill();
       if(reward.kind==='shrine'){ctx.shadowColor=mine.detail;ctx.shadowBlur=12}
-      ctx.drawImage(production,-width*.5,40-height,width,height);ctx.shadowBlur=0;ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 8px Georgia';ctx.fillText(reward.label,0,54);ctx.restore();return;
+      ctx.drawImage(production,-width*.5,40-height,width,height);ctx.shadowBlur=0;ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 8px Georgia';readableFillText(reward.label,0,54);ctx.restore();return;
     }
     ctx.save();ctx.translate(cavern.x,cavern.y+30);ctx.globalAlpha=claimed?.34:1;
     if(reward.kind==='cache'){
@@ -3403,7 +3428,7 @@
     }else{
       ctx.strokeStyle=ROCK_TYPES[reward.type].edge;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,25,0,Math.PI*2);ctx.stroke();
     }
-    if(!claimed){ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 8px Georgia';ctx.fillText(reward.label,0,31)}ctx.restore();
+    if(!claimed){ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 8px Georgia';readableFillText(reward.label,0,31)}ctx.restore();
   }
 
   function drawMineRoute(points,edge,center){
@@ -3472,7 +3497,7 @@
       ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(10,12,9,.68)';ctx.fillRect(0,0,barrier.w,barrier.h);
       ctx.strokeStyle=locked?'#98784a':mine.accent;ctx.globalAlpha=.55;ctx.lineWidth=3;ctx.setLineDash([9,7]);ctx.strokeRect(5,5,barrier.w-10,barrier.h-10);ctx.setLineDash([]);ctx.globalAlpha=1;
       ctx.fillStyle='rgba(7,9,7,.88)';ctx.fillRect(-34,-32,barrier.w+68,24);ctx.strokeStyle='#7e673b';ctx.lineWidth=1;ctx.strokeRect(-34,-32,barrier.w+68,24);
-      ctx.fillStyle=locked?'#cfb985':'#f0d58d';ctx.textAlign='center';ctx.font='900 9px Georgia';ctx.fillText(locked?PICKAXES[barrier.requiresPickaxe].name.toUpperCase()+' REQUIRED':'BREAK: '+barrier.label.toUpperCase(),barrier.w*.5,-16);ctx.restore();
+      ctx.fillStyle=locked?'#cfb985':'#f0d58d';ctx.textAlign='center';ctx.font='900 9px Georgia';readableFillText(locked?PICKAXES[barrier.requiresPickaxe].name.toUpperCase()+' REQUIRED':'BREAK: '+barrier.label.toUpperCase(),barrier.w*.5,-16);ctx.restore();
     }
   }
 
@@ -3495,7 +3520,7 @@
     if(imageReady(production)){
       const maxWidth=158,maxHeight=138,scale=Math.min(maxWidth/production.naturalWidth,maxHeight/production.naturalHeight),assetWidth=production.naturalWidth*scale,assetHeight=production.naturalHeight*scale;
       ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(0,35,62,19,0,0,Math.PI*2);ctx.fill();ctx.drawImage(production,-assetWidth*.5,40-assetHeight,assetWidth,assetHeight);if(currentScene!=='emberMine'&&currentScene!=='starMine')drawDepthEntranceLamp(mine);
-      ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 10px Georgia';ctx.fillText(currentDepth===2?'RETURN TO DEPTH 1':'DESCEND TO DEPTH 2',0,67);
+      ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 10px Georgia';readableFillText(currentDepth===2?'RETURN TO DEPTH 1':'DESCEND TO DEPTH 2',0,67);
       if(selected){ctx.strokeStyle=mine.detail;ctx.globalAlpha=.75;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,5,76+Math.sin(time*4)*2,0,Math.PI*2);ctx.stroke()}ctx.restore();return;
     }
     ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.72)';ctx.beginPath();ctx.ellipse(0,12,52,37,0,0,Math.PI*2);ctx.fill();
@@ -3503,7 +3528,7 @@
     ctx.strokeStyle='#b88b52';ctx.lineWidth=4;for(const x of [-18,18]){ctx.beginPath();ctx.moveTo(x,-23);ctx.lineTo(x,43);ctx.stroke()}
     ctx.lineWidth=3;for(let y=-14;y<=34;y+=12){ctx.beginPath();ctx.moveTo(-18,y);ctx.lineTo(18,y);ctx.stroke()}
     drawDepthEntranceLamp(mine);
-    ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 10px Georgia';ctx.fillText(currentDepth===2?'RETURN TO DEPTH 1':'DESCEND TO DEPTH 2',0,69);
+    ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 10px Georgia';readableFillText(currentDepth===2?'RETURN TO DEPTH 1':'DESCEND TO DEPTH 2',0,69);
     if(selected){ctx.strokeStyle=mine.detail;ctx.globalAlpha=.75;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,10,70+Math.sin(time*4)*2,0,Math.PI*2);ctx.stroke()}
     ctx.restore();
   }
@@ -3529,14 +3554,14 @@
     if(imageReady(production)){
       const maxWidth=174,maxHeight=148,scale=Math.min(maxWidth/production.naturalWidth,maxHeight/production.naturalHeight),assetWidth=production.naturalWidth*scale,assetHeight=production.naturalHeight*scale;
       ctx.save();if(surface&&mine.id==='emberMine')ctx.scale(-1,1);ctx.drawImage(production,-assetWidth*.5,45-assetHeight,assetWidth,assetHeight);ctx.restore();
-      ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 10px Georgia';ctx.fillText(surface?mine.name:'RETURN TO '+mine.surfaceName.replace('MOSSVEIN ','').replace('MOONGLASS ','').replace('EMBERDEEP ','').replace('STARFALL ',''),0,65);
+      ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 10px Georgia';readableFillText(surface?mine.name:'RETURN TO '+mine.surfaceName.replace('MOSSVEIN ','').replace('MOONGLASS ','').replace('EMBERDEEP ','').replace('STARFALL ',''),0,65);
       if(selected){ctx.strokeStyle='#f0d58d';ctx.globalAlpha=.75;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,4,82+Math.sin(time*4)*2,0,Math.PI*2);ctx.stroke()}
       ctx.restore();return;
     }
     ctx.fillStyle='#34372d';ctx.strokeStyle='#80734f';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-58,39);ctx.lineTo(-49,-22);ctx.quadraticCurveTo(0,-86,49,-22);ctx.lineTo(58,39);ctx.closePath();ctx.fill();ctx.stroke();
     const darkness=ctx.createRadialGradient(0,6,5,0,6,48);darkness.addColorStop(0,'#030403');darkness.addColorStop(1,'#151711');ctx.fillStyle=darkness;ctx.beginPath();ctx.moveTo(-39,36);ctx.lineTo(-33,-15);ctx.quadraticCurveTo(0,-58,33,-15);ctx.lineTo(39,36);ctx.closePath();ctx.fill();
     ctx.strokeStyle='#9c7136';ctx.lineWidth=5;for(const x of [-34,34]){ctx.beginPath();ctx.moveTo(x,35);ctx.lineTo(x,-14);ctx.stroke()}ctx.beginPath();ctx.arc(0,-9,34,Math.PI,Math.PI*2);ctx.stroke();
-    ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 10px Georgia';ctx.fillText(surface?mine.name:'RETURN TO '+mine.surfaceName.replace('MOSSVEIN ','').replace('MOONGLASS ','').replace('EMBERDEEP ','').replace('STARFALL ',''),0,61);
+    ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 10px Georgia';readableFillText(surface?mine.name:'RETURN TO '+mine.surfaceName.replace('MOSSVEIN ','').replace('MOONGLASS ','').replace('EMBERDEEP ','').replace('STARFALL ',''),0,61);
     if(selected){ctx.strokeStyle='#f0d58d';ctx.globalAlpha=.75;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,4,72+Math.sin(time*4)*2,0,Math.PI*2);ctx.stroke()}
     ctx.restore();
   }
@@ -3782,14 +3807,14 @@
         const maxWidth=132,maxHeight=116,scale=Math.min(maxWidth/image.naturalWidth,maxHeight/image.naturalHeight),assetWidth=image.naturalWidth*scale,assetHeight=image.naturalHeight*scale,selected=activeContext===(kind==='sell'?'depthSell':'drillForge');
         ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.38)';ctx.beginPath();ctx.ellipse(0,38,54,17,0,0,Math.PI*2);ctx.fill();ctx.drawImage(image,-assetWidth*.5,43-assetHeight,assetWidth,assetHeight);
         if(selected){ctx.strokeStyle=mine.detail;ctx.globalAlpha=.72;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,3,66+Math.sin(time*4)*2,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1}
-        ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 8px Georgia';ctx.fillText(label,0,57);ctx.restore();
+        ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 8px Georgia';readableFillText(label,0,57);ctx.restore();
       }
       return;
     }
     let p=worldToScreen(stations.sell.x,stations.sell.y);
-    ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.38)';ctx.beginPath();ctx.ellipse(0,28,45,15,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#3d3327';ctx.strokeStyle=mine.detail;ctx.lineWidth=2;ctx.fillRect(-31,-13,62,38);ctx.strokeRect(-31,-13,62,38);ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 8px Georgia';ctx.fillText('EXCHANGE',0,9);ctx.restore();
+    ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.38)';ctx.beginPath();ctx.ellipse(0,28,45,15,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#3d3327';ctx.strokeStyle=mine.detail;ctx.lineWidth=2;ctx.fillRect(-31,-13,62,38);ctx.strokeRect(-31,-13,62,38);ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 8px Georgia';readableFillText('EXCHANGE',0,9);ctx.restore();
     p=worldToScreen(stations.forge.x,stations.forge.y);ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(0,31,48,16,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#202827';ctx.strokeStyle=currentDrill()?currentDrill().color:mine.detail;ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(-38,-24,76,52,8);ctx.fill();ctx.stroke();
-    ctx.save();ctx.rotate(time*.5);ctx.strokeStyle=currentDrill()?currentDrill().color:mine.detail;ctx.lineWidth=4;for(let i=0;i<6;i++){ctx.rotate(Math.PI/3);ctx.beginPath();ctx.moveTo(13,0);ctx.lineTo(28,0);ctx.stroke()}ctx.restore();ctx.fillStyle='#0c1110';ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.fill();ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 8px Georgia';ctx.fillText('DRILL FORGE',0,44);ctx.restore();
+    ctx.save();ctx.rotate(time*.5);ctx.strokeStyle=currentDrill()?currentDrill().color:mine.detail;ctx.lineWidth=4;for(let i=0;i<6;i++){ctx.rotate(Math.PI/3);ctx.beginPath();ctx.moveTo(13,0);ctx.lineTo(28,0);ctx.stroke()}ctx.restore();ctx.fillStyle='#0c1110';ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.fill();ctx.fillStyle=mine.detail;ctx.textAlign='center';ctx.font='900 8px Georgia';readableFillText('DRILL FORGE',0,44);ctx.restore();
   }
 
   function drawProductionWorldAsset(image,maxWidth,maxHeight,bottom){
@@ -3804,7 +3829,7 @@
     if(drawProductionWorldAsset(STARTER_ART.sellStation,150,130,42)){ctx.restore();return}
     ctx.fillStyle='#52341f';ctx.fillRect(-45,-15,88,44);ctx.fillStyle='#9f6d35';ctx.fillRect(-52,-22,102,12);ctx.fillStyle='#c7a35d';ctx.fillRect(-33,-7,64,7);
     ctx.fillStyle='#d7c4a0';ctx.beginPath();ctx.arc(-23,-31,13,0,Math.PI*2);ctx.arc(1,-34,16,0,Math.PI*2);ctx.arc(27,-29,11,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#161d17';ctx.font='900 9px Georgia';ctx.textAlign='center';ctx.fillText('ASSAY',0,15);ctx.restore();
+    ctx.fillStyle='#161d17';ctx.font='900 9px Georgia';ctx.textAlign='center';readableFillText('ASSAY',0,15);ctx.restore();
   }
 
   function drawForge(station){
@@ -3822,8 +3847,8 @@
     const types=chestTypeCount(chest),selected=activeContext==='base:'+chest.id;
     ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(0,25,48,15,0,0,Math.PI*2);ctx.fill();
     if(selected){ctx.strokeStyle='#d7e5b1';ctx.globalAlpha=.7;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,48,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1}
-    if(drawProductionWorldAsset(STARTER_ART.storageChest,104,78,34)){ctx.fillStyle='#e9d9a6';ctx.strokeStyle='rgba(5,8,6,.9)';ctx.lineWidth=3;ctx.textAlign='center';ctx.font='900 8px Georgia';ctx.strokeText(types+'/'+STORAGE_CHEST_CAPACITY,0,45);ctx.fillText(types+'/'+STORAGE_CHEST_CAPACITY,0,45);ctx.restore();return}
-    ctx.fillStyle='#51371f';ctx.strokeStyle='#d1a85b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(-37,-15,74,40,6);ctx.fill();ctx.stroke();ctx.fillStyle='#9d6a35';ctx.fillRect(-38,-17,76,12);ctx.fillStyle='#e4c16d';ctx.fillRect(-7,-18,14,24);ctx.fillStyle='#161b16';ctx.textAlign='center';ctx.font='900 8px Georgia';ctx.fillText(types+'/'+STORAGE_CHEST_CAPACITY,0,17);ctx.restore();
+    if(drawProductionWorldAsset(STARTER_ART.storageChest,104,78,34)){ctx.fillStyle='#e9d9a6';ctx.strokeStyle='rgba(5,8,6,.9)';ctx.lineWidth=3;ctx.textAlign='center';ctx.font='900 8px Georgia';readableStrokeText(types+'/'+STORAGE_CHEST_CAPACITY,0,45);readableFillText(types+'/'+STORAGE_CHEST_CAPACITY,0,45);ctx.restore();return}
+    ctx.fillStyle='#51371f';ctx.strokeStyle='#d1a85b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(-37,-15,74,40,6);ctx.fill();ctx.stroke();ctx.fillStyle='#9d6a35';ctx.fillRect(-38,-17,76,12);ctx.fillStyle='#e4c16d';ctx.fillRect(-7,-18,14,24);ctx.fillStyle='#161b16';ctx.textAlign='center';ctx.font='900 8px Georgia';readableFillText(types+'/'+STORAGE_CHEST_CAPACITY,0,17);ctx.restore();
   }
 
   function drawSpeedShop(){
@@ -3835,7 +3860,7 @@
     ctx.fillStyle='#284631';ctx.strokeStyle='#8ed9a1';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-43,-24,86,55,7);ctx.fill();ctx.stroke();
     ctx.fillStyle='#182a1d';ctx.fillRect(-33,-14,66,34);ctx.strokeStyle='#c8f6cd';ctx.lineWidth=5;ctx.lineCap='round';
     for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(side*-20,-5);ctx.lineTo(side*5,-5);ctx.lineTo(side*19,-17);ctx.stroke()}
-    ctx.fillStyle='#d8f4d7';ctx.textAlign='center';ctx.font='900 8px Georgia';ctx.fillText(movementSpeedMultiplier().toFixed(2)+'x',0,16);ctx.restore();
+    ctx.fillStyle='#d8f4d7';ctx.textAlign='center';ctx.font='900 8px Georgia';readableFillText(movementSpeedMultiplier().toFixed(2)+'x',0,16);ctx.restore();
   }
 
   function drawStarforge(){
@@ -3862,7 +3887,7 @@
       {
         const bounds=RESOURCE_IMAGE_BOUNDS[key]||{x:0,y:0,w:production.naturalWidth,h:production.naturalHeight},maxWidth=drop.type==='stone'?30:data.rare?35:33,maxHeight=drop.type==='stone'?27:data.rare?32:30,scale=Math.min(maxWidth/bounds.w,maxHeight/bounds.h),assetWidth=bounds.w*scale,assetHeight=bounds.h*scale;
         ctx.shadowBlur=drop.type==='coin'||drop.type==='gold'?8:drop.type==='copper'?4:2;ctx.shadowColor=data.edge;ctx.drawImage(production,bounds.x,bounds.y,bounds.w,bounds.h,-assetWidth*.5,-assetHeight*.72,assetWidth,assetHeight);ctx.shadowBlur=0;
-        if(drop.amount>1){ctx.fillStyle='#fff2c8';ctx.strokeStyle='rgba(0,0,0,.8)';ctx.lineWidth=3;ctx.textAlign='center';ctx.font='900 9px Georgia';ctx.strokeText('x'+drop.amount,0,-assetHeight*.72-4);ctx.fillText('x'+drop.amount,0,-assetHeight*.72-4)}ctx.restore();continue;
+        if(drop.amount>1){ctx.fillStyle='#fff2c8';ctx.strokeStyle='rgba(0,0,0,.8)';ctx.lineWidth=3;ctx.textAlign='center';ctx.font='900 9px Georgia';readableStrokeText('x'+drop.amount,0,-assetHeight*.72-4);readableFillText('x'+drop.amount,0,-assetHeight*.72-4)}ctx.restore();continue;
       }
     }
   }
@@ -3971,7 +3996,7 @@
       const biomeChest=MOONGLASS_SURFACE_CHEST_ART[chest.id]||EMBERDEEP_SURFACE_CHEST_ART[chest.id]||STARFALL_SURFACE_CHEST_ART[chest.id],production=biomeChest?(opened?biomeChest.open:biomeChest.closed):chest.biome==='mossvein'?(opened?STARTER_ART.treasureOpen:STARTER_ART.treasureClosed):null;
       if(imageReady(production)){
         ctx.globalAlpha=opened?0.72:ready?1:.58;drawProductionWorldAsset(production,104,88,35);ctx.globalAlpha=1;
-        if(!opened&&!ready){ctx.fillStyle='rgba(8,9,8,.86)';ctx.strokeStyle='#8d846e';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,-35,11,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#bdb49c';ctx.font='900 10px Georgia';ctx.textAlign='center';ctx.fillText(String(chest.requires.pickaxeLevel||'S'),0,-31)}
+        if(!opened&&!ready){ctx.fillStyle='rgba(8,9,8,.86)';ctx.strokeStyle='#8d846e';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,-35,11,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#bdb49c';ctx.font='900 10px Georgia';ctx.textAlign='center';readableFillText(String(chest.requires.pickaxeLevel||'S'),0,-31)}
         if(!opened&&ready){const sparkle=.45+.35*Math.sin(time*3.1+chest.tier);ctx.strokeStyle='#fff0b1';ctx.globalAlpha=sparkle;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(38,-28);ctx.lineTo(38,-12);ctx.moveTo(30,-20);ctx.lineTo(46,-20);ctx.stroke();ctx.globalAlpha=1}ctx.restore();continue;
       }
       ctx.fillStyle=opened?'#241f19':'#3b2a1b';ctx.strokeStyle=opened?'#786d59':'#c69545';ctx.lineWidth=3;
@@ -3986,7 +4011,7 @@
       for(const side of [-1,1]){ctx.fillStyle='#a97c36';ctx.fillRect(side*22-2,-20,4,44)}
       if(!opened&&!ready){
         ctx.fillStyle='rgba(8,9,8,.82)';ctx.strokeStyle='#8d846e';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,-36,11,0,Math.PI*2);ctx.fill();ctx.stroke();
-        ctx.fillStyle='#bdb49c';ctx.font='900 10px Georgia';ctx.textAlign='center';ctx.fillText(String(chest.requires.pickaxeLevel||'S'),0,-32);
+        ctx.fillStyle='#bdb49c';ctx.font='900 10px Georgia';ctx.textAlign='center';readableFillText(String(chest.requires.pickaxeLevel||'S'),0,-32);
       }
       if(!opened&&ready){
         const sparkle=.45+.35*Math.sin(time*3.1+chest.tier);ctx.strokeStyle='#fff0b1';ctx.globalAlpha=sparkle;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(34,-25);ctx.lineTo(34,-11);ctx.moveTo(27,-18);ctx.lineTo(41,-18);ctx.stroke();ctx.globalAlpha=1;
@@ -4118,7 +4143,7 @@
       if(mote.age<0)continue;const t=easeInOut(mote.age/mote.life),wx=mote.sx+(mote.tx-mote.sx)*t,wy=mote.sy+(mote.ty-mote.sy)*t-Math.sin(t*Math.PI)*32,p=worldToScreen(wx,wy);
       ctx.save();ctx.globalAlpha=Math.sin(Math.min(1,t)*Math.PI)*.75+.2;ctx.fillStyle=mote.color;ctx.shadowBlur=7;ctx.shadowColor=mote.color;ctx.beginPath();ctx.arc(p.x,p.y,mote.size,0,Math.PI*2);ctx.fill();ctx.restore();
     }
-    for(const floater of floaters){const p=worldToScreen(floater.x,floater.y),t=floater.age/floater.life;ctx.save();ctx.globalAlpha=Math.min(1,(1-t)*2.4);ctx.fillStyle=floater.color;ctx.strokeStyle='rgba(3,5,3,.8)';ctx.lineWidth=3;ctx.textAlign='center';ctx.font='900 '+floater.size+'px Georgia';ctx.strokeText(floater.text,p.x,p.y);ctx.fillText(floater.text,p.x,p.y);ctx.restore()}
+    for(const floater of floaters){const p=worldToScreen(floater.x,floater.y),t=floater.age/floater.life;ctx.save();ctx.globalAlpha=Math.min(1,(1-t)*2.4);ctx.fillStyle=floater.color;ctx.strokeStyle='rgba(3,5,3,.8)';ctx.lineWidth=3;ctx.textAlign='center';ctx.font='900 '+floater.size+'px Georgia';readableStrokeText(floater.text,p.x,p.y);readableFillText(floater.text,p.x,p.y);ctx.restore()}
   }
 
   function drawWorldLabels(){
@@ -4127,14 +4152,14 @@
     const labels=(mine?(currentDepth===2?[]:mine.labels.slice()):[['WAYFARER SHOP',STATIONS.speedShop.x,STATIONS.speedShop.y-75,'#a9efb6']]).concat(baseLabels);
     if(mine){
       ctx.save();ctx.textAlign='center';ctx.font='900 10px Georgia';
-      for(const label of labels){const p=worldToScreen(label[1],label[2]);if(p.x<0||p.x>viewWidth||p.y<0||p.y>viewHeight)continue;ctx.fillStyle='rgba(5,8,5,.72)';ctx.fillRect(p.x-58,p.y-11,116,20);ctx.fillStyle=label[3];ctx.fillText(label[0],p.x,p.y+3)}ctx.restore();return;
+      for(const label of labels){const p=worldToScreen(label[1],label[2]);if(p.x<0||p.x>viewWidth||p.y<0||p.y>viewHeight)continue;ctx.fillStyle='rgba(5,8,5,.72)';ctx.fillRect(p.x-58,p.y-11,116,20);ctx.fillStyle=label[3];readableFillText(label[0],p.x,p.y+3)}ctx.restore();return;
     }
     if(state.fourthUnlocked)labels.push(['STARFORGE',STATIONS.starforge.x,STATIONS.starforge.y-73,'#d9dcff']);
     if(!state.areaUnlocked)labels.push(['MOONGLASS GATE',WORLD.gateX-58,WORLD.gateY-215,'#9ce7e6']);
     if(state.areaUnlocked&&!state.emberdeepUnlocked)labels.push(['EMBERDEEP SEAL',WORLD.emberGateX-58,WORLD.gateY-215,'#ff9a68']);
     if(state.emberdeepUnlocked&&!state.fourthUnlocked)labels.push(['STARFALL MASTER SEAL',WORLD.starfallGateX-65,WORLD.gateY-215,'#d6d8ff']);
     ctx.save();ctx.textAlign='center';ctx.font='900 10px Georgia';
-    for(const label of labels){const p=worldToScreen(label[1],label[2]);if(p.x<0||p.x>viewWidth||p.y<0||p.y>viewHeight)continue;ctx.fillStyle='rgba(5,8,5,.72)';ctx.fillRect(p.x-56,p.y-11,112,20);ctx.fillStyle=label[3];ctx.fillText(label[0],p.x,p.y+3)}ctx.restore();
+    for(const label of labels){const p=worldToScreen(label[1],label[2]);if(p.x<0||p.x>viewWidth||p.y<0||p.y>viewHeight)continue;ctx.fillStyle='rgba(5,8,5,.72)';ctx.fillRect(p.x-56,p.y-11,112,20);ctx.fillStyle=label[3];readableFillText(label[0],p.x,p.y+3)}ctx.restore();
   }
 
   function frame(timestamp){
@@ -4246,7 +4271,7 @@
       effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower()),depthMainHits:currentMine()&&currentDepth===2?armoredHitsRequired(DEPTH2_RESOURCE_PROFILES[currentScene].main,currentPower(),currentShellPower()):null},
       goal:mainGoal(),progression:{finalVictory:{completed:!!state.victory,requiresDrill:'Deepcore Drill',resource:'singularity',scene:'starMine',depth:2}},guide:(()=>{const guide=visualGuide();return guide?{...guide,distance:distance(player.x,player.y,guide.x,guide.y),visible:distance(player.x,player.y,guide.x,guide.y)>guide.closeRadius}:null})(),markerStyle:{bonusVeinRings:false},toolMode:state.drillLevel?'drill':'pickaxe',protectedCargo:protectedProgressCargo(),sellableCargo:sellableCargo(),movement:{level:state.movementSpeedLevel,multiplier:movementSpeedMultiplier(),nextCost:movementSpeedCost()},miningRush:{...miningRush},lootSweep:{remaining:lootSweepRemaining(),nextAt:state.nextLootSweepAt},
       player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY,direction:player.direction,moving:player.moving,walkFrame:player.walkFrame,walkDistance:player.walkDistance},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,moonglassGateTransition:moonglassGateTransition?{active:true,progress:clamp(moonglassGateTransition.elapsed/moonglassGateTransition.duration,0,1)}:{active:false,progress:state.areaUnlocked?1:0},emberdeepGateTransition:emberdeepGateTransition?{active:true,progress:clamp(emberdeepGateTransition.elapsed/emberdeepGateTransition.duration,0,1)}:{active:false,progress:state.emberdeepUnlocked?1:0},starfallGateTransition:starfallGateTransition?{active:true,progress:clamp(starfallGateTransition.elapsed/starfallGateTransition.duration,0,1)}:{active:false,progress:state.fourthUnlocked?1:0},
-      lighting:{enabled:!!currentMine()&&!!lightCtx,technique:'low-resolution-raycast-lightmap',occlusion:true,bufferScale:LIGHTING.bufferScale,bufferWidth:lightCanvas?lightCanvas.width:0,bufferHeight:lightCanvas?lightCanvas.height:0,darkness:currentDepth===2?LIGHTING.darknessDepth2:LIGHTING.darknessDepth1,beamLength:LIGHTING.beamLength,beamHalfAngle:LIGHTING.beamHalfAngle,maxOreLights:LIGHTING.maxOreLights,maxNaturalLights:LIGHTING.maxNaturalLights,depthLampAsset:MINE_ENTRANCE_PATHS.depthLamp,oreLights:currentMine()?lightingOreCount:0,naturalLights:currentMine()?lightingLastSources.length:0,sources:currentMine()?lightingLastSources:[],hierarchy:{stone:LIGHTING.stoneIntensity,rockOre:LIGHTING.rockOreIntensity,rareRockOre:LIGHTING.rareRockOreIntensity,wallOre:LIGHTING.wallOreIntensity,rareWallOre:LIGHTING.rareWallOreIntensity,depthLamp:LIGHTING.depthLampIntensity,bonusCrystalCollected:LIGHTING.collectedBonusCrystalIntensity,bonusCrystal:LIGHTING.bonusCrystalIntensity},rayChecks:currentMine()?lightingRayChecks:0},
+      lighting:{enabled:!!currentMine()&&!!lightCtx,technique:'low-resolution-raycast-lightmap',occlusion:true,readableTextOverlay:true,textPass:'after-lighting',bufferScale:LIGHTING.bufferScale,bufferWidth:lightCanvas?lightCanvas.width:0,bufferHeight:lightCanvas?lightCanvas.height:0,darkness:currentDepth===2?LIGHTING.darknessDepth2:LIGHTING.darknessDepth1,beamLength:LIGHTING.beamLength,beamHalfAngle:LIGHTING.beamHalfAngle,maxOreLights:LIGHTING.maxOreLights,maxNaturalLights:LIGHTING.maxNaturalLights,depthLampAsset:MINE_ENTRANCE_PATHS.depthLamp,oreLights:currentMine()?lightingOreCount:0,naturalLights:currentMine()?lightingLastSources.length:0,sources:currentMine()?lightingLastSources:[],hierarchy:{stone:LIGHTING.stoneIntensity,rockOre:LIGHTING.rockOreIntensity,rareRockOre:LIGHTING.rareRockOreIntensity,wallOre:LIGHTING.wallOreIntensity,rareWallOre:LIGHTING.rareWallOreIntensity,depthLamp:LIGHTING.depthLampIntensity,bonusCrystalCollected:LIGHTING.collectedBonusCrystalIntensity,bonusCrystal:LIGHTING.bonusCrystalIntensity},rayChecks:currentMine()?lightingRayChecks:0},
       mine:currentMine()?{
         id:currentMine().id,name:currentMineVisual().name,depth:currentDepth,width:currentMine().width,height:currentMine().height,style:currentMineVisual().style,visualPass:mineVisualPass(),dirt:currentMineVisual().dirt,floor:currentMineVisual().floor,solids:currentDepth===1?currentMine().solids:[],solidCount:currentDepth===1?currentMine().solids.length:0,barrierIds:currentDepth===1?currentMine().barriers.map(barrier=>barrier.id):[],labels:currentDepth===1?currentMine().labels.map(label=>label[0]):[],
         depthEntrance:{...depthEntrances[currentScene],discovered:!!state.discoveredDepthEntrances[currentScene],boundaryIndex:mineTerrain[currentScene][1].depthEntrance?[...mineTerrain[currentScene][1].depthEntrance.boundary][0]:null,resourceClearance:DEPTH_PORTAL_RESOURCE_CLEARANCE},depthStations:currentDepth===2?{...depthStations(),resourceClearance:DEPTH_STATION_RESOURCE_CLEARANCE}:null,depthResources:currentDepth===2?{...DEPTH2_RESOURCE_PROFILES[currentScene]}:null,
