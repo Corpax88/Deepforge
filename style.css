@@ -699,6 +699,8 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
   .brand-meta{display:none}
   .resources{display:flex;gap:4px;flex:0 0 auto}
   .resource,.icon-button{position:relative;top:auto;right:auto;left:auto;height:42px}
+  .resource.gold{left:auto}
+  .resource.cargo{right:auto}
   .resource{min-width:57px;padding-inline:5px;gap:4px}
   .resource b{font-size:12px}
   .resource .topbar-resource{width:24px;height:24px;transform:none}
