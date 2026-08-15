@@ -624,7 +624,7 @@
     if(achievementPopup.hidden)return;
     const screen=worldToScreen(player.x,player.y),screenWidth=viewport.clientWidth||width,screenHeight=viewport.clientHeight||height;
     const left=clamp(screen.x*viewZoom,58,Math.max(58,screenWidth-58)),top=clamp(screen.y*viewZoom-105,62,Math.max(62,screenHeight-128));
-    achievementPopup.style.left=Math.round(left)+'px';achievementPopup.style.top=Math.round(top)+'px';
+    achievementPopup.style.transform='translate3d('+Math.round(left)+'px,'+Math.round(top)+'px,0) translate(-50%,-50%)';
   }
 
   function syncAchievementPopup(){

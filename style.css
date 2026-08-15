@@ -817,14 +817,15 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
 /* Achievement records and the in-world, tap-to-claim reliquary. */
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .achievement-popup{
-  position:absolute;z-index:22;width:112px;height:132px;margin:0;padding:0;border:0;background:transparent;color:#f7eac4;
-  transform:translate(-50%,-50%);perspective:700px;touch-action:manipulation;cursor:pointer;filter:drop-shadow(0 13px 11px rgba(0,0,0,.62));
+  position:absolute;left:0;top:0;z-index:22;width:112px;height:132px;margin:0;padding:0;border:0;background:transparent;color:#f7eac4;
+  transform:translate3d(0,0,0) translate(-50%,-50%);perspective:700px;touch-action:manipulation;cursor:pointer;will-change:transform;
 }
 .achievement-popup[hidden]{display:none}
-.achievement-popup-box{position:relative;width:106px;height:106px;margin:0 auto;display:block;transform-style:preserve-3d;will-change:transform}
-.achievement-popup-box::after{content:"";position:absolute;inset:8px;border-radius:23px;box-shadow:0 0 24px color-mix(in srgb,var(--biome-detail) 54%,transparent);opacity:.72;transform:translateZ(-2px)}
-.achievement-popup-box img{position:relative;z-index:1;display:block;width:100%;height:100%;object-fit:contain;backface-visibility:visible;filter:drop-shadow(0 2px 1px rgba(255,239,190,.18))}
-.achievement-popup.spinning .achievement-popup-box{animation:achievement-coin-rise 2.65s cubic-bezier(.12,.74,.14,1) both}
+.achievement-popup-box{position:relative;width:106px;height:106px;margin:0 auto;display:block;transform:translate3d(0,0,0);transform-style:preserve-3d}
+.achievement-popup-box::after{content:"";position:absolute;inset:8px;border-radius:23px;box-shadow:0 9px 11px rgba(0,0,0,.62),0 0 24px color-mix(in srgb,var(--biome-detail) 54%,transparent);opacity:.72;transform:translateZ(-2px)}
+.achievement-popup-box img{position:relative;z-index:1;display:block;width:100%;height:100%;object-fit:contain;backface-visibility:visible;-webkit-backface-visibility:visible;transform:translate3d(0,0,0);filter:drop-shadow(0 2px 1px rgba(255,239,190,.18))}
+.achievement-popup.spinning .achievement-popup-box{animation:achievement-reliquary-rise .82s cubic-bezier(.18,.82,.24,1) both}
+.achievement-popup.spinning .achievement-popup-box img{animation:achievement-coin-rise 2.65s cubic-bezier(.12,.74,.14,1) both;will-change:transform;filter:none}
 .achievement-popup-hint{display:inline-block;margin-top:-1px;padding:4px 8px;border:1px solid rgba(229,197,111,.42);border-radius:9px;background:rgba(3,8,5,.82);box-shadow:0 3px 10px rgba(0,0,0,.45);font-size:6px;font-weight:900;letter-spacing:1.2px;text-shadow:0 1px 0 #000;opacity:0}
 .achievement-popup.settled .achievement-popup-hint{animation:achievement-hint-in .32s ease forwards}
 .achievement-popup.settled:active .achievement-popup-box{filter:brightness(1.2);transform:scale(.94) rotateY(5turn)}
@@ -858,7 +859,8 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
 .achievement-copy span{color:#76c391;font-size:7.5px;font-weight:900;line-height:1.25;letter-spacing:.55px;text-align:left}.achievement-entry.locked .achievement-copy span{color:#6f7b72}
 .achievement-copy p{margin:6px 0 0;color:#a8b5aa;font-size:10.5px;line-height:1.38}.achievement-entry.unlocked .achievement-copy p{color:#c6d0c5}
 
-@keyframes achievement-coin-rise{from{transform:translateY(46px) scale(.55) rotateY(0turn);opacity:.08}to{transform:translateY(0) scale(1) rotateY(5turn);opacity:1}}
+@keyframes achievement-reliquary-rise{0%{transform:translate3d(0,46px,0) scale(.55);opacity:.08}72%{transform:translate3d(0,-4px,0) scale(1.035);opacity:1}100%{transform:translate3d(0,0,0) scale(1);opacity:1}}
+@keyframes achievement-coin-rise{0%{transform:translate3d(0,0,0) rotateY(0turn)}92%{transform:translate3d(0,0,0) rotateY(5.045turn)}100%{transform:translate3d(0,0,0) rotateY(5turn)}}
 @keyframes achievement-hint-in{from{transform:translateY(-5px);opacity:0}to{transform:none;opacity:1}}
 @keyframes achievement-entry-reveal{0%{transform:scale(.96);border-color:#fff4a8;box-shadow:0 0 0 2px rgba(255,236,128,.82),0 0 34px rgba(255,207,67,.78)}28%{transform:scale(1.015);filter:brightness(1.55);box-shadow:0 0 0 2px rgba(255,244,174,.95),0 0 42px rgba(255,207,67,.9)}100%{transform:none;filter:none;box-shadow:0 5px 15px rgba(0,0,0,.34),0 0 18px rgba(229,190,91,.18)}}
 
@@ -868,6 +870,6 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
 }
 
 @media (prefers-reduced-motion:reduce){
-  .achievement-popup.spinning .achievement-popup-box{animation:achievement-claim-reveal .3s ease-out both}.achievement-popup.settled .achievement-popup-hint{animation:none;opacity:1}
+  .achievement-popup.spinning .achievement-popup-box{animation:achievement-claim-reveal .3s ease-out both}.achievement-popup.spinning .achievement-popup-box img{animation:none;filter:drop-shadow(0 2px 1px rgba(255,239,190,.18))}.achievement-popup.settled .achievement-popup-hint{animation:none;opacity:1}
 }
 @keyframes achievement-claim-reveal{from{transform:translateY(12px) scale(.8);opacity:.25}to{transform:none;opacity:1}}
