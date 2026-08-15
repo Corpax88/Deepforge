@@ -1322,8 +1322,8 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.35.10',name:'CLEAR REQUIREMENT'});
-  expect(snapshot.assetVersion).toBe('03510');
+  expect(snapshot.build).toEqual({version:'0.35.11',name:'DRILL AGE PACING'});
+  expect(snapshot.assetVersion).toBe('03511');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true,emberMine:true,starMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:COMPLETE_DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
@@ -1347,18 +1347,18 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.35.10');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.35.11');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.35.10 · CLEAR REQUIREMENT');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.35.11 · DRILL AGE PACING');
 });
 
 test('premium start menu owns continue, new game, achievements, and settings',async({page})=>{
   await page.goto('/');await page.waitForFunction(()=>window.__everDeeperTest);
   await expect(page.locator('#startScreen')).toBeVisible();
   await expect(page.locator('#continueButton')).toBeDisabled();
-  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=03510');
+  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=03511');
   await page.locator('#startAchievementsButton').click();
   await expect(page.locator('#achievementsPanel')).toBeVisible();
   await expect(page.locator('.menu-tabs')).toBeHidden();
@@ -1386,9 +1386,10 @@ test('settings opens first and keeps audio choices separate from stats',async({p
   await expect(page.locator('#menuTitle')).toHaveText('Patch Notes');
   await expect(page.locator('#patchNotesPanel')).toBeVisible();
   const patchNotes=page.locator('.patch-note');
-  await expect(patchNotes).toHaveCount(19);
-  await expect(page.locator('.patch-note.latest')).toContainText('v0.35.10');
-  await expect(page.locator('.patch-note.latest')).toContainText('DEEPCORE DRILL REQUIRED');
+  await expect(patchNotes).toHaveCount(20);
+  await expect(page.locator('.patch-note.latest')).toContainText('v0.35.11');
+  await expect(page.locator('.patch-note.latest')).toContainText('70 Phase Crystal');
+  await expect(patchNotes.filter({hasText:'v0.35.10'})).toContainText('DEEPCORE DRILL REQUIRED');
   await expect(patchNotes.filter({hasText:'v0.35.9'})).toContainText('Eight unreachable Astralite nodes');
   await expect(patchNotes.filter({hasText:'v0.35.8'})).toContainText('30, 40, 50, 60, and 70');
   await expect(patchNotes.filter({hasText:'v0.35.7'})).toContainText('Holding Mine');
@@ -1474,9 +1475,9 @@ test('drill-gated materials route progression back through earlier Depth 2 mines
   const lockedHit=await page.evaluate(id=>window.__everDeeperTest.hitDepositRock(id,0),mossGate.id);
   expect(lockedHit.after).toEqual(lockedHit.before);
 
-  await page.evaluate(()=>{const api=window.__everDeeperTest;api.grantGold(1200);api.grantCargo('rootiron',8);api.grantCargo('ambercore',1);api.grantCargo('copper',3);api.sellCargo()});
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.grantGold(5000);api.grantCargo('rootiron',50);api.grantCargo('ambercore',5);api.grantCargo('copper',3);api.sellCargo()});
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.state.cargo).toEqual(expect.objectContaining({rootiron:8,ambercore:1,copper:0}));
+  expect(snapshot.state.cargo).toEqual(expect.objectContaining({rootiron:50,ambercore:5,copper:0}));
   await expect(page.locator('#objectiveDetail')).toHaveText('READY AT ANY DEPTH 2 DRILL FORGE');
   await page.evaluate(()=>window.__everDeeperTest.upgradeDrill());
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
@@ -1487,7 +1488,11 @@ test('drill-gated materials route progression back through earlier Depth 2 mines
   const unlockedHit=await page.evaluate(id=>window.__everDeeperTest.hitDepositRock(id,0),mossGate.id);
   expect(unlockedHit.after).not.toEqual(unlockedHit.before);
 
-  await page.evaluate(()=>{const api=window.__everDeeperTest;api.grantGold(3200);api.grantCargo('burrowsteel',12);api.upgradeDrill();api.exitDepth();api.exitMine();api.enterMine('moonMine');api.discoverDepthEntrance();api.enterDepth()});
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.grantGold(12000);api.grantCargo('burrowsteel',60)});
+  await expect(page.locator('#objectiveText')).toHaveText('Mine Prismite for Pulse Drill');
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.exitDepth();api.exitMine();api.enterMine('moonMine');api.discoverDepthEntrance();api.enterDepth();api.grantCargo('prismite',40)});
+  await expect(page.locator('#objectiveText')).toHaveText('Mine Lunacore for Pulse Drill');
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.grantCargo('lunacore',4);api.upgradeDrill()});
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot.state.drillLevel).toBe(2);expect(snapshot.effectivePickaxe.name).toBe('Pulse Drill');
   const moonGate=snapshot.mine.discovery.deposits.find(deposit=>deposit.type==='phasecrystal');
@@ -1496,13 +1501,17 @@ test('drill-gated materials route progression back through earlier Depth 2 mines
   await expect(page.locator('#objectiveDetail')).toContainText('PRISMATIC DEPTHS');
   const moonHit=await page.evaluate(id=>window.__everDeeperTest.hitDepositRock(id,0),moonGate.id);
   expect(moonHit.after).not.toEqual(moonHit.before);
-  await page.evaluate(()=>{const api=window.__everDeeperTest;api.grantCargo('phasecrystal',10);api.exitDepth();api.exitMine();api.enterMine('emberMine');api.discoverDepthEntrance();api.enterDepth()});
-  await expect(page.locator('#objectiveText')).toHaveText('Mine Infernium for Deepcore Drill');
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.grantCargo('phasecrystal',70);api.exitDepth();api.exitMine();api.enterMine('emberMine');api.discoverDepthEntrance();api.enterDepth()});
+  await expect(page.locator('#objectiveText')).toHaveText('Mine Magmaite for Deepcore Drill');
   await expect(page.locator('#objectiveDetail')).toContainText('MOLTEN DEPTHS');
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   const emberGate=snapshot.mine.discovery.deposits.find(deposit=>deposit.type==='infernium');
   expect(emberGate).toEqual(expect.objectContaining({requiresDrillLevel:2,drillGated:true}));
-  await page.evaluate(()=>{const api=window.__everDeeperTest;api.grantCargo('infernium',10);api.grantGold(7200);api.upgradeDrill();api.save()});
+  await page.evaluate(()=>window.__everDeeperTest.grantCargo('magmaite',50));
+  await expect(page.locator('#objectiveText')).toHaveText('Mine Furnace Heart for Deepcore Drill');
+  await page.evaluate(()=>window.__everDeeperTest.grantCargo('furnaceheart',5));
+  await expect(page.locator('#objectiveText')).toHaveText('Mine Infernium for Deepcore Drill');
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.grantCargo('infernium',70);api.grantGold(25000);api.upgradeDrill();api.save()});
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot.state.drillLevel).toBe(3);expect(snapshot.effectivePickaxe.name).toBe('Deepcore Drill');
   expect(snapshot.goal).toEqual({title:'Enter Starfall Hollow',detail:'THE FINAL DESCENT AWAITS'});
@@ -1748,11 +1757,11 @@ test('real resource art is shared by goals, bags, recipes, stats and world drops
   expect(contract).toMatchObject({paths:COMPLETE_DROP_PATHS,completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false});
 });
 
-test('v0.35.10 exposes the complete production contracts and premium walk renderer',async({page})=>{
+test('v0.35.11 exposes the complete production contracts and premium walk renderer',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.35.10',name:'CLEAR REQUIREMENT'});
-  expect(snapshot.assetVersion).toBe('03510');
+  expect(snapshot.build).toEqual({version:'0.35.11',name:'DRILL AGE PACING'});
+  expect(snapshot.assetVersion).toBe('03511');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.surfaceEmberdeepRendering).toEqual(SURFACE_EMBERDEEP_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);

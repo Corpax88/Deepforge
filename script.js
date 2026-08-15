@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='03510';
+  const ASSET_VERSION='03511';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -391,8 +391,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.35.10',name:'CLEAR REQUIREMENT'};
+  const BUILD={version:'0.35.11',name:'DRILL AGE PACING'};
   const PATCH_NOTES=[
+    {version:'0.35.11',date:'16 AUG 2026',title:'Drill Age Pacing',items:['The journey from Starforge to Deepcore now spans full expeditions through Rootwound, Prismatic, and Molten Depths.','Burrower now costs 5,000 gold, 50 Rootiron, and 5 Ambercore; Pulse costs 12,000 gold, 60 Burrowsteel, 40 Prismite, and 4 Lunacore.','Deepcore now costs 25,000 gold, 70 Phase Crystal, 50 Magmaite, 5 Furnace Heart, and 70 Infernium.']},
     {version:'0.35.10',date:'16 AUG 2026',title:'Clear Requirement',items:['The locked Voidstar entrance now says DEEPCORE DRILL REQUIRED.','The requirement can no longer be mistaken for a separate material called Deepcore.','Progression and the Deepcore Drill recipe are unchanged.']},
     {version:'0.35.9',date:'16 AUG 2026',title:'Clear Veins',items:['Generated mine veins now keep a full node-width margin from every permanent wall.','Eight unreachable Astralite nodes were removed from the Starfall deep-access wall.','The safety rule applies to every mine without changing vein totals or resource balance.']},
     {version:'0.35.8',date:'16 AUG 2026',title:'Ember Ramp',items:['Ember Mastery Sunslag recipes now rise through 30, 40, 50, 60, and 70.','The full mastery climb now costs 250 Sunslag instead of 500, removing the flat midgame grind.','Power, speed, yield bonuses, gold costs, and Starforge requirements are unchanged.']},

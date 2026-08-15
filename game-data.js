@@ -274,9 +274,9 @@
   ];
   const DRILL_RECIPES=[
     null,
-    {gold:1200,requirements:[{scene:'mossMine',type:'rootiron',amount:8},{scene:'mossMine',type:'ambercore',amount:1}]},
-    {gold:3200,requirements:[{scene:'mossMine',type:'burrowsteel',amount:12}]},
-    {gold:7200,requirements:[{scene:'moonMine',type:'phasecrystal',amount:10},{scene:'emberMine',type:'infernium',amount:10}]}
+    {gold:5000,requirements:[{scene:'mossMine',type:'rootiron',amount:50},{scene:'mossMine',type:'ambercore',amount:5}]},
+    {gold:12000,requirements:[{scene:'mossMine',type:'burrowsteel',amount:60},{scene:'moonMine',type:'prismite',amount:40},{scene:'moonMine',type:'lunacore',amount:4}]},
+    {gold:25000,requirements:[{scene:'moonMine',type:'phasecrystal',amount:70},{scene:'emberMine',type:'magmaite',amount:50},{scene:'emberMine',type:'furnaceheart',amount:5},{scene:'emberMine',type:'infernium',amount:70}]}
   ];
   const STATIONS={
     sell:{x:205,y:250,radius:132},
