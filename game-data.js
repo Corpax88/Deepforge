@@ -81,9 +81,9 @@
   const ACHIEVEMENTS_KEY='everDeeperAchievementsV1';
   const GATE_COST=120;
   const EMBER_GATE_COST=360;
-  const EMBER_CRAFT_MATERIAL_REQUIRED=100;
   const STARFORGE_MATERIAL_REQUIRED=200;
-  const EMBER_PICKAXE_ORE_REQUIRED=EMBER_CRAFT_MATERIAL_REQUIRED;
+  const EMBER_PICKAXE_ORE_REQUIRED=100;
+  const EMBER_MASTERY_SUNSLAG_COSTS=Object.freeze([0,30,40,50,60,70]);
   const GROUND_DROP_LIFETIME=300;
   const LOOT_SWEEP_WARNING_SECONDS=30;
   const GROUND_DROP_PICKUP_RADIUS=48;
@@ -97,11 +97,11 @@
   const MAX_MINING_PARTICLES=260;
   const EMBER_MASTERY=[
     {rank:0,power:31,cooldown:.23,gold:0,sunslag:0,label:'Awakened',shellPower:.72,bonusYield:.22,precisionDelay:1},
-    {rank:1,power:38,cooldown:.215,gold:450,sunslag:EMBER_CRAFT_MATERIAL_REQUIRED,label:'Tempered',shellPower:.85,bonusYield:.27,precisionDelay:.96},
-    {rank:2,power:46,cooldown:.20,gold:850,sunslag:EMBER_CRAFT_MATERIAL_REQUIRED,label:'Kindled',shellPower:1,bonusYield:.32,precisionDelay:.92},
-    {rank:3,power:66,cooldown:.185,gold:1450,sunslag:EMBER_CRAFT_MATERIAL_REQUIRED,label:'Blazing',shellPower:1.15,bonusYield:.38,precisionDelay:.88},
-    {rank:4,power:92,cooldown:.17,gold:2300,sunslag:EMBER_CRAFT_MATERIAL_REQUIRED,label:'Infernal',shellPower:1.3,bonusYield:.45,precisionDelay:.82},
-    {rank:5,power:128,cooldown:.155,gold:3600,sunslag:EMBER_CRAFT_MATERIAL_REQUIRED,label:'Depth Master',shellPower:1.5,bonusYield:.55,precisionDelay:.75}
+    {rank:1,power:38,cooldown:.215,gold:450,sunslag:EMBER_MASTERY_SUNSLAG_COSTS[1],label:'Tempered',shellPower:.85,bonusYield:.27,precisionDelay:.96},
+    {rank:2,power:46,cooldown:.20,gold:850,sunslag:EMBER_MASTERY_SUNSLAG_COSTS[2],label:'Kindled',shellPower:1,bonusYield:.32,precisionDelay:.92},
+    {rank:3,power:66,cooldown:.185,gold:1450,sunslag:EMBER_MASTERY_SUNSLAG_COSTS[3],label:'Blazing',shellPower:1.15,bonusYield:.38,precisionDelay:.88},
+    {rank:4,power:92,cooldown:.17,gold:2300,sunslag:EMBER_MASTERY_SUNSLAG_COSTS[4],label:'Infernal',shellPower:1.3,bonusYield:.45,precisionDelay:.82},
+    {rank:5,power:128,cooldown:.155,gold:3600,sunslag:EMBER_MASTERY_SUNSLAG_COSTS[5],label:'Depth Master',shellPower:1.5,bonusYield:.55,precisionDelay:.75}
   ];
   const MINING_RANGE=116;
   const MINE_TILE_SIZE=48;
@@ -400,7 +400,7 @@
 
   global.EverDeeperGameData=Object.freeze({
     WORLD,MINE_DEFINITIONS,MINE_SCENES,MINE_DEPTH_PROFILES,DEPTH2_RESOURCE_PROFILES,DEPTH_ROUTE_LABELS,MINE_DIRT_COLORS,BIOMES,SURFACE_BOUNDARIES,MATERIAL_FEEDBACK,
-    SAVE_KEY,ACHIEVEMENTS_KEY,GATE_COST,EMBER_GATE_COST,STARFORGE_MATERIAL_REQUIRED,EMBER_PICKAXE_ORE_REQUIRED,
+    SAVE_KEY,ACHIEVEMENTS_KEY,GATE_COST,EMBER_GATE_COST,STARFORGE_MATERIAL_REQUIRED,EMBER_PICKAXE_ORE_REQUIRED,EMBER_MASTERY_SUNSLAG_COSTS,
     GROUND_DROP_LIFETIME,LOOT_SWEEP_WARNING_SECONDS,GROUND_DROP_PICKUP_RADIUS,GROUND_DROP_EDGE_X,GROUND_DROP_EDGE_TOP,GROUND_DROP_EDGE_BOTTOM,
     BASE_MODULE_INTERACT_RADIUS,AUTO_SORT_RADIUS,STORAGE_CHEST_CAPACITY,MAX_GROUND_DROPS,MAX_MINING_PARTICLES,EMBER_MASTERY,MINING_RANGE,MINE_TILE_SIZE,
     MINERAL_NODE_RENDER_SCALE,MINE_CHUNK_CELLS,MINE_TERRAIN_HP,PLAYER_SPEED,PLAYER_MOVE_STEP,MOVEMENT_SPEED_GAIN,MINING_RUSH_DURATION,MINING_RUSH_COOLDOWN_MULTIPLIER,

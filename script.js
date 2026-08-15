@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0357';
+  const ASSET_VERSION='0358';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -391,8 +391,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.35.7',name:'QUIET MISSES'};
+  const BUILD={version:'0.35.8',name:'EMBER RAMP'};
   const PATCH_NOTES=[
+    {version:'0.35.8',date:'16 AUG 2026',title:'Ember Ramp',items:['Ember Mastery Sunslag recipes now rise through 30, 40, 50, 60, and 70.','The full mastery climb now costs 250 Sunslag instead of 500, removing the flat midgame grind.','Power, speed, yield bonuses, gold costs, and Starforge requirements are unchanged.']},
     {version:'0.35.7',date:'16 AUG 2026',title:'Quiet Misses',items:['Holding Mine without a valid target is now silent instead of repeating the empty-hit sound.','A fresh manual press still gives one short miss response so the control never feels broken.','Successful pickaxe tink and drill impact sounds are unchanged.']},
     {version:'0.35.6',date:'16 AUG 2026',title:'Visible Wall Fit',items:['Surface wall collision now matches the actual painted width of each premium boundary PNG.','The oversized invisible strip beside opened gates is removed while the visible cliff remains solid.','Closed gates still block across their full portal footprint.']},
     {version:'0.35.5',date:'15 AUG 2026',title:'Pickaxe Tink',items:['Pickaxe mining now lands with a short, bright metallic tink instead of the previous heavy synthetic impact.','Repeated swings form a clean tink-tink-tink rhythm, while drills retain their separate heavier sound.','Material and pickaxe tier still add subtle pitch variation without muddying the hit.']},

@@ -25,7 +25,7 @@ function canonicalData(value){
   return value;
 }
 const gameDataDigest=crypto.createHash('sha256').update(JSON.stringify(canonicalData(gameDataWindow.EverDeeperGameData))).digest('hex');
-assert.equal(gameDataDigest,'5e9748ca63d138398bf7dd05dfd8693d130bde754a1c01bcdf148c8eb9e69946','static gameplay data changed unexpectedly');
+assert.equal(gameDataDigest,'d5e181b5c3067432ffe36cd7b73c0eeddc1cf5e23029b6f81cc05044121ae163','static gameplay data changed unexpectedly');
 const retiredBrand=['deep','forge'].join('');
 const excludedAuditDirectories=new Set(['.git','node_modules','playwright-report','test-results']);
 function auditBrandRemoval(directory){
@@ -51,18 +51,19 @@ assert.match(source,/function playPickaxeTink\(/);assert.match(source,/if\(curre
 assert.match(source,/if\(!rock&&!terrainTarget\)\{if\(manualPress\)sound\('empty'\)/,'held mining misses must stay silent after the initial manual press');
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'0357');
+assert.equal(latest.version,'0358');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0357/);
-assert.match(html,/game-data\.js\?v=0357/);
-assert.match(html,/script\.js\?v=0357/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0357/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0357/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0357/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0357/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0357"/);
-assert.match(source,/const EMBER_CRAFT_MATERIAL_REQUIRED=100;/);
+assert.match(html,/style\.css\?v=0358/);
+assert.match(html,/game-data\.js\?v=0358/);
+assert.match(html,/script\.js\?v=0358/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0358/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0358/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0358/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0358/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0358"/);
+assert.match(source,/const EMBER_PICKAXE_ORE_REQUIRED=100;/);
+assert.match(source,/const EMBER_MASTERY_SUNSLAG_COSTS=Object\.freeze\(\[0,30,40,50,60,70\]\);/);
 assert.match(source,/const STARFORGE_MATERIAL_REQUIRED=200;/);
 assert.match(css,/\.context-panel\{bottom:136px;/);
 assert.match(html,/id="startScreen" class="start-screen"/);
@@ -337,16 +338,16 @@ const expectedSnapshotKeys=[
 ];
 assert.deepEqual(Object.keys(api).sort(),expectedApiKeys,'test API contract changed unexpectedly');
 assert.deepEqual(Object.keys(api.snapshot()).sort(),expectedSnapshotKeys,'snapshot contract changed unexpectedly');
-assert.equal(api.snapshot().build.version,'0.35.7');
-assert.equal(api.snapshot().build.name,'QUIET MISSES');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.35.7');
-assert.equal(api.snapshot().assetVersion,'0357');
+assert.equal(api.snapshot().build.version,'0.35.8');
+assert.equal(api.snapshot().build.name,'EMBER RAMP');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.35.8');
+assert.equal(api.snapshot().assetVersion,'0358');
 const patchNotes=api.snapshot().patchNotes,patchNote=version=>patchNotes.find(note=>note.version===version);
-assert.equal(patchNotes.length,16);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
+assert.equal(patchNotes.length,17);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0357',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0358',volume:1,loop:true,paused:false}));
 api.dismissStartMenu();
 const viewportElement=runtime.elements.get('viewport'),canvasElement=runtime.elements.get('gameCanvas'),joystickElement=runtime.elements.get('joystick'),mineElement=runtime.elements.get('mineButton');
 viewportElement.dispatchEvent({type:'pointerdown',target:canvasElement,pointerId:301,button:0,clientX:120,clientY:260});
@@ -918,7 +919,7 @@ runtime=createRuntime();after=runtime.api.snapshot();assert.equal(after.state.ba
 api=runtime.api;api.reset();api.openChest('moss_supply');api.collectGroundDrops();api.unlockAllAreas();api.setPickaxeLevel(4);api.grantGold(625);api.grantMined('moonglass',1);api.grantMined('emberstone',1);api.grantCargo('emberstone',99);api.setPosition(455,250);api.step(.01);api.interact();after=api.snapshot();
 assert.equal(after.state.pickaxeLevel,4);assert.equal(JSON.stringify(after.goal.requirements),JSON.stringify([{type:'emberstone',amount:100,current:99}]));assert.equal(after.protectedCargo.emberstone,99);
 api.grantCargo('emberstone',1);api.interact();after=api.snapshot();assert.equal(after.state.pickaxeLevel,5);assert.equal(after.state.cargo.emberstone,0);
-api.grantGold(450);api.grantCargo('sunslag',99);api.interact();assert.equal(api.snapshot().state.emberMastery,0);api.grantCargo('sunslag',1);api.interact();after=api.snapshot();assert.equal(after.state.emberMastery,1);assert.equal(after.state.cargo.sunslag,0);
+api.grantGold(450);api.grantCargo('sunslag',29);api.interact();assert.equal(api.snapshot().state.emberMastery,0);api.grantCargo('sunslag',1);api.interact();after=api.snapshot();assert.equal(after.state.emberMastery,1);assert.equal(after.state.cargo.sunslag,0);
 
 api.reset();api.unlockStarfall();api.grantCargo('astralite',199);api.grantCargo('crownstone',199);api.forgeStarVariant('crusher');assert.equal(api.snapshot().state.starforgeVariant,null);
 api.grantCargo('astralite',1);api.grantCargo('crownstone',1);api.forgeStarVariant('crusher');after=api.snapshot();assert.equal(after.state.starforgeVariant,'crusher');assert.equal(after.state.cargo.astralite,0);assert.equal(after.state.cargo.crownstone,0);

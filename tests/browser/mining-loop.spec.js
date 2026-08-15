@@ -649,11 +649,11 @@ test('Ember Mastery enforces both Sunslag and gold requirements',async({page})=>
   await expect(page.locator('#contextTitle')).toHaveText('Tempered');
   await expect(page.locator('#contextButton')).toBeDisabled();
   await expect(page.locator('#contextDetail [data-resource="sunslag"] img')).toHaveAttribute('src',/sunslag-drop\.png/);
-  await expect(page.locator('#contextDetail')).toContainText('0 / 100');
+  await expect(page.locator('#contextDetail')).toContainText('0 / 30');
 
   await page.evaluate(()=>window.__everDeeperTest.grantGold(450));
   await expect(page.locator('#contextButton')).toBeDisabled();
-  await page.evaluate(()=>window.__everDeeperTest.grantCargo('sunslag',100));
+  await page.evaluate(()=>window.__everDeeperTest.grantCargo('sunslag',30));
   await expect(page.locator('#contextButton')).toBeEnabled();
   await page.locator('#contextButton').click();
 
@@ -670,7 +670,7 @@ test('all five Ember Mastery ranks improve mining and persist',async({page},test
   await page.evaluate(()=>{
     window.__everDeeperTest.unlockAllAreas();
     window.__everDeeperTest.setPickaxeLevel(5);
-    window.__everDeeperTest.grantCargo('sunslag',500);
+    window.__everDeeperTest.grantCargo('sunslag',250);
     window.__everDeeperTest.grantGold(8650);
     window.__everDeeperTest.setPosition(455,250);
   });
@@ -695,6 +695,7 @@ test('all five Ember Mastery ranks improve mining and persist',async({page},test
   await expect(page.locator('#contextButton')).toHaveText('MASTERED');
   await expect(page.locator('#unlockLabel')).toHaveText('OPEN STARFALL DEPTHS');
   await expect(page.locator('#powerValue')).toHaveText('128');
+  expect((await page.evaluate(()=>window.__everDeeperTest.snapshot())).state.cargo.sunslag).toBe(0);
   await page.screenshot({path:testInfo.outputPath('ember-mastery-complete.png'),fullPage:true});
 
   await page.evaluate(()=>window.__everDeeperTest.save());
@@ -711,7 +712,7 @@ test('Depth Master breaks Sunslag shell and core with one normal swing',async({p
     window.__everDeeperTest.unlockAllAreas();
     window.__everDeeperTest.setPickaxeLevel(5);
     window.__everDeeperTest.grantMined('sunslag',15);
-    window.__everDeeperTest.grantCargo('sunslag',500);
+    window.__everDeeperTest.grantCargo('sunslag',250);
     window.__everDeeperTest.grantGold(8650);
     window.__everDeeperTest.setPosition(455,250);
   });
@@ -737,7 +738,7 @@ test('Ember Mastery 5 opens Starfall Depths and its new resource loop persists',
   await page.evaluate(()=>{
     window.__everDeeperTest.unlockAllAreas();
     window.__everDeeperTest.setPickaxeLevel(5);
-    window.__everDeeperTest.grantCargo('sunslag',500);
+    window.__everDeeperTest.grantCargo('sunslag',250);
     window.__everDeeperTest.grantGold(8650);
     window.__everDeeperTest.setPosition(3295,650);
   });
@@ -978,7 +979,7 @@ test('Ember Mastery remains readable on an iPhone viewport',async({page},testInf
   await page.evaluate(()=>{
     window.__everDeeperTest.unlockAllAreas();
     window.__everDeeperTest.setPickaxeLevel(5);
-    window.__everDeeperTest.grantCargo('sunslag',100);
+    window.__everDeeperTest.grantCargo('sunslag',30);
     window.__everDeeperTest.grantGold(1300);
     window.__everDeeperTest.setPosition(455,250);
   });
@@ -1321,8 +1322,8 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.35.7',name:'QUIET MISSES'});
-  expect(snapshot.assetVersion).toBe('0357');
+  expect(snapshot.build).toEqual({version:'0.35.8',name:'EMBER RAMP'});
+  expect(snapshot.assetVersion).toBe('0358');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true,emberMine:true,starMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:COMPLETE_DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
@@ -1346,18 +1347,18 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.35.7');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.35.8');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.35.7 · QUIET MISSES');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.35.8 · EMBER RAMP');
 });
 
 test('premium start menu owns continue, new game, achievements, and settings',async({page})=>{
   await page.goto('/');await page.waitForFunction(()=>window.__everDeeperTest);
   await expect(page.locator('#startScreen')).toBeVisible();
   await expect(page.locator('#continueButton')).toBeDisabled();
-  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0357');
+  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0358');
   await page.locator('#startAchievementsButton').click();
   await expect(page.locator('#achievementsPanel')).toBeVisible();
   await expect(page.locator('.menu-tabs')).toBeHidden();
@@ -1385,9 +1386,10 @@ test('settings opens first and keeps audio choices separate from stats',async({p
   await expect(page.locator('#menuTitle')).toHaveText('Patch Notes');
   await expect(page.locator('#patchNotesPanel')).toBeVisible();
   const patchNotes=page.locator('.patch-note');
-  await expect(patchNotes).toHaveCount(16);
-  await expect(page.locator('.patch-note.latest')).toContainText('v0.35.7');
-  await expect(page.locator('.patch-note.latest')).toContainText('Holding Mine');
+  await expect(patchNotes).toHaveCount(17);
+  await expect(page.locator('.patch-note.latest')).toContainText('v0.35.8');
+  await expect(page.locator('.patch-note.latest')).toContainText('30, 40, 50, 60, and 70');
+  await expect(patchNotes.filter({hasText:'v0.35.7'})).toContainText('Holding Mine');
   await expect(patchNotes.filter({hasText:'v0.35.6'})).toContainText('painted width');
   await expect(patchNotes.filter({hasText:'v0.35.5'})).toContainText('tink-tink-tink');
   await expect(patchNotes.filter({hasText:'v0.35.4'})).toContainText('complete passage');
@@ -1744,11 +1746,11 @@ test('real resource art is shared by goals, bags, recipes, stats and world drops
   expect(contract).toMatchObject({paths:COMPLETE_DROP_PATHS,completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false});
 });
 
-test('v0.35.7 exposes the complete production contracts and premium walk renderer',async({page})=>{
+test('v0.35.8 exposes the complete production contracts and premium walk renderer',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.35.7',name:'QUIET MISSES'});
-  expect(snapshot.assetVersion).toBe('0357');
+  expect(snapshot.build).toEqual({version:'0.35.8',name:'EMBER RAMP'});
+  expect(snapshot.assetVersion).toBe('0358');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.surfaceEmberdeepRendering).toEqual(SURFACE_EMBERDEEP_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);
