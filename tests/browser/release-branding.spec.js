@@ -22,6 +22,7 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.33.0 · DEEPGLASS PREMIUM');
   await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0330');
   await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0330');
+  await page.evaluate(()=>window.__everDeeperTest.dismissStartMenu());
   await page.evaluate(()=>window.__everDeeperTest.setPosition(455,250));
   await expect(page.locator('#contextPanel')).toBeVisible();
   await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=0330$/);
