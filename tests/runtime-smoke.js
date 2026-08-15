@@ -24,20 +24,25 @@ assert.doesNotMatch(source,/function drawRockBody/,'resource nodes must not reta
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'0331');
+assert.equal(latest.version,'0340');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0331/);
-assert.match(html,/script\.js\?v=0331/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0331/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0331/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0331/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0331/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0331"/);
+assert.match(html,/style\.css\?v=0340/);
+assert.match(html,/script\.js\?v=0340/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0340/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0340/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0340/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0340/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0340"/);
 assert.match(css,/\.context-panel\{bottom:136px;/);
 assert.match(html,/id="startScreen" class="start-screen"/);
 assert.match(html,/id="continueButton"/);assert.match(html,/id="newGameButton"/);assert.match(html,/id="startAchievementsButton"/);assert.match(html,/id="startSettingsButton"/);
 assert.doesNotMatch(html,/id="achievementsTab"/);
+assert.match(html,/id="achievementPopup"/);assert.match(html,/id="achievementPopupImage"/);assert.match(html,/id="achievementAnnouncement"[^>]+role="status"[^>]+aria-live="polite"/);assert.match(html,/id="achievementCount"/);assert.match(html,/id="achievementList"/);
+assert.match(source,/ACHIEVEMENTS_KEY='everDeeperAchievementsV1'/);assert.match(css,/@keyframes achievement-coin-rise/);assert.match(css,/rotateY\(5turn\)/);assert.match(css,/achievement-coin-rise 2\.65s cubic-bezier/);
+const expectedAchievementIds=['first_chip','first_payday','moon_unsealed','ember_unsealed','stars_unsealed','four_frontiers','minewalker','seasoned_arms','iron_rhythm','keen_eye','true_aim','tunnel_hand','earth_eater','ore_mountain','goldspark','fallen_star','sunstruck','crowned','into_the_deep','three_hearts','drillborn_ore','deep_hoard','ironbound','rune_ready','moonforged','emberforged','depth_master','starforged','threefold_star','burrower','pulse_driver','deepcore','moss_below','glass_below','fire_below','stars_below','hidden_descent','every_depth','treasure_found','cache_hunter','chestmaster','vein_runner','fourfold_veins','vein_veteran','quick_step','roadrunner','more_storage','mobile_base','mineral_crown','ever_deeper'];
+const declaredAchievementIds=[...source.matchAll(/achievementDefinition\('([^']+)'/g)].map(match=>match[1]);
+assert.deepEqual(declaredAchievementIds,expectedAchievementIds);assert.equal(new Set(declaredAchievementIds).size,50);
 assert.match(css,/@media \(orientation:landscape\) and \(max-height:620px\)/);
 assert.match(css,/#game\{visibility:hidden;pointer-events:none\}/);
 assert.match(html,/class="portrait-lock"/);
@@ -66,6 +71,15 @@ function assertPng(relative,width,height,{alpha=true,maxBytes=250000}={}){
   assert.equal(preservesAlpha,alpha,relative+(alpha?' must preserve transparency':' must be fully opaque'));
   assert.ok(png.length<maxBytes,relative+' exceeds its '+maxBytes+' byte mobile budget');
 }
+const achievementAssetBudgetBytes=500000,achievementAssetDigests=new Set();
+for(const id of expectedAchievementIds){
+  const relative='assets/achievements/'+id+'.png',absolute=require('node:path').join(repositoryRoot,relative);assert.ok(fs.existsSync(absolute),relative+' must exist');const png=fs.readFileSync(absolute);
+  assertPng(relative,512,512,{maxBytes:achievementAssetBudgetBytes+1});
+  assert.ok(png.length<=achievementAssetBudgetBytes,relative+' exceeds its 500KB mobile budget');
+  const digest=require('node:crypto').createHash('sha256').update(png).digest('hex');
+  assert.ok(!achievementAssetDigests.has(digest),relative+' duplicates another achievement sprite');achievementAssetDigests.add(digest);
+}
+assert.equal(achievementAssetDigests.size,50,'every achievement must have its own sprite');
 const playerAssets=['assets/characters/miner-b.png','assets/characters/miner-b-drill-burrower.png','assets/characters/miner-b-drill-pulse.png','assets/characters/miner-b-drill-deepcore.png','assets/tools/pickaxe-worn.png','assets/tools/pickaxe-iron.png','assets/tools/pickaxe-runed.png','assets/tools/pickaxe-moonglass.png','assets/tools/pickaxe-ember.png','assets/tools/starforge-crusher.png','assets/tools/starforge-swift.png','assets/tools/starforge-prospector.png'];
 for(const relative of playerAssets){const path=require('node:path').join(__dirname,'..',relative),png=fs.readFileSync(path);assert.equal(png.toString('ascii',1,4),'PNG');assert.equal(png[25],6,relative+' must use RGBA');assert.ok(png.length<250000,relative+' exceeds mobile asset budget')}
 const playerWalkAssets=['assets/characters/miner-b-walk.png','assets/characters/miner-b-drill-burrower-walk.png','assets/characters/miner-b-drill-pulse-walk.png','assets/characters/miner-b-drill-deepcore-walk.png'];
@@ -269,14 +283,14 @@ function createRuntime({failWalkSheets=false,reducedMotion=false}={}){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.33.1');
+assert.equal(api.snapshot().build.version,'0.34.0');
 assert.equal(api.snapshot().build.name,'DEEPGLASS PREMIUM');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.33.1');
-assert.equal(api.snapshot().assetVersion,'0331');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.34.0');
+assert.equal(api.snapshot().assetVersion,'0340');
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0331',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0340',volume:1,loop:true,paused:false}));
 assert.equal(api.setAudioSetting('music',false),false);assert.equal(api.snapshot().music.enabled,false);assert.equal(api.snapshot().music.started,false);
 assert.equal(api.setAudioSetting('effects',false),false);assert.equal(api.snapshot().music.effectsEnabled,false);
 assert.equal(api.setAudioSetting('music',true),true);assert.equal(api.setAudioSetting('effects',true),true);
@@ -313,6 +327,105 @@ function assertRendered(drawCalls,paths){for(const path of paths)assert.ok(drawC
 function renderAt(testRuntime,testApi,x,y,paths){testApi.setPosition(x,y);testRuntime.drawCalls.length=0;testApi.renderOnce();assertRendered(testRuntime.drawCalls,paths)}
 function terrainIndexForRock(snapshot,rock){const cols=Math.ceil(snapshot.mine.width/snapshot.mine.terrain.tileSize);return Math.floor(rock.y/snapshot.mine.terrain.tileSize)*cols+Math.floor(rock.x/snapshot.mine.terrain.tileSize)}
 function exposeRock(testApi,rock,maxHits=8){for(let hit=0;hit<maxHits&&!testApi.snapshot().rocks.find(item=>item.id===rock.id).exposed;hit++)testApi.mineTerrainCell(terrainIndexForRock(testApi.snapshot(),rock));assert.equal(testApi.snapshot().rocks.find(item=>item.id===rock.id).exposed,true,rock.type+' test node must be exposed')}
+
+const storageBeforeAchievements=new Map(storage),achievementRuntime=createRuntime(),achievementApi=achievementRuntime.api;
+let achievementSnapshot=achievementApi.snapshot();
+assert.equal(achievementSnapshot.achievements.storageKey,'everDeeperAchievementsV1');assert.equal(achievementSnapshot.achievements.total,50);assert.equal(achievementSnapshot.achievements.count,0);
+assert.equal(JSON.stringify(achievementSnapshot.achievements.definitions.map(definition=>definition.id)),JSON.stringify(expectedAchievementIds));
+assert.ok(achievementSnapshot.achievements.definitions.every(definition=>definition.asset==='assets/achievements/'+definition.id+'.png'&&definition.title&&definition.description&&definition.category&&definition.tier));
+achievementApi.dismissStartMenu();achievementApi.grantMined('stone',1);assert.equal(JSON.stringify(achievementApi.evaluateAchievements()),JSON.stringify(['first_chip']));achievementSnapshot=achievementApi.snapshot();
+assert.equal(achievementSnapshot.achievements.active,'first_chip');assert.equal(achievementSnapshot.achievements.settled,false);assert.equal(achievementSnapshot.achievements.popupVisible,true);assert.equal(JSON.stringify(achievementSnapshot.achievements.queue),JSON.stringify(['first_chip']));
+const firstChipRecord=achievementSnapshot.achievements.records.first_chip;assert.equal(firstChipRecord.id,'first_chip');assert.equal(firstChipRecord.scene,'surface');assert.equal(firstChipRecord.depth,1);assert.equal(firstChipRecord.order,1);assert.equal(firstChipRecord.acknowledged,false);assert.ok(Number.isFinite(Date.parse(firstChipRecord.timestamp)));assert.match(firstChipRecord.reason,/first resource/i);
+assert.equal(achievementApi.dismissAchievement(),false);assert.equal(achievementApi.snapshot().achievements.records.first_chip.acknowledged,false);assert.equal(achievementApi.settleAchievement(),true);assert.equal(achievementApi.snapshot().achievements.settled,true);
+assert.equal(achievementApi.dismissAchievement(),true);assert.equal(achievementApi.snapshot().achievements.records.first_chip.acknowledged,true);
+achievementApi.setPickaxeLevel(3);assert.equal(JSON.stringify(achievementApi.evaluateAchievements()),JSON.stringify(['ironbound','rune_ready']));achievementSnapshot=achievementApi.snapshot();
+assert.equal(JSON.stringify(achievementSnapshot.achievements.queue),JSON.stringify(['ironbound','rune_ready']));assert.equal(achievementSnapshot.achievements.active,'ironbound');assert.equal(achievementSnapshot.achievements.settled,false);assert.equal(achievementSnapshot.achievements.records.ironbound.order,2);assert.equal(achievementSnapshot.achievements.records.rune_ready.order,3);
+assert.equal(achievementApi.dismissAchievement(),false);assert.equal(achievementApi.settleAchievement(),true);assert.equal(achievementApi.dismissAchievement(),true);assert.equal(achievementApi.snapshot().achievements.active,'rune_ready');assert.equal(achievementApi.snapshot().achievements.settled,false);
+achievementApi.openAchievements();assert.equal((achievementRuntime.elements.get('achievementList').innerHTML.match(/data-achievement=/g)||[]).length,50);assert.match(achievementRuntime.elements.get('achievementList').innerHTML,/EARNED/);
+const persistedAchievementState=JSON.parse(storage.get('everDeeperAchievementsV1'));assert.equal(persistedAchievementState.records.first_chip.acknowledged,true);assert.equal(persistedAchievementState.records.rune_ready.acknowledged,false);
+
+const achievementCatalogBody=source.match(/const ACHIEVEMENT_DEFINITIONS=Object\.freeze\(\[([\s\S]*?)\]\);\s*const ACHIEVEMENT_BY_ID=/);
+assert.ok(achievementCatalogBody,'achievement predicates must remain statically testable');
+const predicateDefinitions=vm.runInNewContext('['+achievementCatalogBody[1]+']',{
+  achievementDefinition:(id,title,description,category,tier,predicate)=>({id,title,description,category,tier,predicate}),
+  MINE_SCENES:['mossMine','moonMine','emberMine','starMine'],
+  CHEST_DEFINITIONS:['moss_supply','moss_ironbound','moon_cache','moon_reliquary','ember_cache','ember_vault','star_cache','star_coffer'].map(id=>({id})),
+  VEIN_DEFINITIONS:['copper_run','moonglass_bloom','ember_fault','starfall_lattice'].map(id=>({id})),
+  ROCK_TYPES:Object.fromEntries(Object.keys(completeDropPaths).map(type=>[type,{}]))
+});
+const predicateById=new Map(predicateDefinitions.map(definition=>[definition.id,definition.predicate]));
+function predicateFixture(){
+  const mines={mossMine:false,moonMine:false,emberMine:false,starMine:false};
+  return{
+    state:{totalGold:0,totalSwings:0,precisionHits:0,areaUnlocked:false,emberdeepUnlocked:false,fourthUnlocked:false,discoveredSecond:false,discoveredThird:false,discoveredFourth:false,victory:false,pickaxeLevel:1,emberMastery:0,drillLevel:0,movementSpeedLevel:0,
+      mined:Object.fromEntries(Object.keys(completeDropPaths).map(type=>[type,0])),discoveredMines:{...mines},discoveredDepthEntrances:{...mines},visitedDepths:{...mines},openedChests:{},veinsCompleted:{copper_run:0,moonglass_bloom:0,ember_fault:0,starfall_lattice:0},starforgeUnlocked:{crusher:false,swift:false,prospector:false},
+      base:{forge:{scene:'surface',packed:false},sell:{scene:'surface',packed:false},chests:[{scene:'surface',packed:false}]}},
+    metrics:{totalMined:0,tilesDug:0,depthMined:0,opened:0,veinTotal:0}
+  };
+}
+const setEvery=(object,value)=>{for(const key of Object.keys(object))object[key]=value};
+const achievementPredicateBoundaries=[
+  ['first_chip',(s,m)=>m.totalMined=1],
+  ['first_payday',s=>s.totalGold=1],
+  ['moon_unsealed',s=>s.areaUnlocked=true],
+  ['ember_unsealed',s=>s.emberdeepUnlocked=true],
+  ['stars_unsealed',s=>s.fourthUnlocked=true],
+  ['four_frontiers',s=>{s.discoveredSecond=s.discoveredThird=s.discoveredFourth=true},s=>{s.discoveredSecond=s.discoveredThird=true}],
+  ['minewalker',s=>setEvery(s.discoveredMines,true),s=>{setEvery(s.discoveredMines,true);s.discoveredMines.starMine=false}],
+  ['seasoned_arms',s=>s.totalSwings=100,s=>s.totalSwings=99],
+  ['iron_rhythm',s=>s.totalSwings=1000,s=>s.totalSwings=999],
+  ['keen_eye',s=>s.precisionHits=10,s=>s.precisionHits=9],
+  ['true_aim',s=>s.precisionHits=100,s=>s.precisionHits=99],
+  ['tunnel_hand',(s,m)=>m.tilesDug=100,(s,m)=>m.tilesDug=99],
+  ['earth_eater',(s,m)=>m.tilesDug=1000,(s,m)=>m.tilesDug=999],
+  ['ore_mountain',(s,m)=>m.totalMined=1000,(s,m)=>m.totalMined=999],
+  ['goldspark',s=>s.mined.gold=1],
+  ['fallen_star',s=>s.mined.starshard=1],
+  ['sunstruck',s=>s.mined.sunslag=1],
+  ['crowned',s=>s.mined.crownstone=1],
+  ['into_the_deep',s=>s.mined.deepstone=1],
+  ['three_hearts',s=>{s.mined.ambercore=s.mined.lunacore=s.mined.furnaceheart=1},s=>{s.mined.ambercore=s.mined.lunacore=1}],
+  ['drillborn_ore',s=>{s.mined.burrowsteel=s.mined.phasecrystal=s.mined.infernium=1},s=>{s.mined.burrowsteel=s.mined.phasecrystal=1}],
+  ['deep_hoard',(s,m)=>m.depthMined=500,(s,m)=>m.depthMined=499],
+  ['ironbound',s=>s.pickaxeLevel=2],
+  ['rune_ready',s=>s.pickaxeLevel=3,s=>s.pickaxeLevel=2],
+  ['moonforged',s=>s.pickaxeLevel=4,s=>s.pickaxeLevel=3],
+  ['emberforged',s=>s.pickaxeLevel=5,s=>s.pickaxeLevel=4],
+  ['depth_master',s=>s.emberMastery=5,s=>s.emberMastery=4],
+  ['starforged',s=>s.starforgeUnlocked.crusher=true],
+  ['threefold_star',s=>setEvery(s.starforgeUnlocked,true),s=>{setEvery(s.starforgeUnlocked,true);s.starforgeUnlocked.prospector=false}],
+  ['burrower',s=>s.drillLevel=1],
+  ['pulse_driver',s=>s.drillLevel=2,s=>s.drillLevel=1],
+  ['deepcore',s=>s.drillLevel=3,s=>s.drillLevel=2],
+  ['moss_below',s=>s.discoveredMines.mossMine=true],
+  ['glass_below',s=>s.discoveredMines.moonMine=true],
+  ['fire_below',s=>s.discoveredMines.emberMine=true],
+  ['stars_below',s=>s.discoveredMines.starMine=true],
+  ['hidden_descent',s=>s.discoveredDepthEntrances.mossMine=true],
+  ['every_depth',s=>setEvery(s.visitedDepths,true),s=>{setEvery(s.visitedDepths,true);s.visitedDepths.starMine=false}],
+  ['treasure_found',(s,m)=>m.opened=1],
+  ['cache_hunter',(s,m)=>m.opened=4,(s,m)=>m.opened=3],
+  ['chestmaster',s=>{for(const id of ['moss_supply','moss_ironbound','moon_cache','moon_reliquary','ember_cache','ember_vault','star_cache','star_coffer'])s.openedChests[id]=true},s=>{for(const id of ['moss_supply','moss_ironbound','moon_cache','moon_reliquary','ember_cache','ember_vault','star_cache'])s.openedChests[id]=true}],
+  ['vein_runner',(s,m)=>m.veinTotal=1],
+  ['fourfold_veins',s=>{for(const id of Object.keys(s.veinsCompleted))s.veinsCompleted[id]=1},s=>{for(const id of ['copper_run','moonglass_bloom','ember_fault'])s.veinsCompleted[id]=1}],
+  ['vein_veteran',(s,m)=>m.veinTotal=10,(s,m)=>m.veinTotal=9],
+  ['quick_step',s=>s.movementSpeedLevel=1],
+  ['roadrunner',s=>s.movementSpeedLevel=10,s=>s.movementSpeedLevel=9],
+  ['more_storage',s=>s.base.chests.push({scene:'surface',packed:true})],
+  ['mobile_base',s=>s.base.forge.scene='mossMine'],
+  ['mineral_crown',s=>setEvery(s.mined,1),s=>{setEvery(s.mined,1);s.mined.infernium=0}],
+  ['ever_deeper',s=>s.victory=true]
+];
+assert.equal(achievementPredicateBoundaries.length,50);assert.deepEqual(achievementPredicateBoundaries.map(([id])=>id),expectedAchievementIds);
+for(const [id,crossBoundary,approachBoundary] of achievementPredicateBoundaries){
+  const predicate=predicateById.get(id);assert.equal(typeof predicate,'function',id+' predicate must exist');
+  const below=predicateFixture();if(approachBoundary)approachBoundary(below.state,below.metrics);assert.equal(Boolean(predicate(below.state,below.metrics)),false,id+' must stay locked below its boundary');
+  const atBoundary=predicateFixture();crossBoundary(atBoundary.state,atBoundary.metrics);assert.equal(Boolean(predicate(atBoundary.state,atBoundary.metrics)),true,id+' must unlock at its boundary');
+}
+
+const existingExpedition=achievementApi.snapshot().state;storage.clear();storage.set('everDeeperPrototypeV2',JSON.stringify(existingExpedition));const backfillSnapshot=createRuntime().api.snapshot();
+assert.equal(backfillSnapshot.achievements.count,3);assert.equal(JSON.stringify(backfillSnapshot.achievements.queue),JSON.stringify([]));assert.equal(backfillSnapshot.achievements.active,null);assert.ok(['first_chip','ironbound','rune_ready'].every(id=>{const record=backfillSnapshot.achievements.records[id];return record.acknowledged&&record.retroactive&&record.scene===null&&record.depth===null}));
+storage.clear();for(const [key,value] of storageBeforeAchievements)storage.set(key,value);
 
 const storageBeforeMoonglassRendering=new Map(storage),productionRuntime=createRuntime(),productionApi=productionRuntime.api;
 productionApi.reset();

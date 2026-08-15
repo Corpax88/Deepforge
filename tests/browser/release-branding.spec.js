@@ -12,20 +12,20 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   const logo=page.locator('.brand-logo');
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('alt','Ever Deeper');
-  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0331');
+  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0340');
   const logoState=await logo.evaluate(image=>({complete:image.complete,width:image.naturalWidth,height:image.naturalHeight,bounds:image.getBoundingClientRect().toJSON()}));
   expect(logoState).toMatchObject({complete:true,width:800,height:297});
   expect(logoState.bounds.width).toBeGreaterThanOrEqual(124);
   expect(logoState.bounds.right).toBeLessThanOrEqual(await page.evaluate(()=>innerWidth));
 
-  await expect(page.locator('#buildVersion')).toHaveText('v0.33.1');
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.33.1 · DEEPGLASS PREMIUM');
-  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0331');
-  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0331');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.34.0');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.34.0 · DEEPGLASS PREMIUM');
+  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0340');
+  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0340');
   await page.evaluate(()=>window.__everDeeperTest.dismissStartMenu());
   await page.evaluate(()=>window.__everDeeperTest.setPosition(455,250));
   await expect(page.locator('#contextPanel')).toBeVisible();
-  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=0331$/);
+  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=0340$/);
   const release=await page.evaluate(()=>{
     const api=window.__everDeeperTest;
     api.reset();api.save();
@@ -39,7 +39,7 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
     };
   });
   expect(release).toEqual({
-    build:{version:'0.33.1',name:'DEEPGLASS PREMIUM'},
+    build:{version:'0.34.0',name:'DEEPGLASS PREMIUM'},
     music:'assets/audio/ever-deeper-drift-loop.mp3',
     retiredMarkup:false,
     retiredStorage:false,
@@ -60,6 +60,30 @@ test('all resource symbols use the shared production drop assets',async({page})=
   await expect(page.locator('#inventoryGrid [data-resource="emberstone"] img')).toHaveAttribute('src',/emberstone-drop\.png/);
   await expect(page.locator('.resource.gold [data-resource="gold"] img')).toHaveAttribute('src',/gold-drop\.png/);
   expect(await page.locator('.resource-gem').count()).toBe(0);
+});
+
+test('achievement reliquaries settle before FIFO dismissal and persist full records',async({page})=>{
+  await page.goto('/');
+  await page.waitForFunction(()=>window.__everDeeperTest);
+  const catalog=await page.evaluate(()=>{const achievements=window.__everDeeperTest.snapshot().achievements;return{total:achievements.total,ids:achievements.definitions.map(definition=>definition.id),assets:achievements.definitions.map(definition=>definition.asset),count:achievements.count}});
+  expect(catalog.total).toBe(50);expect(new Set(catalog.ids).size).toBe(50);expect(catalog.count).toBe(0);expect(catalog.assets.every((asset,index)=>asset===`assets/achievements/${catalog.ids[index]}.png`)).toBe(true);
+  expect(new Set(catalog.assets).size).toBe(50);
+  const decodedAssets=await page.evaluate(paths=>Promise.all(paths.map(async src=>{const image=new Image();image.src=src;try{await image.decode();return{src,width:image.naturalWidth,height:image.naturalHeight,decoded:true}}catch{return{src,width:0,height:0,decoded:false}}})),catalog.assets);
+  expect(decodedAssets).toHaveLength(50);expect(decodedAssets.every(asset=>asset.decoded&&asset.width===512&&asset.height===512)).toBe(true);
+
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.dismissStartMenu();api.grantMined('stone',1);api.evaluateAchievements()});
+  const popup=page.locator('#achievementPopup');await expect(popup).toBeVisible();await expect(popup).toHaveAttribute('data-achievement','first_chip');await expect(popup).toHaveAttribute('data-settled','false');
+  await popup.dispatchEvent('click');expect(await page.evaluate(()=>window.__everDeeperTest.snapshot().achievements.active)).toBe('first_chip');
+  await page.waitForFunction(()=>window.__everDeeperTest.snapshot().achievements.settled);await expect(popup).toHaveAttribute('data-settled','true');await popup.click();await expect(popup).toBeHidden();
+
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.setPickaxeLevel(3);api.evaluateAchievements()});await expect(popup).toHaveAttribute('data-achievement','ironbound');
+  let fifo=await page.evaluate(()=>window.__everDeeperTest.snapshot().achievements);expect(fifo.queue).toEqual(['ironbound','rune_ready']);expect(fifo.settled).toBe(false);
+  await page.waitForFunction(()=>window.__everDeeperTest.snapshot().achievements.settled);await popup.click();await expect(popup).toHaveAttribute('data-achievement','rune_ready');
+  await page.waitForFunction(()=>window.__everDeeperTest.snapshot().achievements.settled);await popup.click();await expect(popup).toBeHidden();
+
+  const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('everDeeperAchievementsV1')));expect(Object.keys(stored.records)).toEqual(['first_chip','ironbound','rune_ready']);
+  for(const record of Object.values(stored.records)){expect(record).toEqual(expect.objectContaining({reason:expect.any(String),scene:'surface',depth:1,order:expect.any(Number),acknowledged:true}));expect(Number.isFinite(Date.parse(record.timestamp))).toBe(true)}
+  await page.reload();await page.waitForFunction(()=>window.__everDeeperTest);await page.locator('#startAchievementsButton').click();await expect(page.locator('#achievementCount')).toHaveText('3 / 50 UNLOCKED');await expect(page.locator('.achievement-entry')).toHaveCount(50);await expect(page.locator('.achievement-entry.unlocked')).toHaveCount(3);await expect(page.locator('[data-achievement="first_chip"] .achievement-copy p')).toContainText('first resource');await expect(page.locator('[data-achievement="first_chip"] .achievement-copy span')).toContainText(/EARNED/);
 });
 
 test('Deepcore routes the final expedition through Starfall and into Voidstar',async({page})=>{

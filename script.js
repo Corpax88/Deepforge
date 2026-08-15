@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0331';
+  const ASSET_VERSION='0340';
   const MOONGLASS_SURFACE_BLEND=190;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=190;
@@ -324,6 +324,11 @@
   const settingsPanel=document.getElementById('settingsPanel');
   const statsPanel=document.getElementById('statsPanel');
   const achievementsPanel=document.getElementById('achievementsPanel');
+  const achievementCount=document.getElementById('achievementCount');
+  const achievementList=document.getElementById('achievementList');
+  const achievementPopup=document.getElementById('achievementPopup');
+  const achievementPopupImage=document.getElementById('achievementPopupImage');
+  const achievementAnnouncement=document.getElementById('achievementAnnouncement');
   const musicToggle=document.getElementById('musicToggle');
   const effectsToggle=document.getElementById('effectsToggle');
   const resumeButton=document.getElementById('resumeButton');
@@ -332,6 +337,7 @@
   const continueDetail=document.getElementById('continueDetail');
   const newGameButton=document.getElementById('newGameButton');
   const startAchievementsButton=document.getElementById('startAchievementsButton');
+  const startAchievementsDetail=document.getElementById('startAchievementsDetail');
   const startSettingsButton=document.getElementById('startSettingsButton');
   const inventoryButton=document.getElementById('inventoryButton');
   const inventoryShade=document.getElementById('inventoryShade');
@@ -345,7 +351,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.33.1',name:'DEEPGLASS PREMIUM'};
+  const BUILD={version:'0.34.0',name:'DEEPGLASS PREMIUM'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='EVER DEEPER v'+BUILD.version+' · '+BUILD.name;
 
@@ -421,6 +427,7 @@
     burrowsteel:{shape:'spark',gravity:360,spread:1.16},phasecrystal:{shape:'shard',gravity:150,spread:1.24},infernium:{shape:'ember',gravity:180,spread:1.28}
   };
   const SAVE_KEY='everDeeperPrototypeV2';
+  const ACHIEVEMENTS_KEY='everDeeperAchievementsV1';
   const GATE_COST=120;
   const EMBER_GATE_COST=360;
   const CRAFT_MATERIAL_REQUIRED=200;
@@ -661,6 +668,63 @@
   ];
   const VEIN_ROCK_LAYOUT=VEIN_DEFINITIONS.flatMap(vein=>vein.positions.map(position=>[vein.type,position[0],position[1],vein.id]));
 
+  function achievementDefinition(id,title,description,category,tier,predicate){
+    return Object.freeze({id,title,description,category,tier,asset:'assets/achievements/'+id+'.png',predicate});
+  }
+  const ACHIEVEMENT_DEFINITIONS=Object.freeze([
+    achievementDefinition('first_chip','First Chip','Mine your first resource.','mining','bronze',(s,m)=>m.totalMined>=1),
+    achievementDefinition('first_payday','First Payday','Earn your first gold.','treasure','bronze',s=>s.totalGold>=1),
+    achievementDefinition('moon_unsealed','Moon Unsealed','Open the Moonglass Gate.','journey','bronze',s=>s.areaUnlocked),
+    achievementDefinition('ember_unsealed','Ember Unsealed','Break the Emberdeep Seal.','journey','silver',s=>s.emberdeepUnlocked),
+    achievementDefinition('stars_unsealed','Stars Unsealed','Open the Starfall Master Seal.','journey','gold',s=>s.fourthUnlocked),
+    achievementDefinition('four_frontiers','Four Frontiers','Step into Moonglass, Emberdeep, and Starfall.','journey','gold',s=>s.discoveredSecond&&s.discoveredThird&&s.discoveredFourth),
+    achievementDefinition('minewalker','Minewalker','Enter all four mines.','journey','gold',s=>MINE_SCENES.every(scene=>s.discoveredMines[scene])),
+    achievementDefinition('seasoned_arms','Seasoned Arms','Complete 100 mining swings.','mining','bronze',s=>s.totalSwings>=100),
+    achievementDefinition('iron_rhythm','Iron Rhythm','Complete 1,000 mining swings.','mining','gold',s=>s.totalSwings>=1000),
+    achievementDefinition('keen_eye','Keen Eye','Land 10 precision hits.','mining','bronze',s=>s.precisionHits>=10),
+    achievementDefinition('true_aim','True Aim','Land 100 precision hits.','mining','gold',s=>s.precisionHits>=100),
+    achievementDefinition('tunnel_hand','Tunnel Hand','Dig out 100 terrain tiles.','mining','silver',(s,m)=>m.tilesDug>=100),
+    achievementDefinition('earth_eater','Earth Eater','Dig out 1,000 terrain tiles.','mining','gold',(s,m)=>m.tilesDug>=1000),
+    achievementDefinition('ore_mountain','Ore Mountain','Mine 1,000 resources in total.','mining','gold',(s,m)=>m.totalMined>=1000),
+    achievementDefinition('goldspark','Goldspark','Mine your first Gold Vein.','resources','bronze',s=>s.mined.gold>=1),
+    achievementDefinition('fallen_star','Fallen Star','Obtain your first Starshard through mining.','resources','silver',s=>s.mined.starshard>=1),
+    achievementDefinition('sunstruck','Sunstruck','Obtain your first Sunslag Core through mining.','resources','silver',s=>s.mined.sunslag>=1),
+    achievementDefinition('crowned','Crowned','Obtain your first Crownstone through mining.','resources','gold',s=>s.mined.crownstone>=1),
+    achievementDefinition('into_the_deep','Into the Deep','Mine your first Deepstone in Depth 2.','depths','silver',s=>s.mined.deepstone>=1),
+    achievementDefinition('three_hearts','Three Hearts','Mine Ambercore, Lunacore, and a Furnace Heart.','depths','gold',s=>['ambercore','lunacore','furnaceheart'].every(type=>s.mined[type]>0)),
+    achievementDefinition('drillborn_ore','Drillborn Ore','Mine Burrowsteel, Phase Crystal, and Infernium.','depths','gold',s=>['burrowsteel','phasecrystal','infernium'].every(type=>s.mined[type]>0)),
+    achievementDefinition('deep_hoard','Deep Hoard','Mine 500 Depth 2 resources.','depths','gold',(s,m)=>m.depthMined>=500),
+    achievementDefinition('ironbound','Ironbound','Forge the Iron Pickaxe.','equipment','bronze',s=>s.pickaxeLevel>=2),
+    achievementDefinition('rune_ready','Rune Ready','Forge the Runed Pickaxe.','equipment','bronze',s=>s.pickaxeLevel>=3),
+    achievementDefinition('moonforged','Moonforged','Forge the Moonglass Pickaxe.','equipment','silver',s=>s.pickaxeLevel>=4),
+    achievementDefinition('emberforged','Emberforged','Forge the Ember Pickaxe.','equipment','gold',s=>s.pickaxeLevel>=5),
+    achievementDefinition('depth_master','Depth Master','Reach Ember Mastery 5.','equipment','gold',s=>s.emberMastery>=5),
+    achievementDefinition('starforged','Starforged','Forge your first Starforge form.','equipment','gold',s=>Object.values(s.starforgeUnlocked).some(Boolean)),
+    achievementDefinition('threefold_star','Threefold Star','Forge all three Starforge forms.','equipment','mythic',s=>Object.values(s.starforgeUnlocked).every(Boolean)),
+    achievementDefinition('burrower','Burrower','Forge the Burrower Drill.','equipment','silver',s=>s.drillLevel>=1),
+    achievementDefinition('pulse_driver','Pulse Driver','Forge the Pulse Drill.','equipment','gold',s=>s.drillLevel>=2),
+    achievementDefinition('deepcore','Deepcore','Forge the Deepcore Drill.','equipment','mythic',s=>s.drillLevel>=3),
+    achievementDefinition('moss_below','Moss Below','Enter Mossvein Mine.','journey','bronze',s=>s.discoveredMines.mossMine),
+    achievementDefinition('glass_below','Glass Below','Enter Moonglass Labyrinth.','journey','silver',s=>s.discoveredMines.moonMine),
+    achievementDefinition('fire_below','Fire Below','Enter Emberdeep Works.','journey','silver',s=>s.discoveredMines.emberMine),
+    achievementDefinition('stars_below','Stars Below','Enter Starfall Hollow.','journey','gold',s=>s.discoveredMines.starMine),
+    achievementDefinition('hidden_descent','Hidden Descent','Uncover a hidden Depth 2 entrance.','depths','silver',s=>MINE_SCENES.some(scene=>s.discoveredDepthEntrances[scene])),
+    achievementDefinition('every_depth','Every Depth','Enter Depth 2 in all four mines.','depths','mythic',s=>MINE_SCENES.every(scene=>s.visitedDepths[scene])),
+    achievementDefinition('treasure_found','Treasure Found','Open your first surface treasure chest.','treasure','bronze',(s,m)=>m.opened>=1),
+    achievementDefinition('cache_hunter','Cache Hunter','Open four surface treasure chests.','treasure','silver',(s,m)=>m.opened>=4),
+    achievementDefinition('chestmaster','Chestmaster','Open all eight surface treasure chests.','treasure','gold',s=>CHEST_DEFINITIONS.every(chest=>s.openedChests[chest.id])),
+    achievementDefinition('vein_runner','Vein Runner','Complete your first timed surface vein.','veins','bronze',(s,m)=>m.veinTotal>=1),
+    achievementDefinition('fourfold_veins','Fourfold Veins','Complete each of the four timed vein types.','veins','gold',s=>VEIN_DEFINITIONS.every(vein=>s.veinsCompleted[vein.id]>0)),
+    achievementDefinition('vein_veteran','Vein Veteran','Complete 10 timed surface veins.','veins','gold',(s,m)=>m.veinTotal>=10),
+    achievementDefinition('quick_step','Quick Step','Buy your first movement-speed upgrade.','base','bronze',s=>s.movementSpeedLevel>=1),
+    achievementDefinition('roadrunner','Roadrunner','Buy 10 movement-speed upgrades.','base','gold',s=>s.movementSpeedLevel>=10),
+    achievementDefinition('more_storage','More Storage','Purchase a second storage chest.','base','bronze',s=>s.base.chests.length>=2),
+    achievementDefinition('mobile_base','Mobile Base','Place a base module inside any mine.','base','silver',s=>[s.base.forge,s.base.sell,...s.base.chests].some(module=>!module.packed&&MINE_SCENES.includes(module.scene))),
+    achievementDefinition('mineral_crown','Mineral Crown','Record at least one of every resource.','resources','mythic',s=>Object.keys(ROCK_TYPES).every(type=>s.mined[type]>0)),
+    achievementDefinition('ever_deeper','Ever Deeper','Conquer Voidstar by mining a Singularity Core with the Deepcore Drill.','journey','mythic',s=>s.victory)
+  ]);
+  const ACHIEVEMENT_BY_ID=Object.freeze(Object.fromEntries(ACHIEVEMENT_DEFINITIONS.map(definition=>[definition.id,definition])));
+
   let width=800,height=600,viewZoom=.86,viewWidth=930,viewHeight=698,dpr=1,lastFrame=0,time=0,timeScale=1,toastTimer=0,bannerTimer=0;
   const reducedMotionQuery=typeof window.matchMedia==='function'?window.matchMedia('(prefers-reduced-motion: reduce)'):null;
   let reducedMotion=!!(reducedMotionQuery&&reducedMotionQuery.matches);
@@ -684,6 +748,7 @@
   const state=loadState();
   let currentScene=state.location.scene;
   let currentDepth=currentScene==='surface'?1:state.location.depth;
+  let achievementProgress=null,achievementQueue=[],activeAchievementId=null,achievementPopupSettled=false,achievementSettleTimer=0,achievementCheckTimer=0,achievementListDirty=true;
   player.x=state.location.x;player.y=state.location.y;
   let displayedGold=state.gold,goldTween=null;
   let depthEntrances=createDepthEntrances();
@@ -791,6 +856,143 @@
     try{localStorage.setItem(AUDIO_SETTINGS_KEY,JSON.stringify(audioSettings))}catch(error){}
   }
 
+  const ACHIEVEMENT_REASONS=Object.freeze({
+    first_chip:'Mined the first resource of the expedition.',first_payday:'Added the first piece of earned gold to the expedition ledger.',
+    moon_unsealed:'Opened the way into Moonglass.',ember_unsealed:'Broke the seal guarding Emberdeep.',stars_unsealed:'Opened the master seal into Starfall.',
+    four_frontiers:'Crossed into Moonglass, Emberdeep, and Starfall.',minewalker:'Entered Mossvein, Moonglass, Emberdeep, and Starfall mines.',
+    seasoned_arms:'Completed 100 mining swings.',iron_rhythm:'Completed 1,000 mining swings.',keen_eye:'Landed 10 precision hits.',true_aim:'Landed 100 precision hits.',
+    tunnel_hand:'Dug out 100 terrain tiles.',earth_eater:'Dug out 1,000 terrain tiles.',ore_mountain:'Mined 1,000 resources in total.',
+    goldspark:'Mined the first Gold Vein.',fallen_star:'Mined the first Starshard.',sunstruck:'Mined the first Sunslag Core.',crowned:'Mined the first Crownstone.',
+    into_the_deep:'Mined the first piece of Deepstone in Depth 2.',three_hearts:'Mined Ambercore, Lunacore, and a Furnace Heart.',
+    drillborn_ore:'Mined Burrowsteel, Phase Crystal, and Infernium.',deep_hoard:'Mined 500 resources found in Depth 2.',
+    ironbound:'Forged the Iron Pickaxe.',rune_ready:'Forged the Runed Pickaxe.',moonforged:'Forged the Moonglass Pickaxe.',emberforged:'Forged the Ember Pickaxe.',
+    depth_master:'Reached Ember Mastery rank 5.',starforged:'Forged the first Starforge form.',threefold_star:'Forged all three Starforge forms.',
+    burrower:'Forged the Burrower Drill.',pulse_driver:'Forged the Pulse Drill.',deepcore:'Forged the Deepcore Drill.',
+    moss_below:'Entered Mossvein Mine.',glass_below:'Entered Moonglass Labyrinth.',fire_below:'Entered Emberdeep Works.',stars_below:'Entered Starfall Hollow.',
+    hidden_descent:'Uncovered a hidden Depth 2 entrance.',every_depth:'Entered Depth 2 in all four mines.',
+    treasure_found:'Opened the first surface treasure chest.',cache_hunter:'Opened four surface treasure chests.',chestmaster:'Opened all eight surface treasure chests.',
+    vein_runner:'Completed the first timed surface vein.',fourfold_veins:'Completed all four timed surface vein types.',vein_veteran:'Completed 10 timed surface veins.',
+    quick_step:'Bought the first movement-speed upgrade.',roadrunner:'Bought 10 movement-speed upgrades.',more_storage:'Purchased a second storage chest.',
+    mobile_base:'Placed a base module inside a mine.',mineral_crown:'Recorded at least one of every mineable resource.',
+    ever_deeper:'Mined a Singularity Core in Voidstar with the Deepcore Drill and completed Ever Deeper.'
+  });
+
+  function defaultAchievementProgress(){return{version:1,nextOrder:1,records:{}}}
+
+  function loadAchievementProgress(){
+    const fallback=defaultAchievementProgress();
+    try{
+      const raw=parseStoredState(localStorage.getItem(ACHIEVEMENTS_KEY));if(!raw||typeof raw!=='object')return fallback;
+      const source=raw.records&&typeof raw.records==='object'?raw.records:{},records={};let maxOrder=0;
+      for(const definition of ACHIEVEMENT_DEFINITIONS){
+        const record=source[definition.id];if(!record||typeof record!=='object')continue;
+        const parsedTime=Date.parse(record.timestamp),order=Math.max(1,Math.floor(Number(record.order)||maxOrder+1));maxOrder=Math.max(maxOrder,order);
+        const retroactive=record.retroactive===true;
+        records[definition.id]={id:definition.id,timestamp:Number.isFinite(parsedTime)?new Date(parsedTime).toISOString():new Date().toISOString(),reason:typeof record.reason==='string'&&record.reason?record.reason:ACHIEVEMENT_REASONS[definition.id],scene:retroactive?null:['surface',...MINE_SCENES].includes(record.scene)?record.scene:'surface',depth:retroactive?null:record.depth===2?2:1,order,acknowledged:record.acknowledged===true,retroactive};
+      }
+      return{version:1,nextOrder:Math.max(maxOrder+1,Math.floor(Number(raw.nextOrder)||1)),records};
+    }catch(error){return fallback}
+  }
+
+  function persistAchievementProgress(){
+    try{localStorage.setItem(ACHIEVEMENTS_KEY,JSON.stringify(achievementProgress))}catch(error){}
+  }
+
+  function achievementMetrics(progress=state){
+    const totalMined=Object.values(progress.mined).reduce((total,amount)=>total+Math.max(0,Number(amount)||0),0);
+    const tilesDug=Object.values(progress.terrainDug).reduce((total,indices)=>total+(Array.isArray(indices)?indices.length:0),0);
+    const depthMined=Object.entries(progress.mined).reduce((total,[type,amount])=>total+(ROCK_TYPES[type]&&ROCK_TYPES[type].depth2?Math.max(0,Number(amount)||0):0),0);
+    const opened=CHEST_DEFINITIONS.reduce((total,chest)=>total+Number(!!progress.openedChests[chest.id]),0);
+    const veinTotal=Object.values(progress.veinsCompleted).reduce((total,count)=>total+Math.max(0,Number(count)||0),0);
+    return{totalMined,tilesDug,depthMined,opened,veinTotal};
+  }
+
+  function addAchievementRecord(definition,acknowledged,timestamp,retroactive=false){
+    if(achievementProgress.records[definition.id])return null;
+    const record={id:definition.id,timestamp:timestamp||new Date().toISOString(),reason:ACHIEVEMENT_REASONS[definition.id],scene:retroactive?null:currentScene,depth:retroactive?null:currentScene==='surface'?1:currentDepth,order:achievementProgress.nextOrder++,acknowledged:!!acknowledged,retroactive:!!retroactive};
+    achievementProgress.records[definition.id]=record;return record;
+  }
+
+  function evaluateAchievements({silent=false,timestamp=null,retroactive=false}={}){
+    const metrics=achievementMetrics(),unlocked=[];
+    for(const definition of ACHIEVEMENT_DEFINITIONS){
+      if(achievementProgress.records[definition.id])continue;
+      let earned=false;try{earned=!!definition.predicate(state,metrics)}catch(error){}
+      if(!earned)continue;
+      const record=addAchievementRecord(definition,silent,timestamp,retroactive);if(!record)continue;
+      unlocked.push(definition.id);if(!silent)achievementQueue.push(definition.id);
+    }
+    if(unlocked.length){persistAchievementProgress();renderAchievementSummary();achievementListDirty=true;if(!silent)syncAchievementPopup()}
+    return unlocked;
+  }
+
+  function initializeAchievements(){
+    if(loadedExistingSave)evaluateAchievements({silent:true,timestamp:new Date().toISOString(),retroactive:true});
+    achievementQueue=Object.values(achievementProgress.records).filter(record=>!record.acknowledged).sort((a,b)=>a.order-b.order).map(record=>record.id);
+    renderAchievementSummary();syncAchievementPopup();
+  }
+
+  function escapeAchievementHtml(value){return String(value).replace(/[&<>"']/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]))}
+
+  function achievementLocationLabel(record){
+    if(record.scene==='surface')return'Surface';
+    const mine=MINE_DEFINITIONS[record.scene];return record.depth===2?MINE_DEPTH_PROFILES[record.scene].name:titleCase(mine.name);
+  }
+
+  function achievementDateLabel(timestamp){
+    const date=new Date(timestamp);if(!Number.isFinite(date.getTime()))return'Unknown date';
+    try{return date.toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}catch(error){return date.toISOString().slice(0,16).replace('T',' ')}
+  }
+
+  function renderAchievementSummary(){
+    const unlocked=Object.keys(achievementProgress.records).length,label=unlocked+' / '+ACHIEVEMENT_DEFINITIONS.length+' UNLOCKED';
+    achievementCount.textContent=label;startAchievementsDetail.textContent=label;
+  }
+
+  function renderAchievementList(force=false){
+    if(!force&&!achievementListDirty)return;
+    achievementList.innerHTML=ACHIEVEMENT_DEFINITIONS.map((definition,index)=>{
+      const record=achievementProgress.records[definition.id],earned=!!record;
+      const status=earned?(record.retroactive?'IMPORTED '+achievementDateLabel(record.timestamp).toUpperCase()+' · PRE-v0.34 SAVE':'EARNED '+achievementDateLabel(record.timestamp).toUpperCase()+' · '+achievementLocationLabel(record).toUpperCase()):'LOCKED · '+definition.category.toUpperCase();
+      const detail=earned?(record.retroactive?record.reason+' Exact original unlock time was not recorded.':record.reason):'How to earn: '+definition.description;
+      return'<article class="achievement-entry '+(earned?'unlocked':'locked')+'" data-tier="'+definition.tier+'" data-achievement="'+definition.id+'"><div class="achievement-index">'+String(index+1).padStart(2,'0')+'</div><div class="achievement-art"><img src="'+definition.asset+'?v='+ASSET_VERSION+'" alt="" loading="lazy" aria-hidden="true"></div><div class="achievement-copy"><div><h4>'+escapeAchievementHtml(definition.title)+'</h4><span>'+escapeAchievementHtml(status)+'</span></div><p>'+escapeAchievementHtml(detail)+'</p></div></article>';
+    }).join('');achievementListDirty=false;
+  }
+
+  function canShowAchievementPopup(){return startScreen.hidden&&menuShade.hidden&&inventoryShade.hidden}
+
+  function positionAchievementPopup(){
+    if(achievementPopup.hidden)return;
+    const screen=worldToScreen(player.x,player.y),screenWidth=viewport.clientWidth||width,screenHeight=viewport.clientHeight||height;
+    const left=clamp(screen.x*viewZoom,58,Math.max(58,screenWidth-58)),top=clamp(screen.y*viewZoom-105,62,Math.max(62,screenHeight-128));
+    achievementPopup.style.left=Math.round(left)+'px';achievementPopup.style.top=Math.round(top)+'px';
+  }
+
+  function syncAchievementPopup(){
+    if(!canShowAchievementPopup()){achievementPopup.hidden=true;return}
+    if(activeAchievementId){const wasHidden=achievementPopup.hidden;achievementPopup.hidden=false;if(wasHidden&&!achievementPopupSettled){achievementPopup.classList.remove('spinning');void achievementPopup.offsetWidth;achievementPopup.classList.add('spinning');clearTimeout(achievementSettleTimer);achievementSettleTimer=setTimeout(settleAchievementPopup,reducedMotion?450:2900)}positionAchievementPopup();return}
+    while(achievementQueue.length&&achievementProgress.records[achievementQueue[0]]&&achievementProgress.records[achievementQueue[0]].acknowledged)achievementQueue.shift();
+    const id=achievementQueue[0],definition=ACHIEVEMENT_BY_ID[id];if(!definition){achievementPopup.hidden=true;return}
+    activeAchievementId=id;achievementPopupSettled=false;achievementPopup.dataset.achievement=id;achievementPopup.dataset.settled='false';achievementPopupImage.src=definition.asset+'?v='+ASSET_VERSION;achievementPopup.setAttribute('aria-label',definition.title+' unlocked. Wait for the reliquary to settle.');achievementPopup.setAttribute('aria-disabled','true');
+    achievementPopup.hidden=false;achievementPopup.classList.remove('spinning');achievementPopup.classList.remove('settled');void achievementPopup.offsetWidth;achievementPopup.classList.add('spinning');positionAchievementPopup();sound('achievement');
+    achievementAnnouncement.textContent=definition.title+' unlocked. '+definition.description;
+    clearTimeout(achievementSettleTimer);achievementSettleTimer=setTimeout(settleAchievementPopup,reducedMotion?450:2900);
+  }
+
+  function settleAchievementPopup(){
+    if(!activeAchievementId||achievementPopupSettled)return false;
+    clearTimeout(achievementSettleTimer);achievementSettleTimer=0;achievementPopupSettled=true;achievementPopup.dataset.settled='true';achievementPopup.classList.remove('spinning');achievementPopup.classList.add('settled');achievementPopup.setAttribute('aria-disabled','false');
+    const definition=ACHIEVEMENT_BY_ID[activeAchievementId];achievementPopup.setAttribute('aria-label',(definition?definition.title:'Achievement')+' unlocked. Tap to dismiss.');return true;
+  }
+
+  function dismissAchievementPopup(){
+    if(!activeAchievementId||!achievementPopupSettled)return false;
+    clearTimeout(achievementSettleTimer);achievementSettleTimer=0;
+    const record=achievementProgress.records[activeAchievementId];if(record)record.acknowledged=true;
+    const dismissed=activeAchievementId;activeAchievementId=null;achievementPopupSettled=false;if(achievementQueue[0]===dismissed)achievementQueue.shift();else achievementQueue=achievementQueue.filter(id=>id!==dismissed);
+    achievementPopup.hidden=true;achievementPopup.classList.remove('spinning');achievementPopup.classList.remove('settled');persistAchievementProgress();achievementListDirty=true;sound('coin');syncAchievementPopup();return true;
+  }
+
   function isCompatibleLegacySave(candidate){
     return !!candidate&&typeof candidate==='object'&&Number(candidate.pickaxeLevel)>=1&&candidate.cargo&&candidate.mined&&candidate.terrainDug&&candidate.discoveredMines&&candidate.base;
   }
@@ -892,6 +1094,7 @@
     try{
       state.location.scene=currentScene;state.location.depth=currentScene==='surface'?1:currentDepth;state.location.x=player.x;state.location.y=player.y;
       if(currentScene==='surface'){state.location.surfaceX=player.x;state.location.surfaceY=player.y}
+      if(achievementProgress)evaluateAchievements();
       const snapshot=JSON.stringify(state);
       if(force||snapshot!==lastSavedSnapshot){localStorage.setItem(SAVE_KEY,snapshot);lastSavedSnapshot=snapshot}
     }catch(error){}
@@ -1189,8 +1392,8 @@
     sound('pickup','gold');showToast(moved+' resources returned to your inventory.');uiDirty=true;renderInventory();saveState(true);return true;
   }
 
-  function openInventory(){releaseTouchControls();inventoryShade.hidden=false;renderInventory()}
-  function closeInventory(){inventoryShade.hidden=true}
+  function openInventory(){releaseTouchControls();inventoryShade.hidden=false;renderInventory();syncAchievementPopup()}
+  function closeInventory(){inventoryShade.hidden=true;syncAchievementPopup()}
 
   function resourceKey(type){return type==='coin'?'gold':type}
   function resourceIconMarkup(type,className='',label=''){
@@ -1541,15 +1744,16 @@
     for(const [key,tab] of Object.entries(tabs)){const active=key===name;tab.classList.toggle('active',active);tab.setAttribute('aria-selected',String(active));panels[key].hidden=!active}
     achievementsPanel.hidden=name!=='achievements';menuShade.dataset.view=name;
     menuTitle.textContent=name==='stats'?'Stats':name==='achievements'?'Achievements':'Settings';
-    if(name==='stats')updateLedger();
+    menuCloseButton.setAttribute('aria-label','Close '+menuTitle.textContent.toLowerCase());
+    if(name==='stats')updateLedger();else if(name==='achievements')renderAchievementList();
   }
 
   function showOverlayMenu(name,source){
-    unlockAudio();releaseTouchControls();inventoryShade.hidden=true;menuShade.dataset.source=source;setMenuTab(name);resumeButton.textContent=source==='start'?'BACK TO MAIN MENU':'RETURN TO MINE';menuShade.hidden=false;
+    unlockAudio();releaseTouchControls();inventoryShade.hidden=true;menuShade.dataset.source=source;setMenuTab(name);resumeButton.textContent=source==='start'?'BACK TO MAIN MENU':'RETURN TO MINE';menuShade.hidden=false;syncAchievementPopup();
   }
 
   function enterGame(){
-    unlockAudio();startScreen.hidden=true;menuShade.hidden=true;lastFrame=0;saveState(true);
+    unlockAudio();startScreen.hidden=true;menuShade.hidden=true;inventoryShade.hidden=true;lastFrame=0;saveState(true);syncAchievementPopup();
   }
 
   function startNewGame(){
@@ -1622,6 +1826,8 @@
       playTone(250,510,.28,.1,'triangle');playTone(440,900,.32,.065,'sine',.08);
     }else if(kind==='unlock'){
       playTone(155,390,.52,.12,'sine');playTone(245,680,.58,.065,'triangle',.09);
+    }else if(kind==='achievement'){
+      playTone(330,720,.34,.09,'triangle');playTone(540,1120,.48,.065,'sine',.06);playTone(880,1540,.38,.04,'triangle',.19);
     }else if(kind==='vein'){
       playTone(210,520,.22,.1,'triangle');playTone(420,980,.34,.07,'sine',.06);playTone(720,1320,.2,.04,'triangle',.16);
     }else if(kind==='veinStep'){
@@ -2371,7 +2577,7 @@
   }
 
   function update(dt){
-    updateLootSweep(dt);if(!menuShade.hidden||!inventoryShade.hidden)return;
+    updateLootSweep(dt);achievementCheckTimer=Math.max(0,achievementCheckTimer-dt);if(achievementCheckTimer===0){evaluateAchievements();achievementCheckTimer=.12}if(!menuShade.hidden||!inventoryShade.hidden)return;
     time+=dt;
     if(moonglassGateTransition){
       moonglassGateTransition.elapsed=Math.min(moonglassGateTransition.duration,moonglassGateTransition.elapsed+dt);
@@ -2441,6 +2647,7 @@
       if(!state.discoveredThird&&player.x>WORLD.emberGateX+100){state.discoveredThird=true;showAreaBanner('EMBERDEEP FOUNDRY');sound('unlock');uiDirty=true;saveState()}
       if(!state.discoveredFourth&&player.x>WORLD.starfallGateX+100){state.discoveredFourth=true;showAreaBanner('STARFALL DEPTHS');sound('unlock');uiDirty=true;saveState()}
     }
+    positionAchievementPopup();
     if(uiDirty)updateUI();
   }
 
@@ -3960,7 +4167,7 @@
     unlockAudio();input.keys.add(event.code);
     if(event.code==='Space'){input.mineHeld=true;mineButton.classList.add('active');if(!event.repeat)startSwing(true)}
     if(event.code==='KeyE')performContext();
-    if(event.code==='Escape'){if(!inventoryShade.hidden)closeInventory();else if(!menuShade.hidden)menuShade.hidden=true}
+    if(event.code==='Escape'){if(!inventoryShade.hidden)closeInventory();else if(!menuShade.hidden){menuShade.hidden=true;syncAchievementPopup()}}
   });
   window.addEventListener('keyup',event=>{input.keys.delete(event.code);if(event.code==='Space'){input.mineHeld=false;mineButton.classList.remove('active')}});
   window.addEventListener('blur',()=>{input.keys.clear();releaseTouchControls()});
@@ -3976,6 +4183,9 @@
   autoSortButton.addEventListener('click',autoSortResources);buyChestButton.addEventListener('click',buyStorageChest);
   baseModuleList.addEventListener('click',event=>{const place=event.target.closest('[data-base-place]'),pack=event.target.closest('[data-base-pack]'),take=event.target.closest('[data-chest-take]');if(place)placeBaseModule(place.dataset.basePlace);else if(pack)packBaseModule(pack.dataset.basePack);else if(take)takeAllFromChest(take.dataset.chestTake)});
   inventoryShade.addEventListener('pointerdown',event=>{if(event.target===inventoryShade)closeInventory()});
+  achievementPopup.addEventListener('animationend',event=>{if(event.animationName==='achievement-coin-rise'||event.animationName==='achievement-claim-reveal')settleAchievementPopup()});
+  achievementPopup.addEventListener('click',dismissAchievementPopup);
+  achievementProgress=loadAchievementProgress();initializeAchievements();
   syncAudioSettingsUI();
   continueButton.disabled=!loadedExistingSave;
   continueDetail.textContent=loadedExistingSave?(currentScene==='surface'?'SURFACE EXPEDITION':currentMine().name):'NO EXPEDITION FOUND';
@@ -3984,13 +4194,13 @@
   menuButton.addEventListener('click',()=>showOverlayMenu('settings','game'));
   settingsTab.addEventListener('click',()=>setMenuTab('settings'));statsTab.addEventListener('click',()=>setMenuTab('stats'));
   musicToggle.addEventListener('click',()=>{unlockAudio();setAudioSetting('music',!audioSettings.music)});effectsToggle.addEventListener('click',()=>{unlockAudio();setAudioSetting('effects',!audioSettings.effects)});
-  menuCloseButton.addEventListener('click',()=>menuShade.hidden=true);resumeButton.addEventListener('click',()=>menuShade.hidden=true);
-  menuShade.addEventListener('pointerdown',event=>{if(event.target===menuShade)menuShade.hidden=true});
+  menuCloseButton.addEventListener('click',()=>{menuShade.hidden=true;syncAchievementPopup()});resumeButton.addEventListener('click',()=>{menuShade.hidden=true;syncAchievementPopup()});
+  menuShade.addEventListener('pointerdown',event=>{if(event.target===menuShade){menuShade.hidden=true;syncAchievementPopup()}});
   window.addEventListener('resize',resize,{passive:true});
 
   window.__everDeeperTest={
     snapshot:()=>JSON.parse(JSON.stringify({
-      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,startMenu:{visible:!startScreen.hidden,hasSave:loadedExistingSave,actions:['continue','new-game','achievements','settings'],achievementsInPause:false},music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted,enabled:audioSettings.music,effectsEnabled:audioSettings.effects},resourceRendering:{...RESOURCE_RENDER_CONTRACT,paths:DROP_PATHS,bounds:RESOURCE_IMAGE_BOUNDS},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true,emberMine:true,starMine:true},surfaceAssetRendering:{mossveinGround:true,mainRoad:SURFACE_ROAD_PATHS,seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:MOSSVEIN_MINE_PATH,mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
+      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,startMenu:{visible:!startScreen.hidden,hasSave:loadedExistingSave,actions:['continue','new-game','achievements','settings'],achievementsInPause:false},achievements:{storageKey:ACHIEVEMENTS_KEY,total:ACHIEVEMENT_DEFINITIONS.length,count:Object.keys(achievementProgress.records).length,definitions:ACHIEVEMENT_DEFINITIONS.map(({predicate,...definition})=>definition),records:achievementProgress.records,queue:achievementQueue.slice(),active:activeAchievementId,settled:achievementPopupSettled,popupVisible:!achievementPopup.hidden,metrics:achievementMetrics()},music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted,enabled:audioSettings.music,effectsEnabled:audioSettings.effects},resourceRendering:{...RESOURCE_RENDER_CONTRACT,paths:DROP_PATHS,bounds:RESOURCE_IMAGE_BOUNDS},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true,emberMine:true,starMine:true},surfaceAssetRendering:{mossveinGround:true,mainRoad:SURFACE_ROAD_PATHS,seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:MOSSVEIN_MINE_PATH,mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
       surfaceMoonglassRendering:{ground:SURFACE_MOONGLASS_PATHS.ground,crystals:SURFACE_MOONGLASS_PATHS.crystals,bloomBed:SURFACE_MOONGLASS_PATHS.bloomBed,entrance:MINE_ENTRANCE_PATHS.moonMine,gateMark:STARTER_PATHS.moonglassGateMark,emberdeepSeal:STARTER_PATHS.emberdeepSeal,openBoundaryGatesRemoved:true,animatedGateTransition:true,smoothMossveinBlend:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:SURFACE_MOONGLASS_PATHS.crystalCacheClosed,open:SURFACE_MOONGLASS_PATHS.crystalCacheOpen},reliquary:{closed:SURFACE_MOONGLASS_PATHS.reliquaryClosed,open:SURFACE_MOONGLASS_PATHS.reliquaryOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyEmberdeepSeal:false},
       surfaceEmberdeepRendering:{ground:SURFACE_EMBERDEEP_PATHS.ground,slag:SURFACE_EMBERDEEP_PATHS.slag,faultBed:SURFACE_EMBERDEEP_PATHS.faultBed,minePath:SURFACE_EMBERDEEP_PATHS.minePath,minePathBounds:{...EMBERDEEP_MINE_PATH_BOUNDS},minePathRotation:EMBERDEEP_MINE_PATH_ROTATION,minePathPivot:{...EMBERDEEP_MINE_PATH_PIVOT},minePathMouthTarget:{x:2480,y:1015},entrance:MINE_ENTRANCE_PATHS.emberMine,entrancePosition:{...MINE_DEFINITIONS.emberMine.surfaceEntrance},entranceFlipped:true,gateSeal:STARTER_PATHS.emberdeepSeal,gateMark:STARTER_PATHS.emberdeepSealMark,animatedGateTransition:true,smoothMoonglassBlend:true,continuousBlendUnderlay:true,backgroundSlagDistinct:true,chests:{foundry:{closed:SURFACE_EMBERDEEP_PATHS.foundryClosed,open:SURFACE_EMBERDEEP_PATHS.foundryOpen},vault:{closed:SURFACE_EMBERDEEP_PATHS.vaultClosed,open:SURFACE_EMBERDEEP_PATHS.vaultOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyGate:false},
       surfaceStarfallRendering:{ground:SURFACE_STARFALL_PATHS.ground,shards:SURFACE_STARFALL_PATHS.shards,latticeBed:SURFACE_STARFALL_PATHS.latticeBed,minePath:SURFACE_STARFALL_PATHS.minePath,minePathBounds:{...STARFALL_MINE_PATH_BOUNDS},minePathMouthTarget:{x:3505,y:1000},entrance:MINE_ENTRANCE_PATHS.starMine,entrancePosition:{...MINE_DEFINITIONS.starMine.surfaceEntrance},gateSeal:STARTER_PATHS.starfallSeal,gateMark:STARTER_PATHS.starfallSealMark,starforge:STARTER_PATHS.starforgeStation,chests:{astralCache:{closed:SURFACE_STARFALL_PATHS.astralCacheClosed,open:SURFACE_STARFALL_PATHS.astralCacheOpen},celestialCoffer:{closed:SURFACE_STARFALL_PATHS.celestialCofferClosed,open:SURFACE_STARFALL_PATHS.celestialCofferOpen}},animatedGateTransition:true,smoothEmberdeepBlend:true,continuousBlendUnderlay:true,backgroundShardsDistinct:true,legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyGate:false,legacyStarforge:false},
@@ -4019,6 +4229,10 @@
       groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,depth:drop.depth,sourceChest:drop.sourceChest,sourcePocket:drop.sourcePocket})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count,particleCount:particles.length,shake:miningFeedback.shake,flash:miningFeedback.flash,hitStop:miningFeedback.hitStop,terrainHitIndex:miningFeedback.terrainHitIndex,lastDiscovery:miningFeedback.lastDiscovery,lastDepositBeat:miningFeedback.lastDepositBeat,lastPocketReward:miningFeedback.lastPocketReward},activeContext
     })),
     reset:resetProgress,
+    evaluateAchievements:()=>evaluateAchievements(),
+    settleAchievement:()=>settleAchievementPopup(),
+    dismissAchievement:()=>dismissAchievementPopup(),
+    openAchievements:()=>showOverlayMenu('achievements','start'),
     dismissStartMenu:enterGame,
     startMusic:()=>{startBackgroundMusic();return backgroundMusic?{src:backgroundMusic.src,volume:backgroundMusic.volume,loop:backgroundMusic.loop,paused:backgroundMusic.paused}:null},
     setAudioSetting:(kind,enabled)=>setAudioSetting(kind,enabled),

@@ -1,6 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.33.1 - Mobile Action Bar Spacing**
+Current build: **Ever Deeper v0.34.0 - Achievement Reliquaries**
+
+Fifty persistent achievements now cover mining, precision, resources, exploration, treasure, veins, equipment, Depth 2, and the final victory. Every unlock has its own transparent reliquary sprite, an earned-at record with a clear reason, and a hero-following five-turn reveal that settles before it can be claimed.
 
 Starfall is now a complete production-art world: its own seamless surface, an untouched biome road with a naturally joined cave branch, a correctly oriented Starfall Hollow entrance, sinking Master Seal and permanent astral ground mark, celestial chests, Starforge station, lattice sockets, and distinct background formations. Starfall Hollow and Voidstar Depths have dedicated floors, walls, barriers, chambers, stations, portals, buried wall hints, mineable nodes, and rewards.
 
