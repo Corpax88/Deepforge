@@ -1188,6 +1188,27 @@ test('every unlocked surface biome leads to its own mine layout',async({page})=>
   expect(signatures.size).toBe(cases.length);
 });
 
+test('physical biome walls keep each opened gate as the only surface passage',async({page})=>{
+  await freshGame(page);
+  let boundaries=await page.evaluate(()=>window.__everDeeperTest.snapshot().surfaceBoundaries);
+  expect(boundaries).toMatchObject({groundBlendWidth:24,gateOnlyPassage:true,persistentAfterUnlock:true,portalFocus:true});expect(boundaries.walls).toHaveLength(3);
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.setPosition(1060,650);api.setMoveVector(1,0);api.step(.6);api.stopMove()});
+  expect((await page.evaluate(()=>window.__everDeeperTest.snapshot().player.x))).toBeLessThanOrEqual(1074);
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.unlockAllAreas();api.unlockStarfall();api.setPosition(1060,650);api.setMoveVector(1,0);api.step(.6);api.stopMove()});
+  expect((await page.evaluate(()=>window.__everDeeperTest.snapshot().player.x))).toBeGreaterThan(1110);
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.setPosition(1060,220);api.setMoveVector(1,0);api.step(.6);api.stopMove()});
+  expect((await page.evaluate(()=>window.__everDeeperTest.snapshot().player.x))).toBeLessThan(1110);
+});
+
+test('every mine requires its final ore gate before the right-side deep descent',async({page})=>{
+  await freshGame(page);await page.evaluate(()=>{window.__everDeeperTest.unlockAllAreas();window.__everDeeperTest.unlockStarfall()});
+  for(const scene of ['mossMine','moonMine','emberMine','starMine']){
+    await page.evaluate(value=>window.__everDeeperTest.enterMine(value),scene);const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot()),wall=snapshot.mine.deepAccess;
+    expect(wall).toMatchObject({x:0,role:'deepAccessWall',barrierId:snapshot.mine.barrierIds.at(-1)});expect(snapshot.mine.visibleWallFaces).toBe(true);expect(wall.w).toBeLessThan(snapshot.mine.width-52);expect(await page.evaluate(({x,y})=>window.__everDeeperTest.mineCollisionAt(x,y),{x:wall.w-80,y:wall.y+70})).toBe(true);
+    const firstCavern=snapshot.mine.discovery.caverns[0];expect(wall.y+wall.h).toBeLessThan(firstCavern.y-firstCavern.ry);await page.evaluate(()=>window.__everDeeperTest.exitMine());
+  }
+});
+
 test('all mine layouts remain readable and distinct across viewports',async({page},testInfo)=>{
   await freshGame(page);
   await page.evaluate(()=>{
@@ -1293,8 +1314,8 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.34.7',name:'DEEPGLASS PREMIUM'});
-  expect(snapshot.assetVersion).toBe('0347');
+  expect(snapshot.build).toEqual({version:'0.35.0',name:'GATEBOUND DEPTHS'});
+  expect(snapshot.assetVersion).toBe('0350');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true,emberMine:true,starMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:COMPLETE_DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
@@ -1318,18 +1339,18 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.34.7');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.35.0');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.34.7 · DEEPGLASS PREMIUM');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.35.0 · GATEBOUND DEPTHS');
 });
 
 test('premium start menu owns continue, new game, achievements, and settings',async({page})=>{
   await page.goto('/');await page.waitForFunction(()=>window.__everDeeperTest);
   await expect(page.locator('#startScreen')).toBeVisible();
   await expect(page.locator('#continueButton')).toBeDisabled();
-  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0347');
+  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0350');
   await page.locator('#startAchievementsButton').click();
   await expect(page.locator('#achievementsPanel')).toBeVisible();
   await expect(page.locator('.menu-tabs')).toBeHidden();
@@ -1356,12 +1377,13 @@ test('settings opens first and keeps audio choices separate from stats',async({p
   await page.locator('#patchNotesButton').click();
   await expect(page.locator('#menuTitle')).toHaveText('Patch Notes');
   await expect(page.locator('#patchNotesPanel')).toBeVisible();
-  await expect(page.locator('.patch-note')).toHaveCount(8);
-  await expect(page.locator('.patch-note.latest')).toContainText('v0.34.7');
-  await expect(page.locator('.patch-note.latest')).toContainText('Gameplay, balance, progression, controls, and visuals are unchanged');
-  await expect(page.locator('.patch-note').nth(1)).toContainText('Reset All Progress');
-  await expect(page.locator('.patch-note').nth(6)).toContainText('100 Emberstone');
-  await expect(page.locator('.patch-note').nth(6)).toContainText('200 Astralite and 200 Crownstone');
+  await expect(page.locator('.patch-note')).toHaveCount(9);
+  await expect(page.locator('.patch-note.latest')).toContainText('v0.35.0');
+  await expect(page.locator('.patch-note.latest')).toContainText('Physical biome walls');
+  await expect(page.locator('.patch-note').nth(1)).toContainText('Gameplay, balance, progression, controls, and visuals are unchanged');
+  await expect(page.locator('.patch-note').nth(2)).toContainText('Reset All Progress');
+  await expect(page.locator('.patch-note').nth(7)).toContainText('100 Emberstone');
+  await expect(page.locator('.patch-note').nth(7)).toContainText('200 Astralite and 200 Crownstone');
   await expect(page.locator('#resumeButton')).toHaveText('BACK TO SETTINGS');
   await page.locator('#resumeButton').click();
   await expect(page.locator('#settingsPanel')).toBeVisible();
@@ -1707,11 +1729,11 @@ test('real resource art is shared by goals, bags, recipes, stats and world drops
   expect(contract).toMatchObject({paths:COMPLETE_DROP_PATHS,completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false});
 });
 
-test('v0.34.7 exposes the complete production contracts and premium walk renderer',async({page})=>{
+test('v0.35.0 exposes the complete production contracts and premium walk renderer',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.34.7',name:'DEEPGLASS PREMIUM'});
-  expect(snapshot.assetVersion).toBe('0347');
+  expect(snapshot.build).toEqual({version:'0.35.0',name:'GATEBOUND DEPTHS'});
+  expect(snapshot.assetVersion).toBe('0350');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.surfaceEmberdeepRendering).toEqual(SURFACE_EMBERDEEP_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);

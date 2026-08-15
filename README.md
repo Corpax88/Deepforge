@@ -1,8 +1,10 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.34.7 - Safer Foundations**
+Current build: **Ever Deeper v0.35.0 - Gatebound Depths**
 
-Static game data now lives in its own ordered module, protected by parity checks that catch accidental balance or progression changes while keeping runtime behavior unchanged.
+Every surface biome now ends at a persistent physical ridge with its world gate as the only passage. Inside all four mines, a clearly rendered deep-access wall prevents players from tunneling below the route early; the descent opens from the right only after the final ore barrier has been mined.
+
+Static game data lives in its own ordered module, protected by parity checks that catch accidental balance or progression changes.
 
 Fifty persistent achievements now cover mining, precision, resources, exploration, treasure, veins, equipment, Depth 2, and the final victory. Every unlock has its own transparent reliquary sprite, an earned-at record with a clear reason, and a hero-following five-turn reveal that settles before it can be claimed.
 
