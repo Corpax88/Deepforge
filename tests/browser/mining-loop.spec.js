@@ -1398,7 +1398,7 @@ test('settings opens first and keeps audio choices separate from stats',async({p
   await expect(patchNotes.filter({hasText:'v0.35.4'})).toContainText('complete passage');
   await expect(patchNotes.filter({hasText:'v0.35.3'})).toContainText('natural openings');
   await expect(patchNotes.filter({hasText:'v0.35.2'})).toContainText('unbreakable-wall PNG');
-  await expect(patchNotes.filter({hasText:/v0\.35\.1(?!\d)/})).toContainText('production PNGs');
+  await expect(patchNotes.filter({has:page.locator('header span',{hasText:/^v0\.35\.1$/})})).toContainText('production PNGs');
   await expect(patchNotes.filter({hasText:'v0.35.0'})).toContainText('Physical biome walls');
   await expect(patchNotes.filter({hasText:'v0.34.7'})).toContainText('Gameplay, balance, progression, controls, and visuals are unchanged');
   await expect(patchNotes.filter({hasText:'v0.34.6'})).toContainText('Reset All Progress');
