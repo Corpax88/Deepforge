@@ -61,7 +61,7 @@ test('Deepcore routes the final expedition through Starfall and into Voidstar',a
   await page.waitForFunction(()=>window.__everDeeperTest);
   const route=await page.evaluate(()=>{
     const api=window.__everDeeperTest;
-    api.reset();api.unlockAllAreas();api.unlockStarfall();api.setDrillLevel(3);
+    api.reset();api.unlockAllAreas();api.unlockStarfall();api.setPickaxeLevel(5);api.setDrillLevel(3);
     const surface=api.snapshot();
     api.enterMine('starMine');const searching=api.snapshot();
     api.discoverDepthEntrance();const descent=api.snapshot();
