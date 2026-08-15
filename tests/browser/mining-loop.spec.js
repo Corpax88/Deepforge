@@ -1339,7 +1339,7 @@ test('each mine hides one persistent random entrance to a contrasting Depth 2',a
     expect(snapshot.mine.dirt).not.toBe(snapshot.mine.floor);
     const entrance={x:snapshot.mine.depthEntrance.x,y:snapshot.mine.depthEntrance.y};
     expect(await page.evaluate(()=>window.__everDeeperTest.discoverDepthEntrance())).toBe(true);
-    if(scene==='starMine')await page.evaluate(()=>window.__everDeeperTest.setDrillLevel(3));
+    if(scene==='starMine')await page.evaluate(()=>{const api=window.__everDeeperTest;api.setPickaxeLevel(5);api.setDrillLevel(3)});
     expect(await page.evaluate(()=>window.__everDeeperTest.enterDepth())).toBe(true);
     snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
     expect(snapshot.depth).toBe(2);
@@ -2232,7 +2232,7 @@ test('Voidstar entry requires Deepcore and its portal, stations, and materials s
   expect(await page.evaluate(()=>window.__everDeeperTest.enterDepth())).toBe(false);
   expect(await page.evaluate(()=>window.__everDeeperTest.snapshot())).toMatchObject({scene:'starMine',depth:1,state:{drillLevel:2}});
 
-  await page.evaluate(()=>window.__everDeeperTest.setDrillLevel(3));
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.setPickaxeLevel(5);api.setDrillLevel(3)});
   expect(await page.evaluate(()=>window.__everDeeperTest.enterDepth())).toBe(true);
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot.mine).toMatchObject({name:'VOIDSTAR DEPTHS',depth:2,visualPass:'voidstar-production-assets-v1'});
@@ -2269,6 +2269,7 @@ test('Deepcore guidance routes surface to Starfall, an explored shaft to Voidsta
     const api=window.__everDeeperTest;
     api.unlockAllAreas();
     api.unlockStarfall();
+    api.setPickaxeLevel(5);
     api.setDrillLevel(3);
   });
 
@@ -2316,6 +2317,7 @@ test('Deepcore to Voidstar to the first Singularity completes and persists the f
     const api=window.__everDeeperTest;
     api.unlockAllAreas();
     api.unlockStarfall();
+    api.setPickaxeLevel(5);
     api.setDrillLevel(3);
     api.enterMine('starMine');
     api.discoverDepthEntrance();
@@ -2351,6 +2353,7 @@ test('Starfall entrance and Voidstar Depths remain readable on compact and tall 
     const api=window.__everDeeperTest;
     api.unlockAllAreas();
     api.unlockStarfall();
+    api.setPickaxeLevel(5);
     api.setDrillLevel(3);
   });
   const sizes=[{name:'compact',width:375,height:667},{name:'tall',width:390,height:844}];
