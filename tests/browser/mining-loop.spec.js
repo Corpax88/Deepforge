@@ -1391,11 +1391,11 @@ test('settings opens first and keeps audio choices separate from stats',async({p
   await expect(page.locator('.patch-note').nth(2)).toContainText('natural openings');
   await expect(page.locator('.patch-note').nth(3)).toContainText('unbreakable-wall PNG');
   await expect(page.locator('.patch-note').nth(4)).toContainText('production PNGs');
-  await expect(page.locator('.patch-note').nth(3)).toContainText('Physical biome walls');
-  await expect(page.locator('.patch-note').nth(4)).toContainText('Gameplay, balance, progression, controls, and visuals are unchanged');
-  await expect(page.locator('.patch-note').nth(5)).toContainText('Reset All Progress');
-  await expect(page.locator('.patch-note').nth(10)).toContainText('100 Emberstone');
-  await expect(page.locator('.patch-note').nth(10)).toContainText('200 Astralite and 200 Crownstone');
+  await expect(page.locator('.patch-note').nth(5)).toContainText('Physical biome walls');
+  await expect(page.locator('.patch-note').nth(6)).toContainText('Gameplay, balance, progression, controls, and visuals are unchanged');
+  await expect(page.locator('.patch-note').nth(7)).toContainText('Reset All Progress');
+  await expect(page.locator('.patch-note').nth(12)).toContainText('100 Emberstone');
+  await expect(page.locator('.patch-note').nth(12)).toContainText('200 Astralite and 200 Crownstone');
   await expect(page.locator('#resumeButton')).toHaveText('BACK TO SETTINGS');
   await page.locator('#resumeButton').click();
   await expect(page.locator('#settingsPanel')).toBeVisible();
