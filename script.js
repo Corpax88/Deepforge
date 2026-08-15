@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0322';
+  const ASSET_VERSION='0330';
   const MOONGLASS_SURFACE_BLEND=190;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=190;
@@ -321,14 +321,18 @@
   const menuCloseButton=document.getElementById('menuCloseButton');
   const settingsTab=document.getElementById('settingsTab');
   const statsTab=document.getElementById('statsTab');
-  const achievementsTab=document.getElementById('achievementsTab');
   const settingsPanel=document.getElementById('settingsPanel');
   const statsPanel=document.getElementById('statsPanel');
   const achievementsPanel=document.getElementById('achievementsPanel');
   const musicToggle=document.getElementById('musicToggle');
   const effectsToggle=document.getElementById('effectsToggle');
   const resumeButton=document.getElementById('resumeButton');
-  const resetButton=document.getElementById('resetButton');
+  const startScreen=document.getElementById('startScreen');
+  const continueButton=document.getElementById('continueButton');
+  const continueDetail=document.getElementById('continueDetail');
+  const newGameButton=document.getElementById('newGameButton');
+  const startAchievementsButton=document.getElementById('startAchievementsButton');
+  const startSettingsButton=document.getElementById('startSettingsButton');
   const inventoryButton=document.getElementById('inventoryButton');
   const inventoryShade=document.getElementById('inventoryShade');
   const inventoryCloseButton=document.getElementById('inventoryCloseButton');
@@ -341,7 +345,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.32.2',name:'DEEPGLASS PREMIUM'};
+  const BUILD={version:'0.33.0',name:'DEEPGLASS PREMIUM'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='EVER DEEPER v'+BUILD.version+' · '+BUILD.name;
 
@@ -676,6 +680,7 @@
   const player={x:330,y:690,radius:23,facing:1,aimX:1,aimY:0,walk:0,walkPhase:0,walkDistance:0,walkFrame:0,direction:'right',moving:false,swing:null,swingCooldown:0,hitRockId:null,hitTerrainIndex:-1};
   const miningFocus={streak:0,timer:0};
   const miningRush={timer:0,lastSecond:0};
+  let loadedExistingSave=false;
   const state=loadState();
   let currentScene=state.location.scene;
   let currentDepth=currentScene==='surface'?1:state.location.depth;
@@ -809,7 +814,8 @@
   function loadState(){
     try{
       const raw=readStoredState();
-      if(!raw||typeof raw!=='object')return defaultState();
+      loadedExistingSave=!!raw&&typeof raw==='object';
+      if(!loadedExistingSave)return defaultState();
       const base=defaultState();
       base.worldSeed=Number.isInteger(raw.worldSeed)&&raw.worldSeed>0?raw.worldSeed>>>0:base.worldSeed;
       base.gold=Math.max(0,Number(raw.gold)||0);
@@ -879,7 +885,7 @@
       base.totalSwings=Math.max(0,Number(raw.totalSwings)||0);
       base.precisionHits=Math.max(0,Number(raw.precisionHits)||0);
       return base;
-    }catch(error){return defaultState()}
+    }catch(error){loadedExistingSave=false;return defaultState()}
   }
 
   function saveState(force){
@@ -1530,11 +1536,25 @@
   }
 
   function setMenuTab(name){
-    const tabs={settings:settingsTab,stats:statsTab,achievements:achievementsTab},panels={settings:settingsPanel,stats:statsPanel,achievements:achievementsPanel};
-    if(!tabs[name])name='settings';
+    if(!['settings','stats','achievements'].includes(name))name='settings';
+    const tabs={settings:settingsTab,stats:statsTab},panels={settings:settingsPanel,stats:statsPanel};
     for(const [key,tab] of Object.entries(tabs)){const active=key===name;tab.classList.toggle('active',active);tab.setAttribute('aria-selected',String(active));panels[key].hidden=!active}
+    achievementsPanel.hidden=name!=='achievements';menuShade.dataset.view=name;
     menuTitle.textContent=name==='stats'?'Stats':name==='achievements'?'Achievements':'Settings';
     if(name==='stats')updateLedger();
+  }
+
+  function showOverlayMenu(name,source){
+    unlockAudio();releaseTouchControls();inventoryShade.hidden=true;menuShade.dataset.source=source;setMenuTab(name);resumeButton.textContent=source==='start'?'BACK TO MAIN MENU':'RETURN TO MINE';menuShade.hidden=false;
+  }
+
+  function enterGame(){
+    unlockAudio();startScreen.hidden=true;menuShade.hidden=true;lastFrame=0;saveState(true);
+  }
+
+  function startNewGame(){
+    if(loadedExistingSave&&!window.confirm('Start a new game and replace your current expedition?'))return;
+    resetProgress();loadedExistingSave=true;continueButton.disabled=false;continueDetail.textContent='MOSSVEIN QUARRY';enterGame();
   }
 
   function unlockAudio(){
@@ -3893,7 +3913,7 @@
   function frame(timestamp){
     const raw=Math.min(.05,Math.max(0,(timestamp-lastFrame)/1000||0));lastFrame=timestamp;
     const frozen=Math.min(raw,miningFeedback.hitStop);miningFeedback.hitStop=Math.max(0,miningFeedback.hitStop-frozen);
-    update((raw-frozen)*timeScale);draw();requestAnimationFrame(frame);
+    if(startScreen.hidden&&menuShade.hidden&&inventoryShade.hidden)update((raw-frozen)*timeScale);draw();requestAnimationFrame(frame);
   }
 
   function setJoystickFromEvent(event){
@@ -3957,17 +3977,20 @@
   baseModuleList.addEventListener('click',event=>{const place=event.target.closest('[data-base-place]'),pack=event.target.closest('[data-base-pack]'),take=event.target.closest('[data-chest-take]');if(place)placeBaseModule(place.dataset.basePlace);else if(pack)packBaseModule(pack.dataset.basePack);else if(take)takeAllFromChest(take.dataset.chestTake)});
   inventoryShade.addEventListener('pointerdown',event=>{if(event.target===inventoryShade)closeInventory()});
   syncAudioSettingsUI();
-  menuButton.addEventListener('click',()=>{unlockAudio();releaseTouchControls();inventoryShade.hidden=true;setMenuTab('settings');menuShade.hidden=false});
-  settingsTab.addEventListener('click',()=>setMenuTab('settings'));statsTab.addEventListener('click',()=>setMenuTab('stats'));achievementsTab.addEventListener('click',()=>setMenuTab('achievements'));
+  continueButton.disabled=!loadedExistingSave;
+  continueDetail.textContent=loadedExistingSave?(currentScene==='surface'?'SURFACE EXPEDITION':currentMine().name):'NO EXPEDITION FOUND';
+  continueButton.addEventListener('click',enterGame);newGameButton.addEventListener('click',startNewGame);
+  startAchievementsButton.addEventListener('click',()=>showOverlayMenu('achievements','start'));startSettingsButton.addEventListener('click',()=>showOverlayMenu('settings','start'));
+  menuButton.addEventListener('click',()=>showOverlayMenu('settings','game'));
+  settingsTab.addEventListener('click',()=>setMenuTab('settings'));statsTab.addEventListener('click',()=>setMenuTab('stats'));
   musicToggle.addEventListener('click',()=>{unlockAudio();setAudioSetting('music',!audioSettings.music)});effectsToggle.addEventListener('click',()=>{unlockAudio();setAudioSetting('effects',!audioSettings.effects)});
   menuCloseButton.addEventListener('click',()=>menuShade.hidden=true);resumeButton.addEventListener('click',()=>menuShade.hidden=true);
-  resetButton.addEventListener('click',()=>{if(window.confirm('Reset all Ever Deeper progress?'))resetProgress()});
   menuShade.addEventListener('pointerdown',event=>{if(event.target===menuShade)menuShade.hidden=true});
   window.addEventListener('resize',resize,{passive:true});
 
   window.__everDeeperTest={
     snapshot:()=>JSON.parse(JSON.stringify({
-      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted,enabled:audioSettings.music,effectsEnabled:audioSettings.effects},resourceRendering:{...RESOURCE_RENDER_CONTRACT,paths:DROP_PATHS,bounds:RESOURCE_IMAGE_BOUNDS},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true,emberMine:true,starMine:true},surfaceAssetRendering:{mossveinGround:true,mainRoad:SURFACE_ROAD_PATHS,seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:MOSSVEIN_MINE_PATH,mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
+      build:BUILD,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,startMenu:{visible:!startScreen.hidden,hasSave:loadedExistingSave,actions:['continue','new-game','achievements','settings'],achievementsInPause:false},music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted,enabled:audioSettings.music,effectsEnabled:audioSettings.effects},resourceRendering:{...RESOURCE_RENDER_CONTRACT,paths:DROP_PATHS,bounds:RESOURCE_IMAGE_BOUNDS},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true,emberMine:true,starMine:true},surfaceAssetRendering:{mossveinGround:true,mainRoad:SURFACE_ROAD_PATHS,seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:MOSSVEIN_MINE_PATH,mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
       surfaceMoonglassRendering:{ground:SURFACE_MOONGLASS_PATHS.ground,crystals:SURFACE_MOONGLASS_PATHS.crystals,bloomBed:SURFACE_MOONGLASS_PATHS.bloomBed,entrance:MINE_ENTRANCE_PATHS.moonMine,gateMark:STARTER_PATHS.moonglassGateMark,emberdeepSeal:STARTER_PATHS.emberdeepSeal,openBoundaryGatesRemoved:true,animatedGateTransition:true,smoothMossveinBlend:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:SURFACE_MOONGLASS_PATHS.crystalCacheClosed,open:SURFACE_MOONGLASS_PATHS.crystalCacheOpen},reliquary:{closed:SURFACE_MOONGLASS_PATHS.reliquaryClosed,open:SURFACE_MOONGLASS_PATHS.reliquaryOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyEmberdeepSeal:false},
       surfaceEmberdeepRendering:{ground:SURFACE_EMBERDEEP_PATHS.ground,slag:SURFACE_EMBERDEEP_PATHS.slag,faultBed:SURFACE_EMBERDEEP_PATHS.faultBed,minePath:SURFACE_EMBERDEEP_PATHS.minePath,minePathBounds:{...EMBERDEEP_MINE_PATH_BOUNDS},minePathRotation:EMBERDEEP_MINE_PATH_ROTATION,minePathPivot:{...EMBERDEEP_MINE_PATH_PIVOT},minePathMouthTarget:{x:2480,y:1015},entrance:MINE_ENTRANCE_PATHS.emberMine,entrancePosition:{...MINE_DEFINITIONS.emberMine.surfaceEntrance},entranceFlipped:true,gateSeal:STARTER_PATHS.emberdeepSeal,gateMark:STARTER_PATHS.emberdeepSealMark,animatedGateTransition:true,smoothMoonglassBlend:true,continuousBlendUnderlay:true,backgroundSlagDistinct:true,chests:{foundry:{closed:SURFACE_EMBERDEEP_PATHS.foundryClosed,open:SURFACE_EMBERDEEP_PATHS.foundryOpen},vault:{closed:SURFACE_EMBERDEEP_PATHS.vaultClosed,open:SURFACE_EMBERDEEP_PATHS.vaultOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyGate:false},
       surfaceStarfallRendering:{ground:SURFACE_STARFALL_PATHS.ground,shards:SURFACE_STARFALL_PATHS.shards,latticeBed:SURFACE_STARFALL_PATHS.latticeBed,minePath:SURFACE_STARFALL_PATHS.minePath,minePathBounds:{...STARFALL_MINE_PATH_BOUNDS},minePathMouthTarget:{x:3505,y:1000},entrance:MINE_ENTRANCE_PATHS.starMine,entrancePosition:{...MINE_DEFINITIONS.starMine.surfaceEntrance},gateSeal:STARTER_PATHS.starfallSeal,gateMark:STARTER_PATHS.starfallSealMark,starforge:STARTER_PATHS.starforgeStation,chests:{astralCache:{closed:SURFACE_STARFALL_PATHS.astralCacheClosed,open:SURFACE_STARFALL_PATHS.astralCacheOpen},celestialCoffer:{closed:SURFACE_STARFALL_PATHS.celestialCofferClosed,open:SURFACE_STARFALL_PATHS.celestialCofferOpen}},animatedGateTransition:true,smoothEmberdeepBlend:true,continuousBlendUnderlay:true,backgroundShardsDistinct:true,legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyGate:false,legacyStarforge:false},
@@ -3996,6 +4019,7 @@
       groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,depth:drop.depth,sourceChest:drop.sourceChest,sourcePocket:drop.sourcePocket})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count,particleCount:particles.length,shake:miningFeedback.shake,flash:miningFeedback.flash,hitStop:miningFeedback.hitStop,terrainHitIndex:miningFeedback.terrainHitIndex,lastDiscovery:miningFeedback.lastDiscovery,lastDepositBeat:miningFeedback.lastDepositBeat,lastPocketReward:miningFeedback.lastPocketReward},activeContext
     })),
     reset:resetProgress,
+    dismissStartMenu:enterGame,
     startMusic:()=>{startBackgroundMusic();return backgroundMusic?{src:backgroundMusic.src,volume:backgroundMusic.volume,loop:backgroundMusic.loop,paused:backgroundMusic.paused}:null},
     setAudioSetting:(kind,enabled)=>setAudioSetting(kind,enabled),
     setPosition:(x,y)=>{const world=currentWorld();player.x=clamp(Number(x),52,world.width-52);player.y=clamp(Number(y),70,world.height-58);player.moving=false;updateCamera(true);uiDirty=true},
@@ -4056,5 +4080,5 @@
     save:()=>saveState(true)
   };
 
-  resize();updateUI();saveState(true);requestAnimationFrame(frame);
+  resize();updateUI();if(loadedExistingSave)saveState(true);requestAnimationFrame(frame);
 })();
