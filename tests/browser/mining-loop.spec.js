@@ -1254,7 +1254,7 @@ test('mine nodes never respawn inside permanent walls',async({page})=>{
     const blockedNodes=await page.evaluate(()=>{
       const snapshot=window.__everDeeperTest.snapshot();
       return snapshot.rocks
-        .filter(rock=>rock.scene===snapshot.scene&&!rock.barrierId)
+        .filter(rock=>rock.scene===snapshot.scene&&rock.depth===snapshot.mine.depth&&!rock.barrierId)
         .filter(rock=>snapshot.mine.solids.some(solid=>
           rock.x+42>solid.x&&rock.x-42<solid.x+solid.w&&
           rock.y+42>solid.y&&rock.y-42<solid.y+solid.h
