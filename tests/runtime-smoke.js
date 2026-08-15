@@ -42,23 +42,24 @@ assert.doesNotMatch(source,/drawPlayerDrillLayer|drawPlayerCropAtGrip|offhandCro
 assert.doesNotMatch(source,/function drawRockBody/,'resource nodes must not retain a procedural canvas body fallback');
 assert.doesNotMatch(source,/function drawSurfaceBoundarySegment|function drawDeepAccessWallFace/,'new boundary walls must not retain procedural canvas renderers');
 assert.match(source,/function drawSurfaceBoundaryAsset/);assert.match(source,/legacyCanvasWalls:false/);assert.match(source,/legacyCanvasDeepAccessFace:false/);
+assert.doesNotMatch(source,/drawSection\(0,gapTop\)|drawSection\(gapBottom,WORLD\.height\)/,'boundary art must not be cut into rectangular gate sections');assert.match(source,/ctx\.drawImage\(image,x,-camera\.y,width,WORLD\.height\)/);
 for(const asset of ['boundary-mossvein-moonglass.png','boundary-moonglass-emberdeep.png','boundary-emberdeep-starfall.png'])assert.ok(fs.existsSync(path.join(repositoryRoot,'assets','surface',asset)),asset+' must exist');
 for(const [biome,asset] of [['mossvein','unbreakable-wall.png'],['moonglass','unbreakable-wall.png'],['emberdeep','unbreakable-wall.png'],['starfall','unbreakable-wall.png']])assert.ok(fs.existsSync(path.join(repositoryRoot,'assets',biome,asset)),biome+' unbreakable wall must exist');
 assert.match(source,/function drawUnbreakableSolidWall/);assert.match(source,/legacyCanvasSolidWalls:false/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'0352');
+assert.equal(latest.version,'0353');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0352/);
-assert.match(html,/game-data\.js\?v=0352/);
-assert.match(html,/script\.js\?v=0352/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0352/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0352/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0352/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0352/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0352"/);
+assert.match(html,/style\.css\?v=0353/);
+assert.match(html,/game-data\.js\?v=0353/);
+assert.match(html,/script\.js\?v=0353/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0353/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0353/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0353/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0353/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0353"/);
 assert.match(source,/const EMBER_CRAFT_MATERIAL_REQUIRED=100;/);
 assert.match(source,/const STARFORGE_MATERIAL_REQUIRED=200;/);
 assert.match(css,/\.context-panel\{bottom:136px;/);
@@ -334,15 +335,15 @@ const expectedSnapshotKeys=[
 ];
 assert.deepEqual(Object.keys(api).sort(),expectedApiKeys,'test API contract changed unexpectedly');
 assert.deepEqual(Object.keys(api.snapshot()).sort(),expectedSnapshotKeys,'snapshot contract changed unexpectedly');
-assert.equal(api.snapshot().build.version,'0.35.2');
-assert.equal(api.snapshot().build.name,'BEDROCK LANGUAGE');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.35.2');
-assert.equal(api.snapshot().assetVersion,'0352');
-assert.equal(api.snapshot().patchNotes.length,11);assert.equal(api.snapshot().patchNotes[0].version,'0.35.2');assert.match(api.snapshot().patchNotes[0].items.join(' '),/dedicated premium unbreakable-wall PNG/);assert.match(api.snapshot().patchNotes[0].items.join(' '),/mineable terrain/);assert.match(api.snapshot().patchNotes[1].items.join(' '),/production PNGs/);assert.match(api.snapshot().patchNotes[1].items.join(' '),/no procedural face overlay/);assert.match(api.snapshot().patchNotes[2].items.join(' '),/Physical biome walls/);assert.match(api.snapshot().patchNotes[2].items.join(' '),/final ore barrier/);assert.match(api.snapshot().patchNotes[3].items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(api.snapshot().patchNotes[4].items.join(' '),/Reset All Progress/);assert.match(api.snapshot().patchNotes[9].items.join(' '),/100 Emberstone/);assert.match(api.snapshot().patchNotes[9].items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
+assert.equal(api.snapshot().build.version,'0.35.3');
+assert.equal(api.snapshot().build.name,'INTEGRATED GATES');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.35.3');
+assert.equal(api.snapshot().assetVersion,'0353');
+assert.equal(api.snapshot().patchNotes.length,12);assert.equal(api.snapshot().patchNotes[0].version,'0.35.3');assert.match(api.snapshot().patchNotes[0].items.join(' '),/natural openings/);assert.match(api.snapshot().patchNotes[0].items.join(' '),/seated directly/);assert.match(api.snapshot().patchNotes[1].items.join(' '),/dedicated premium unbreakable-wall PNG/);assert.match(api.snapshot().patchNotes[1].items.join(' '),/mineable terrain/);assert.match(api.snapshot().patchNotes[2].items.join(' '),/production PNGs/);assert.match(api.snapshot().patchNotes[3].items.join(' '),/Physical biome walls/);assert.match(api.snapshot().patchNotes[4].items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(api.snapshot().patchNotes[5].items.join(' '),/Reset All Progress/);assert.match(api.snapshot().patchNotes[10].items.join(' '),/100 Emberstone/);assert.match(api.snapshot().patchNotes[10].items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0352',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0353',volume:1,loop:true,paused:false}));
 api.dismissStartMenu();
 const viewportElement=runtime.elements.get('viewport'),canvasElement=runtime.elements.get('gameCanvas'),joystickElement=runtime.elements.get('joystick'),mineElement=runtime.elements.get('mineButton');
 viewportElement.dispatchEvent({type:'pointerdown',target:canvasElement,pointerId:301,button:0,clientX:120,clientY:260});
@@ -360,13 +361,13 @@ assert.equal(JSON.stringify(api.snapshot().surfaceBoundaries),JSON.stringify({wa
   {id:'moonglass',x:1110,y:650,gap:118,unlockKey:'areaUnlocked',renderWidth:320,collisionHalfWidth:48,locked:true},
   {id:'emberdeep',x:2240,y:650,gap:118,unlockKey:'emberdeepUnlocked',renderWidth:320,collisionHalfWidth:48,locked:true},
   {id:'starfall',x:3360,y:650,gap:118,unlockKey:'fourthUnlocked',renderWidth:320,collisionHalfWidth:48,locked:true}
-],assets:{moonglass:'assets/surface/boundary-mossvein-moonglass.png',emberdeep:'assets/surface/boundary-moonglass-emberdeep.png',starfall:'assets/surface/boundary-emberdeep-starfall.png'},premiumAssets:true,legacyCanvasWalls:false,groundBlendWidth:24,gateOnlyPassage:true,persistentAfterUnlock:true,portalFocus:true}));
+],assets:{moonglass:'assets/surface/boundary-mossvein-moonglass.png',emberdeep:'assets/surface/boundary-moonglass-emberdeep.png',starfall:'assets/surface/boundary-emberdeep-starfall.png'},premiumAssets:true,fullHeightAssets:true,naturalAssetOpenings:true,legacyCanvasWalls:false,legacyRectangularGateCuts:false,groundBlendWidth:24,gateOnlyPassage:true,persistentAfterUnlock:true,portalFocus:true}));
 assert.equal(api.surfaceBoundaryBlockedAt(1110,220),true);assert.equal(api.surfaceBoundaryBlockedAt(1110,650),false);
 assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false}));
 assert.equal(JSON.stringify(api.snapshot().starterRendering),JSON.stringify({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:completeDropPaths,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false}));
 assert.equal(JSON.stringify({...api.snapshot().resourceRendering,paths:undefined,bounds:undefined}),JSON.stringify({completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,objectiveIcons:true,inventoryIcons:true,storageIcons:true,recipeIcons:true,ledgerIcons:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false}));
 assert.equal(JSON.stringify(api.snapshot().resourceRendering.paths),JSON.stringify(completeDropPaths));
-assert.equal(JSON.stringify(api.snapshot().starterGateRendering),JSON.stringify({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepSealMark:'assets/surface/emberdeep-seal-mark.png',starfallSeal:'assets/surface/starfall-seal.png',starfallSealMark:'assets/surface/starfall-seal-mark.png',animatedMoonglassTransition:true,animatedEmberdeepTransition:true,animatedStarfallTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false}));
+assert.equal(JSON.stringify(api.snapshot().starterGateRendering),JSON.stringify({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepSealMark:'assets/surface/emberdeep-seal-mark.png',starfallSeal:'assets/surface/starfall-seal.png',starfallSealMark:'assets/surface/starfall-seal-mark.png',renderBounds:{maxWidth:260,maxHeight:238,bottom:110},integratedBoundaryScale:true,animatedMoonglassTransition:true,animatedEmberdeepTransition:true,animatedStarfallTransition:true,openWorldGatesRemoved:true,legacyStarterGate:false}));
 const storageBeforeBoundaries=new Map(storage),boundaryRuntime=createRuntime(),boundaryApi=boundaryRuntime.api;boundaryApi.dismissStartMenu();
 for(const [x,asset] of [[1110,'boundary-mossvein-moonglass.png'],[2240,'boundary-moonglass-emberdeep.png'],[3360,'boundary-emberdeep-starfall.png']]){boundaryRuntime.drawCalls.length=0;boundaryApi.setPosition(x,650);boundaryApi.renderOnce();assert.ok(boundaryRuntime.drawCalls.some(call=>call.src.includes(asset)),asset+' must render at its world gate')}
 boundaryApi.setPosition(1060,650);boundaryApi.setMoveVector(1,0);boundaryApi.step(.6);assert.ok(boundaryApi.snapshot().player.x<=1074,'locked Moonglass gate must stop crossing');

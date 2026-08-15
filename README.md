@@ -1,8 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.35.2 - Bedrock Language**
+Current build: **Ever Deeper v0.35.3 - Integrated Gates**
 
-Every surface biome now ends at a dedicated transparent production-PNG ridge with its world gate as the only passage. Inside all four mines, every permanent collision wall uses a dedicated biome-specific unbreakable-bedrock PNG, visibly distinct from chipped mineable terrain; the deep-access shelf still prevents players from tunneling below the route early and opens from the right only after the final ore barrier has been mined.
+Every surface biome now ends at a dedicated transparent production-PNG ridge with its world gate as the only passage. The complete boundary art provides each natural opening, while the enlarged premium gate sits directly inside the painted rock instead of a rectangular code-cut gap. Inside all four mines, every permanent collision wall uses a dedicated biome-specific unbreakable-bedrock PNG, visibly distinct from chipped mineable terrain.
 
 Static game data lives in its own ordered module, protected by parity checks that catch accidental balance or progression changes.
 
