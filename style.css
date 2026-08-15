@@ -849,6 +849,7 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
 .achievement-entry{position:relative;min-height:102px;padding:9px;display:grid;grid-template-columns:18px 76px minmax(0,1fr);align-items:center;gap:9px;border:1px solid #485448;border-radius:12px;background:linear-gradient(135deg,rgba(22,34,26,.96),rgba(7,12,9,.98));box-shadow:0 5px 13px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.045);overflow:hidden}
 .achievement-entry::after{content:"";position:absolute;inset:3px;border:1px solid rgba(255,255,255,.025);border-radius:9px;pointer-events:none}
 .achievement-entry.unlocked{border-color:#8b713d;background:linear-gradient(135deg,rgba(34,48,35,.97),rgba(9,16,11,.98))}
+.achievement-entry.recently-unlocked{z-index:1;animation:achievement-entry-reveal 2.8s ease-out both}
 .achievement-entry[data-tier="silver"].unlocked{border-color:#748a80}.achievement-entry[data-tier="gold"].unlocked{border-color:#b08b42}.achievement-entry[data-tier="mythic"].unlocked{border-color:#8870ab;box-shadow:0 5px 15px rgba(0,0,0,.34),0 0 16px rgba(160,111,224,.08)}
 .achievement-index{align-self:stretch;display:grid;place-items:center;border-right:1px solid rgba(219,190,111,.14);color:#78847a;font-size:7px;font-weight:900;letter-spacing:.5px;writing-mode:vertical-rl}
 .achievement-art{width:74px;height:74px;display:grid;place-items:center;overflow:visible}.achievement-art img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 5px 4px rgba(0,0,0,.55))}
@@ -859,6 +860,7 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
 
 @keyframes achievement-coin-rise{from{transform:translateY(46px) scale(.55) rotateY(0turn);opacity:.08}to{transform:translateY(0) scale(1) rotateY(5turn);opacity:1}}
 @keyframes achievement-hint-in{from{transform:translateY(-5px);opacity:0}to{transform:none;opacity:1}}
+@keyframes achievement-entry-reveal{0%{transform:scale(.96);border-color:#fff4a8;box-shadow:0 0 0 2px rgba(255,236,128,.82),0 0 34px rgba(255,207,67,.78)}28%{transform:scale(1.015);filter:brightness(1.55);box-shadow:0 0 0 2px rgba(255,244,174,.95),0 0 42px rgba(255,207,67,.9)}100%{transform:none;filter:none;box-shadow:0 5px 15px rgba(0,0,0,.34),0 0 18px rgba(229,190,91,.18)}}
 
 @media (max-width:380px){
   .achievement-popup{width:102px;height:120px}.achievement-popup-box{width:96px;height:96px}

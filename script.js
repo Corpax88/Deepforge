@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0344';
+  const ASSET_VERSION='0345';
   const MOONGLASS_SURFACE_BLEND=190;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=190;
@@ -377,8 +377,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.34.4',name:'DEEPGLASS PREMIUM'};
+  const BUILD={version:'0.34.5',name:'DEEPGLASS PREMIUM'};
   const PATCH_NOTES=[
+    {version:'0.34.5',date:'15 AUG 2026',title:'Achievement Spotlight',items:['Tapping a new achievement now opens the achievement list.','The newly earned record scrolls into view and lights up.']},
     {version:'0.34.4',date:'15 AUG 2026',title:'Readable Cave Text',items:['All cave text now renders above the lighting pass.','Labels remain readable without aiming the mining helmet at them.']},
     {version:'0.34.3',date:'15 AUG 2026',title:'Free-Move Controls',items:['The movement joystick now appears wherever you press in the playfield.','Movement and mining remain independent for smooth two-thumb control.']},
     {version:'0.34.2',date:'15 AUG 2026',title:'News from the Depths',items:['Patch Notes now live inside Settings.','Browse the latest changes without leaving the game.']},
@@ -782,7 +783,7 @@
   const state=loadState();
   let currentScene=state.location.scene;
   let currentDepth=currentScene==='surface'?1:state.location.depth;
-  let achievementProgress=null,achievementQueue=[],activeAchievementId=null,achievementPopupSettled=false,achievementSettleTimer=0,achievementCheckTimer=0,achievementListDirty=true;
+  let achievementProgress=null,achievementQueue=[],activeAchievementId=null,highlightedAchievementId=null,achievementPopupSettled=false,achievementSettleTimer=0,achievementCheckTimer=0,achievementListDirty=true;
   player.x=state.location.x;player.y=state.location.y;
   let displayedGold=state.gold,goldTween=null;
   let depthEntrances=createDepthEntrances();
@@ -1016,7 +1017,7 @@
   function settleAchievementPopup(){
     if(!activeAchievementId||achievementPopupSettled)return false;
     clearTimeout(achievementSettleTimer);achievementSettleTimer=0;achievementPopupSettled=true;achievementPopup.dataset.settled='true';achievementPopup.classList.remove('spinning');achievementPopup.classList.add('settled');achievementPopup.setAttribute('aria-disabled','false');
-    const definition=ACHIEVEMENT_BY_ID[activeAchievementId];achievementPopup.setAttribute('aria-label',(definition?definition.title:'Achievement')+' unlocked. Tap to dismiss.');return true;
+    const definition=ACHIEVEMENT_BY_ID[activeAchievementId];achievementPopup.setAttribute('aria-label',(definition?definition.title:'Achievement')+' unlocked. Tap to view in achievements.');return true;
   }
 
   function dismissAchievementPopup(){
@@ -1025,6 +1026,20 @@
     const record=achievementProgress.records[activeAchievementId];if(record)record.acknowledged=true;
     const dismissed=activeAchievementId;activeAchievementId=null;achievementPopupSettled=false;if(achievementQueue[0]===dismissed)achievementQueue.shift();else achievementQueue=achievementQueue.filter(id=>id!==dismissed);
     achievementPopup.hidden=true;achievementPopup.classList.remove('spinning');achievementPopup.classList.remove('settled');persistAchievementProgress();achievementListDirty=true;sound('coin');syncAchievementPopup();return true;
+  }
+
+  function highlightAchievementEntry(id){
+    highlightedAchievementId=id;achievementList.dataset.highlightedAchievement=id;
+    if(typeof achievementList.querySelectorAll==='function')achievementList.querySelectorAll('.recently-unlocked').forEach(entry=>entry.classList.remove('recently-unlocked'));
+    const entry=typeof achievementList.querySelector==='function'?achievementList.querySelector('[data-achievement="'+id+'"]'):null;if(!entry)return false;
+    entry.classList.remove('recently-unlocked');void entry.offsetWidth;entry.classList.add('recently-unlocked');
+    const reveal=()=>{if(typeof entry.scrollIntoView==='function')entry.scrollIntoView({behavior:reducedMotion?'auto':'smooth',block:'center'})};
+    if(typeof requestAnimationFrame==='function')requestAnimationFrame(reveal);else reveal();return true;
+  }
+
+  function openAchievementFromPopup(){
+    if(!activeAchievementId||!achievementPopupSettled)return false;
+    const id=activeAchievementId;showOverlayMenu('achievements','game');if(!dismissAchievementPopup())return false;renderAchievementList(true);highlightAchievementEntry(id);return true;
   }
 
   function isCompatibleLegacySave(candidate){
@@ -4239,7 +4254,7 @@
   baseModuleList.addEventListener('click',event=>{const place=event.target.closest('[data-base-place]'),pack=event.target.closest('[data-base-pack]'),take=event.target.closest('[data-chest-take]');if(place)placeBaseModule(place.dataset.basePlace);else if(pack)packBaseModule(pack.dataset.basePack);else if(take)takeAllFromChest(take.dataset.chestTake)});
   inventoryShade.addEventListener('pointerdown',event=>{if(event.target===inventoryShade)closeInventory()});
   achievementPopup.addEventListener('animationend',event=>{if(event.animationName==='achievement-coin-rise'||event.animationName==='achievement-claim-reveal')settleAchievementPopup()});
-  achievementPopup.addEventListener('click',dismissAchievementPopup);
+  achievementPopup.addEventListener('click',openAchievementFromPopup);
   achievementProgress=loadAchievementProgress();initializeAchievements();
   syncAudioSettingsUI();
   continueButton.disabled=!loadedExistingSave;
@@ -4256,7 +4271,7 @@
 
   window.__everDeeperTest={
     snapshot:()=>JSON.parse(JSON.stringify({
-      build:BUILD,patchNotes:PATCH_NOTES,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,startMenu:{visible:!startScreen.hidden,hasSave:loadedExistingSave,actions:['continue','new-game','achievements','settings'],achievementsInPause:false},achievements:{storageKey:ACHIEVEMENTS_KEY,total:ACHIEVEMENT_DEFINITIONS.length,count:Object.keys(achievementProgress.records).length,definitions:ACHIEVEMENT_DEFINITIONS.map(({predicate,...definition})=>definition),records:achievementProgress.records,queue:achievementQueue.slice(),active:activeAchievementId,settled:achievementPopupSettled,popupVisible:!achievementPopup.hidden,metrics:achievementMetrics()},music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted,enabled:audioSettings.music,effectsEnabled:audioSettings.effects},controls:{floatingJoystick:true,activationSurface:'gameCanvas',pressAnywhere:true,independentMinePointer:true,joystickPointer:input.joystickPointer,moveX:input.moveX,moveY:input.moveY,mineHeld:input.mineHeld},resourceRendering:{...RESOURCE_RENDER_CONTRACT,paths:DROP_PATHS,bounds:RESOURCE_IMAGE_BOUNDS},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true,emberMine:true,starMine:true},surfaceAssetRendering:{mossveinGround:true,mainRoad:SURFACE_ROAD_PATHS,seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:MOSSVEIN_MINE_PATH,mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
+      build:BUILD,patchNotes:PATCH_NOTES,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,startMenu:{visible:!startScreen.hidden,hasSave:loadedExistingSave,actions:['continue','new-game','achievements','settings'],achievementsInPause:false},achievements:{storageKey:ACHIEVEMENTS_KEY,total:ACHIEVEMENT_DEFINITIONS.length,count:Object.keys(achievementProgress.records).length,definitions:ACHIEVEMENT_DEFINITIONS.map(({predicate,...definition})=>definition),records:achievementProgress.records,queue:achievementQueue.slice(),active:activeAchievementId,highlighted:highlightedAchievementId,settled:achievementPopupSettled,popupVisible:!achievementPopup.hidden,metrics:achievementMetrics()},music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted,enabled:audioSettings.music,effectsEnabled:audioSettings.effects},controls:{floatingJoystick:true,activationSurface:'gameCanvas',pressAnywhere:true,independentMinePointer:true,joystickPointer:input.joystickPointer,moveX:input.moveX,moveY:input.moveY,mineHeld:input.mineHeld},resourceRendering:{...RESOURCE_RENDER_CONTRACT,paths:DROP_PATHS,bounds:RESOURCE_IMAGE_BOUNDS},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true,emberMine:true,starMine:true},surfaceAssetRendering:{mossveinGround:true,mainRoad:SURFACE_ROAD_PATHS,seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:MOSSVEIN_MINE_PATH,mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
       surfaceMoonglassRendering:{ground:SURFACE_MOONGLASS_PATHS.ground,crystals:SURFACE_MOONGLASS_PATHS.crystals,bloomBed:SURFACE_MOONGLASS_PATHS.bloomBed,entrance:MINE_ENTRANCE_PATHS.moonMine,gateMark:STARTER_PATHS.moonglassGateMark,emberdeepSeal:STARTER_PATHS.emberdeepSeal,openBoundaryGatesRemoved:true,animatedGateTransition:true,smoothMossveinBlend:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:SURFACE_MOONGLASS_PATHS.crystalCacheClosed,open:SURFACE_MOONGLASS_PATHS.crystalCacheOpen},reliquary:{closed:SURFACE_MOONGLASS_PATHS.reliquaryClosed,open:SURFACE_MOONGLASS_PATHS.reliquaryOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyEmberdeepSeal:false},
       surfaceEmberdeepRendering:{ground:SURFACE_EMBERDEEP_PATHS.ground,slag:SURFACE_EMBERDEEP_PATHS.slag,faultBed:SURFACE_EMBERDEEP_PATHS.faultBed,minePath:SURFACE_EMBERDEEP_PATHS.minePath,minePathBounds:{...EMBERDEEP_MINE_PATH_BOUNDS},minePathRotation:EMBERDEEP_MINE_PATH_ROTATION,minePathPivot:{...EMBERDEEP_MINE_PATH_PIVOT},minePathMouthTarget:{x:2480,y:1015},entrance:MINE_ENTRANCE_PATHS.emberMine,entrancePosition:{...MINE_DEFINITIONS.emberMine.surfaceEntrance},entranceFlipped:true,gateSeal:STARTER_PATHS.emberdeepSeal,gateMark:STARTER_PATHS.emberdeepSealMark,animatedGateTransition:true,smoothMoonglassBlend:true,continuousBlendUnderlay:true,backgroundSlagDistinct:true,chests:{foundry:{closed:SURFACE_EMBERDEEP_PATHS.foundryClosed,open:SURFACE_EMBERDEEP_PATHS.foundryOpen},vault:{closed:SURFACE_EMBERDEEP_PATHS.vaultClosed,open:SURFACE_EMBERDEEP_PATHS.vaultOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyGate:false},
       surfaceStarfallRendering:{ground:SURFACE_STARFALL_PATHS.ground,shards:SURFACE_STARFALL_PATHS.shards,latticeBed:SURFACE_STARFALL_PATHS.latticeBed,minePath:SURFACE_STARFALL_PATHS.minePath,minePathBounds:{...STARFALL_MINE_PATH_BOUNDS},minePathMouthTarget:{x:3505,y:1000},entrance:MINE_ENTRANCE_PATHS.starMine,entrancePosition:{...MINE_DEFINITIONS.starMine.surfaceEntrance},gateSeal:STARTER_PATHS.starfallSeal,gateMark:STARTER_PATHS.starfallSealMark,starforge:STARTER_PATHS.starforgeStation,chests:{astralCache:{closed:SURFACE_STARFALL_PATHS.astralCacheClosed,open:SURFACE_STARFALL_PATHS.astralCacheOpen},celestialCoffer:{closed:SURFACE_STARFALL_PATHS.celestialCofferClosed,open:SURFACE_STARFALL_PATHS.celestialCofferOpen}},animatedGateTransition:true,smoothEmberdeepBlend:true,continuousBlendUnderlay:true,backgroundShardsDistinct:true,legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyGate:false,legacyStarforge:false},
@@ -4288,6 +4303,7 @@
     evaluateAchievements:()=>evaluateAchievements(),
     settleAchievement:()=>settleAchievementPopup(),
     dismissAchievement:()=>dismissAchievementPopup(),
+    openAchievementPopup:()=>openAchievementFromPopup(),
     openAchievements:()=>showOverlayMenu('achievements','start'),
     dismissStartMenu:enterGame,
     startMusic:()=>{startBackgroundMusic();return backgroundMusic?{src:backgroundMusic.src,volume:backgroundMusic.volume,loop:backgroundMusic.loop,paused:backgroundMusic.paused}:null},

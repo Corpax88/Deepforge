@@ -1,8 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.34.4 - Readable Cave Text**
+Current build: **Ever Deeper v0.34.5 - Achievement Spotlight**
 
-All cave text now renders above the lighting pass, so labels stay readable without aiming the mining helmet at them. The floating movement joystick remains available anywhere in the playfield.
+Tapping a newly earned achievement now opens the achievement list, scrolls directly to that record, and lights it up so the reward feels properly connected to its details.
 
 Fifty persistent achievements now cover mining, precision, resources, exploration, treasure, veins, equipment, Depth 2, and the final victory. Every unlock has its own transparent reliquary sprite, an earned-at record with a clear reason, and a hero-following five-turn reveal that settles before it can be claimed.
 

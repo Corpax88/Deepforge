@@ -12,20 +12,20 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   const logo=page.locator('.brand-logo');
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('alt','Ever Deeper');
-  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0344');
+  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0345');
   const logoState=await logo.evaluate(image=>({complete:image.complete,width:image.naturalWidth,height:image.naturalHeight,bounds:image.getBoundingClientRect().toJSON()}));
   expect(logoState).toMatchObject({complete:true,width:800,height:297});
   expect(logoState.bounds.width).toBeGreaterThanOrEqual(124);
   expect(logoState.bounds.right).toBeLessThanOrEqual(await page.evaluate(()=>innerWidth));
 
-  await expect(page.locator('#buildVersion')).toHaveText('v0.34.4');
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.34.4 · DEEPGLASS PREMIUM');
-  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0344');
-  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0344');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.34.5');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.34.5 · DEEPGLASS PREMIUM');
+  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0345');
+  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0345');
   await page.evaluate(()=>window.__everDeeperTest.dismissStartMenu());
   await page.evaluate(()=>window.__everDeeperTest.setPosition(455,250));
   await expect(page.locator('#contextPanel')).toBeVisible();
-  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=0344$/);
+  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=0345$/);
   const release=await page.evaluate(()=>{
     const api=window.__everDeeperTest;
     api.reset();api.save();
@@ -39,7 +39,7 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
     };
   });
   expect(release).toEqual({
-    build:{version:'0.34.4',name:'DEEPGLASS PREMIUM'},
+    build:{version:'0.34.5',name:'DEEPGLASS PREMIUM'},
     music:'assets/audio/ever-deeper-drift-loop.mp3',
     retiredMarkup:false,
     retiredStorage:false,
@@ -74,12 +74,12 @@ test('achievement reliquaries settle before FIFO dismissal and persist full reco
   await page.evaluate(()=>{const api=window.__everDeeperTest;api.dismissStartMenu();api.grantMined('stone',1);api.evaluateAchievements()});
   const popup=page.locator('#achievementPopup');await expect(popup).toBeVisible();await expect(popup).toHaveAttribute('data-achievement','first_chip');await expect(popup).toHaveAttribute('data-settled','false');
   await popup.dispatchEvent('click');expect(await page.evaluate(()=>window.__everDeeperTest.snapshot().achievements.active)).toBe('first_chip');
-  await page.waitForFunction(()=>window.__everDeeperTest.snapshot().achievements.settled);await expect(popup).toHaveAttribute('data-settled','true');await popup.click();await expect(popup).toBeHidden();
+  await page.waitForFunction(()=>window.__everDeeperTest.snapshot().achievements.settled);await expect(popup).toHaveAttribute('data-settled','true');await popup.click();await expect(popup).toBeHidden();await expect(page.locator('#menuShade')).toBeVisible();await expect(page.locator('#menuShade')).toHaveAttribute('data-view','achievements');await expect(page.locator('[data-achievement="first_chip"]')).toHaveClass(/recently-unlocked/);expect(await page.evaluate(()=>window.__everDeeperTest.snapshot().achievements.highlighted)).toBe('first_chip');await page.locator('#menuCloseButton').click();
 
   await page.evaluate(()=>{const api=window.__everDeeperTest;api.setPickaxeLevel(3);api.evaluateAchievements()});await expect(popup).toHaveAttribute('data-achievement','ironbound');
   let fifo=await page.evaluate(()=>window.__everDeeperTest.snapshot().achievements);expect(fifo.queue).toEqual(['ironbound','rune_ready']);expect(fifo.settled).toBe(false);
-  await page.waitForFunction(()=>window.__everDeeperTest.snapshot().achievements.settled);await popup.click();await expect(popup).toHaveAttribute('data-achievement','rune_ready');
-  await page.waitForFunction(()=>window.__everDeeperTest.snapshot().achievements.settled);await popup.click();await expect(popup).toBeHidden();
+  await page.waitForFunction(()=>window.__everDeeperTest.snapshot().achievements.settled);await page.evaluate(()=>window.__everDeeperTest.dismissAchievement());await expect(popup).toHaveAttribute('data-achievement','rune_ready');
+  await page.waitForFunction(()=>window.__everDeeperTest.snapshot().achievements.settled);await page.evaluate(()=>window.__everDeeperTest.dismissAchievement());await expect(popup).toBeHidden();
 
   const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('everDeeperAchievementsV1')));expect(Object.keys(stored.records)).toEqual(['first_chip','ironbound','rune_ready']);
   for(const record of Object.values(stored.records)){expect(record).toEqual(expect.objectContaining({reason:expect.any(String),scene:'surface',depth:1,order:expect.any(Number),acknowledged:true}));expect(Number.isFinite(Date.parse(record.timestamp))).toBe(true)}
