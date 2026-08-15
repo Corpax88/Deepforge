@@ -1,18 +1,37 @@
 const assert=require('node:assert/strict');
+const crypto=require('node:crypto');
 const fs=require('node:fs');
+const path=require('node:path');
 const vm=require('node:vm');
 
-const source=fs.readFileSync(require('node:path').join(__dirname,'..','script.js'),'utf8');
-const html=fs.readFileSync(require('node:path').join(__dirname,'..','index.html'),'utf8');
-const css=fs.readFileSync(require('node:path').join(__dirname,'..','style.css'),'utf8');
-const latest=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'..','version.json'),'utf8'));
-const repositoryRoot=require('node:path').join(__dirname,'..');
+const repositoryRoot=path.join(__dirname,'..');
+const html=fs.readFileSync(path.join(repositoryRoot,'index.html'),'utf8');
+const css=fs.readFileSync(path.join(repositoryRoot,'style.css'),'utf8');
+const latest=JSON.parse(fs.readFileSync(path.join(repositoryRoot,'version.json'),'utf8'));
+const externalScripts=[...html.matchAll(/<script\b([^>]*)\bsrc="([^"]+)"([^>]*)><\/script>/g)].map(match=>({attributes:match[1]+match[3],src:match[2]}));
+const scriptSources=externalScripts.map(script=>script.src);
+const gameDataScriptIndex=scriptSources.findIndex(src=>src.startsWith('game-data.js?'));
+const engineScriptIndex=scriptSources.findIndex(src=>src.startsWith('script.js?'));
+assert.ok(gameDataScriptIndex>=0&&engineScriptIndex>gameDataScriptIndex,'game-data.js must load before script.js');
+for(const script of externalScripts)assert.doesNotMatch(script.attributes,/\btype\s*=/,'runtime scripts must remain ordered classic scripts');
+const source=scriptSources.map(src=>fs.readFileSync(path.join(repositoryRoot,src.split('?')[0]),'utf8')).join('\n');
+const gameDataSource=fs.readFileSync(path.join(repositoryRoot,scriptSources[gameDataScriptIndex].split('?')[0]),'utf8');
+const gameDataWindow={};
+vm.runInNewContext(gameDataSource,{window:gameDataWindow},{filename:'game-data.js'});
+function canonicalData(value){
+  if(typeof value==='function'||value===undefined)return undefined;
+  if(Array.isArray(value))return value.map(canonicalData).filter(item=>item!==undefined);
+  if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().flatMap(key=>{const item=canonicalData(value[key]);return item===undefined?[]:[[key,item]]}));
+  return value;
+}
+const gameDataDigest=crypto.createHash('sha256').update(JSON.stringify(canonicalData(gameDataWindow.EverDeeperGameData))).digest('hex');
+assert.equal(gameDataDigest,'bd1816ca2683b07cd62458fd8a33e7e79f8241cac9fdde63b5ce3768678f09f6','static gameplay data changed unexpectedly');
 const retiredBrand=['deep','forge'].join('');
 const excludedAuditDirectories=new Set(['.git','node_modules','playwright-report','test-results']);
 function auditBrandRemoval(directory){
   for(const entry of fs.readdirSync(directory,{withFileTypes:true})){
     if(entry.isDirectory()&&excludedAuditDirectories.has(entry.name))continue;
-    const absolute=require('node:path').join(directory,entry.name),relative=require('node:path').relative(repositoryRoot,absolute);
+    const absolute=path.join(directory,entry.name),relative=path.relative(repositoryRoot,absolute);
     assert.ok(!relative.toLowerCase().includes(retiredBrand),'retired brand remains in path: '+relative);
     if(entry.isDirectory())auditBrandRemoval(absolute);
     else if(entry.isFile())assert.ok(!fs.readFileSync(absolute).toString('latin1').toLowerCase().includes(retiredBrand),'retired brand remains in file: '+relative);
@@ -24,22 +43,23 @@ assert.doesNotMatch(source,/function drawRockBody/,'resource nodes must not reta
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'0346');
+assert.equal(latest.version,'0347');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0346/);
-assert.match(html,/script\.js\?v=0346/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0346/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0346/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0346/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0346/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0346"/);
+assert.match(html,/style\.css\?v=0347/);
+assert.match(html,/game-data\.js\?v=0347/);
+assert.match(html,/script\.js\?v=0347/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0347/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0347/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0347/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0347/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0347"/);
 assert.match(source,/const EMBER_CRAFT_MATERIAL_REQUIRED=100;/);
 assert.match(source,/const STARFORGE_MATERIAL_REQUIRED=200;/);
 assert.match(css,/\.context-panel\{bottom:136px;/);
 assert.match(html,/id="startScreen" class="start-screen"/);
 assert.match(html,/id="continueButton"/);assert.match(html,/id="newGameButton"/);assert.match(html,/id="startAchievementsButton"/);assert.match(html,/id="startSettingsButton"/);assert.match(html,/id="patchNotesButton"/);assert.match(html,/id="patchNotesPanel"/);assert.match(html,/id="patchNotesList"/);assert.match(html,/id="resetProgressButton"/);
-assert.match(source,/const PATCH_NOTES=\[/);assert.match(source,/version:'0\.34\.6'.+title:'Fresh Expedition'/);assert.match(css,/\.patch-note\.latest/);assert.match(css,/@keyframes achievement-entry-reveal/);
+assert.match(source,/const PATCH_NOTES=\[/);assert.match(source,/version:'0\.34\.7'.+title:'Safer Foundations'/);assert.match(css,/\.patch-note\.latest/);assert.match(css,/@keyframes achievement-entry-reveal/);
 assert.match(source,/drawMineLighting\(\);drawWorldLabels\(\);drawVisualGuide\(\);drawReadableTextOverlay\(\)/);assert.match(source,/readableTextOverlay:true,textPass:'after-lighting'/);
 assert.match(source,/viewport\.addEventListener\('pointerdown',beginFloatingJoystick\)/);assert.match(source,/floatingJoystick:true.+pressAnywhere:true.+independentMinePointer:true/);assert.match(css,/\.joystick\.active\{opacity:1\}/);
 assert.doesNotMatch(html,/id="achievementsTab"/);
@@ -291,15 +311,33 @@ function createRuntime({failWalkSheets=false,reducedMotion=false}={}){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.34.6');
+const expectedApiKeys=[
+  'activateMiningRush','autoSort','breakDepositRock','breakVeinRock','buyMovementSpeed','buyStorageChest','claimPocketReward','clearMineBarrier','clearSwing','collectGroundDrops',
+  'discoverCavern','discoverDepthEntrance','dismissAchievement','dismissStartMenu','enterDepth','enterMine','evaluateAchievements','exitDepth','exitMine','expireGroundDrops',
+  'forceGlobalLootSweep','forgeStarVariant','grantCargo','grantGold','grantMined','hitDepositRock','interact','mineOnce','mineTerrainCell','openAchievementPopup','openAchievements',
+  'openChest','openInventory','packBaseModule','placeBaseModule','primePrecision','renderOnce','reset','resetAll','restoreRocks','restoreTerrain','sampleHeadlampRay','save','sellCargo',
+  'setAim','setAudioSetting','setDrillLevel','setMoveVector','setPickaxeLevel','setPosition','setReducedMotion','setStarforgeVariant','setSwingProgress','setTimeScale','settleAchievement',
+  'snapshot','spawnGroundDrops','startEmberdeepGateTransition','startMoonglassGateTransition','startMusic','startStarfallGateTransition','step','stopMove','takeAllFromChest','unlockAllAreas',
+  'unlockStarfall','upgradeDrill'
+];
+const expectedSnapshotKeys=[
+  'achievements','activeContext','assetRendering','assetVersion','biome','bonusVeinRendering','build','camera','characterRendering','chests','controls','depth','discoveryRendering',
+  'effectivePickaxe','emberdeepGateTransition','emberdeepRendering','entranceAssetRendering','feedback','focus','goal','groundDrops','guide','lighting','lootSweep','markerStyle','mine',
+  'mineralNodeRenderScale','miningFeedbackRendering','miningRush','moltenRendering','moonglassGateTransition','moonglassRendering','movement','music','patchNotes','player','prismaticRendering',
+  'progression','protectedCargo','resourceRendering','rocks','rootwoundRendering','scene','sellableCargo','starfallGateTransition','starfallRendering','startMenu','starterGateRendering',
+  'starterRendering','state','surfaceAssetRendering','surfaceEmberdeepRendering','surfaceMoonglassRendering','surfaceStarfallRendering','toolMode','veins','voidstarRendering'
+];
+assert.deepEqual(Object.keys(api).sort(),expectedApiKeys,'test API contract changed unexpectedly');
+assert.deepEqual(Object.keys(api.snapshot()).sort(),expectedSnapshotKeys,'snapshot contract changed unexpectedly');
+assert.equal(api.snapshot().build.version,'0.34.7');
 assert.equal(api.snapshot().build.name,'DEEPGLASS PREMIUM');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.34.6');
-assert.equal(api.snapshot().assetVersion,'0346');
-assert.equal(api.snapshot().patchNotes.length,7);assert.equal(api.snapshot().patchNotes[0].version,'0.34.6');assert.match(api.snapshot().patchNotes[0].items.join(' '),/Reset All Progress/);assert.match(api.snapshot().patchNotes[5].items.join(' '),/100 Emberstone/);assert.match(api.snapshot().patchNotes[5].items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.34.7');
+assert.equal(api.snapshot().assetVersion,'0347');
+assert.equal(api.snapshot().patchNotes.length,8);assert.equal(api.snapshot().patchNotes[0].version,'0.34.7');assert.match(api.snapshot().patchNotes[0].items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(api.snapshot().patchNotes[1].items.join(' '),/Reset All Progress/);assert.match(api.snapshot().patchNotes[6].items.join(' '),/100 Emberstone/);assert.match(api.snapshot().patchNotes[6].items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0346',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0347',volume:1,loop:true,paused:false}));
 api.dismissStartMenu();
 const viewportElement=runtime.elements.get('viewport'),canvasElement=runtime.elements.get('gameCanvas'),joystickElement=runtime.elements.get('joystick'),mineElement=runtime.elements.get('mineButton');
 viewportElement.dispatchEvent({type:'pointerdown',target:canvasElement,pointerId:301,button:0,clientX:120,clientY:260});

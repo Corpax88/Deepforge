@@ -1,8 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.34.6 - Fresh Expedition**
+Current build: **Ever Deeper v0.34.7 - Safer Foundations**
 
-Settings now includes a confirmed full reset that clears both the expedition save and all achievement records for clean testing.
+Static game data now lives in its own ordered module, protected by parity checks that catch accidental balance or progression changes while keeping runtime behavior unchanged.
 
 Fifty persistent achievements now cover mining, precision, resources, exploration, treasure, veins, equipment, Depth 2, and the final victory. Every unlock has its own transparent reliquary sprite, an earned-at record with a clear reason, and a hero-following five-turn reveal that settles before it can be claimed.
 
@@ -58,6 +58,19 @@ python -m http.server 4180 --bind 0.0.0.0
 ```
 
 Open `http://127.0.0.1:4180` on the same computer.
+
+## Codebase layout
+
+- `game-data.js` owns the static world definitions, balance values, equipment catalogs, discoveries, recipes, and achievement definitions.
+- `script.js` owns runtime state, persistence, input, UI, audio, rendering, and the browser bootstrap.
+- `index.html` loads both as ordered classic scripts: `game-data.js` must always run before `script.js`.
+- Exported game data is shared read-only. Clone nested objects before changing them at runtime.
+
+## Refactor guardrails
+
+- `npm run test:smoke` loads every external runtime script in HTML order and exercises saves, progression, achievements, controls, lighting, and the complete expedition.
+- The smoke suite pins a canonical SHA-256 digest of the static game data so accidental balance, requirement, layout, or catalog changes fail immediately.
+- The Playwright suite checks desktop and iPhone behavior. Keep gameplay changes separate from structural refactors so failures remain attributable.
 
 ## Mossvein wall optimization
 

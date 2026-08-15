@@ -1,8 +1,17 @@
 const {test,expect}=require('@playwright/test');
 
 test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
+  const pageErrors=[],consoleErrors=[],scriptFailures=[];
+  page.on('pageerror',error=>pageErrors.push(error.message));
+  page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text())});
+  page.on('requestfailed',request=>{if(request.resourceType()==='script')scriptFailures.push(request.url()+': '+(request.failure()?.errorText||'request failed'))});
+  page.on('response',response=>{if(response.request().resourceType()==='script'&&!response.ok())scriptFailures.push(response.url()+': HTTP '+response.status())});
   await page.goto('/');
   await page.waitForFunction(()=>window.__everDeeperTest);
+  const scripts=await page.locator('script[src]').evaluateAll(elements=>elements.map(script=>({src:script.getAttribute('src'),type:script.type})));
+  const gameDataIndex=scripts.findIndex(script=>script.src==='game-data.js?v=0347'),engineIndex=scripts.findIndex(script=>script.src==='script.js?v=0347');
+  expect(gameDataIndex).toBeGreaterThanOrEqual(0);expect(engineIndex).toBeGreaterThan(gameDataIndex);
+  expect(scripts.every(script=>script.type===''&&script.src.endsWith('?v=0347'))).toBe(true);
 
   await expect(page).toHaveTitle('Ever Deeper');
   await expect(page.locator('meta[name="application-name"]')).toHaveAttribute('content','Ever Deeper');
@@ -12,20 +21,20 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   const logo=page.locator('.brand-logo');
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('alt','Ever Deeper');
-  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0346');
+  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0347');
   const logoState=await logo.evaluate(image=>({complete:image.complete,width:image.naturalWidth,height:image.naturalHeight,bounds:image.getBoundingClientRect().toJSON()}));
   expect(logoState).toMatchObject({complete:true,width:800,height:297});
   expect(logoState.bounds.width).toBeGreaterThanOrEqual(124);
   expect(logoState.bounds.right).toBeLessThanOrEqual(await page.evaluate(()=>innerWidth));
 
-  await expect(page.locator('#buildVersion')).toHaveText('v0.34.6');
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.34.6 · DEEPGLASS PREMIUM');
-  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0346');
-  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0346');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.34.7');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.34.7 · DEEPGLASS PREMIUM');
+  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0347');
+  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0347');
   await page.evaluate(()=>window.__everDeeperTest.dismissStartMenu());
   await page.evaluate(()=>window.__everDeeperTest.setPosition(455,250));
   await expect(page.locator('#contextPanel')).toBeVisible();
-  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=0346$/);
+  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=0347$/);
   const release=await page.evaluate(()=>{
     const api=window.__everDeeperTest;
     api.reset();api.save();
@@ -39,12 +48,13 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
     };
   });
   expect(release).toEqual({
-    build:{version:'0.34.6',name:'DEEPGLASS PREMIUM'},
+    build:{version:'0.34.7',name:'DEEPGLASS PREMIUM'},
     music:'assets/audio/ever-deeper-drift-loop.mp3',
     retiredMarkup:false,
     retiredStorage:false,
     currentStorage:true
   });
+  expect({pageErrors,consoleErrors,scriptFailures}).toEqual({pageErrors:[],consoleErrors:[],scriptFailures:[]});
 });
 
 test('all resource symbols use the shared production drop assets',async({page})=>{
