@@ -24,22 +24,22 @@ assert.doesNotMatch(source,/function drawRockBody/,'resource nodes must not reta
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'0345');
+assert.equal(latest.version,'0346');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0345/);
-assert.match(html,/script\.js\?v=0345/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0345/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0345/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0345/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0345/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0345"/);
+assert.match(html,/style\.css\?v=0346/);
+assert.match(html,/script\.js\?v=0346/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0346/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0346/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0346/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0346/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0346"/);
 assert.match(source,/const EMBER_CRAFT_MATERIAL_REQUIRED=100;/);
 assert.match(source,/const STARFORGE_MATERIAL_REQUIRED=200;/);
 assert.match(css,/\.context-panel\{bottom:136px;/);
 assert.match(html,/id="startScreen" class="start-screen"/);
-assert.match(html,/id="continueButton"/);assert.match(html,/id="newGameButton"/);assert.match(html,/id="startAchievementsButton"/);assert.match(html,/id="startSettingsButton"/);assert.match(html,/id="patchNotesButton"/);assert.match(html,/id="patchNotesPanel"/);assert.match(html,/id="patchNotesList"/);
-assert.match(source,/const PATCH_NOTES=\[/);assert.match(source,/version:'0\.34\.5'.+title:'Achievement Spotlight'/);assert.match(css,/\.patch-note\.latest/);assert.match(css,/@keyframes achievement-entry-reveal/);
+assert.match(html,/id="continueButton"/);assert.match(html,/id="newGameButton"/);assert.match(html,/id="startAchievementsButton"/);assert.match(html,/id="startSettingsButton"/);assert.match(html,/id="patchNotesButton"/);assert.match(html,/id="patchNotesPanel"/);assert.match(html,/id="patchNotesList"/);assert.match(html,/id="resetProgressButton"/);
+assert.match(source,/const PATCH_NOTES=\[/);assert.match(source,/version:'0\.34\.6'.+title:'Fresh Expedition'/);assert.match(css,/\.patch-note\.latest/);assert.match(css,/@keyframes achievement-entry-reveal/);
 assert.match(source,/drawMineLighting\(\);drawWorldLabels\(\);drawVisualGuide\(\);drawReadableTextOverlay\(\)/);assert.match(source,/readableTextOverlay:true,textPass:'after-lighting'/);
 assert.match(source,/viewport\.addEventListener\('pointerdown',beginFloatingJoystick\)/);assert.match(source,/floatingJoystick:true.+pressAnywhere:true.+independentMinePointer:true/);assert.match(css,/\.joystick\.active\{opacity:1\}/);
 assert.doesNotMatch(html,/id="achievementsTab"/);
@@ -291,15 +291,15 @@ function createRuntime({failWalkSheets=false,reducedMotion=false}={}){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.34.5');
+assert.equal(api.snapshot().build.version,'0.34.6');
 assert.equal(api.snapshot().build.name,'DEEPGLASS PREMIUM');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.34.5');
-assert.equal(api.snapshot().assetVersion,'0345');
-assert.equal(api.snapshot().patchNotes.length,6);assert.equal(api.snapshot().patchNotes[0].version,'0.34.5');assert.match(api.snapshot().patchNotes[0].items.join(' '),/opens the achievement list/);assert.match(api.snapshot().patchNotes[4].items.join(' '),/100 Emberstone/);assert.match(api.snapshot().patchNotes[4].items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.34.6');
+assert.equal(api.snapshot().assetVersion,'0346');
+assert.equal(api.snapshot().patchNotes.length,7);assert.equal(api.snapshot().patchNotes[0].version,'0.34.6');assert.match(api.snapshot().patchNotes[0].items.join(' '),/Reset All Progress/);assert.match(api.snapshot().patchNotes[5].items.join(' '),/100 Emberstone/);assert.match(api.snapshot().patchNotes[5].items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0345',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0346',volume:1,loop:true,paused:false}));
 api.dismissStartMenu();
 const viewportElement=runtime.elements.get('viewport'),canvasElement=runtime.elements.get('gameCanvas'),joystickElement=runtime.elements.get('joystick'),mineElement=runtime.elements.get('mineButton');
 viewportElement.dispatchEvent({type:'pointerdown',target:canvasElement,pointerId:301,button:0,clientX:120,clientY:260});
@@ -442,6 +442,7 @@ for(const [id,crossBoundary,approachBoundary] of achievementPredicateBoundaries)
 
 const existingExpedition=achievementApi.snapshot().state;storage.clear();storage.set('everDeeperPrototypeV2',JSON.stringify(existingExpedition));const backfillSnapshot=createRuntime().api.snapshot();
 assert.equal(backfillSnapshot.achievements.count,3);assert.equal(JSON.stringify(backfillSnapshot.achievements.queue),JSON.stringify([]));assert.equal(backfillSnapshot.achievements.active,null);assert.ok(['first_chip','ironbound','rune_ready'].every(id=>{const record=backfillSnapshot.achievements.records[id];return record.acknowledged&&record.retroactive&&record.scene===null&&record.depth===null}));
+assert.equal(achievementApi.resetAll(),true);assert.equal(achievementApi.snapshot().achievements.count,0);assert.equal(achievementApi.snapshot().achievements.active,null);assert.equal(achievementApi.snapshot().state.pickaxeLevel,1);assert.equal(achievementApi.snapshot().state.mined.stone,0);assert.deepEqual(JSON.parse(storage.get('everDeeperAchievementsV1')).records,{});
 storage.clear();for(const [key,value] of storageBeforeAchievements)storage.set(key,value);
 
 const storageBeforeMoonglassRendering=new Map(storage),productionRuntime=createRuntime(),productionApi=productionRuntime.api;

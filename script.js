@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0345';
+  const ASSET_VERSION='0346';
   const MOONGLASS_SURFACE_BLEND=190;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=190;
@@ -357,6 +357,7 @@
   const achievementAnnouncement=document.getElementById('achievementAnnouncement');
   const musicToggle=document.getElementById('musicToggle');
   const effectsToggle=document.getElementById('effectsToggle');
+  const resetProgressButton=document.getElementById('resetProgressButton');
   const resumeButton=document.getElementById('resumeButton');
   const startScreen=document.getElementById('startScreen');
   const continueButton=document.getElementById('continueButton');
@@ -377,8 +378,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.34.5',name:'DEEPGLASS PREMIUM'};
+  const BUILD={version:'0.34.6',name:'DEEPGLASS PREMIUM'};
   const PATCH_NOTES=[
+    {version:'0.34.6',date:'15 AUG 2026',title:'Fresh Expedition',items:['Reset All Progress is available in Settings again.','The reset clears both the expedition save and every achievement record.']},
     {version:'0.34.5',date:'15 AUG 2026',title:'Achievement Spotlight',items:['Tapping a new achievement now opens the achievement list.','The newly earned record scrolls into view and lights up.']},
     {version:'0.34.4',date:'15 AUG 2026',title:'Readable Cave Text',items:['All cave text now renders above the lighting pass.','Labels remain readable without aiming the mining helmet at them.']},
     {version:'0.34.3',date:'15 AUG 2026',title:'Free-Move Controls',items:['The movement joystick now appears wherever you press in the playfield.','Movement and mining remain independent for smooth two-thumb control.']},
@@ -1161,6 +1163,13 @@
     lootSweepCheck=0;lootSweepWarned30=false;lootSweepWarned10=false;moonglassGateTransition=null;emberdeepGateTransition=null;starfallGateTransition=null;
     Object.assign(miningFeedback,{shake:0,shakeTime:0,flash:0,hitStop:0,terrainHitIndex:-1,terrainHitTime:0,lastDiscovery:null,lastDepositBeat:null,lastPocketReward:null});
     lastRegion=-1;activeContext=null;menuShade.hidden=true;inventoryShade.hidden=true;uiDirty=true;saveState(true);showToast('A fresh vein awaits.');
+  }
+
+  function resetAllProgress(){
+    if(!window.confirm('Reset all game progress and achievements? This cannot be undone.'))return false;
+    clearTimeout(achievementSettleTimer);achievementSettleTimer=0;achievementProgress=defaultAchievementProgress();achievementQueue=[];activeAchievementId=null;highlightedAchievementId=null;achievementPopupSettled=false;achievementListDirty=true;
+    try{localStorage.removeItem(ACHIEVEMENTS_KEY)}catch(error){}achievementPopup.hidden=true;achievementPopup.classList.remove('spinning');achievementPopup.classList.remove('settled');achievementList.dataset.highlightedAchievement='';renderAchievementSummary();
+    resetProgress();persistAchievementProgress();loadedExistingSave=true;continueButton.disabled=false;continueDetail.textContent='MOSSVEIN QUARRY';enterGame();return true;
   }
 
   function resize(){
@@ -4264,6 +4273,7 @@
   menuButton.addEventListener('click',()=>showOverlayMenu('settings','game'));
   settingsTab.addEventListener('click',()=>setMenuTab('settings'));statsTab.addEventListener('click',()=>setMenuTab('stats'));
   patchNotesButton.addEventListener('click',()=>setMenuTab('patchnotes'));
+  resetProgressButton.addEventListener('click',resetAllProgress);
   musicToggle.addEventListener('click',()=>{unlockAudio();setAudioSetting('music',!audioSettings.music)});effectsToggle.addEventListener('click',()=>{unlockAudio();setAudioSetting('effects',!audioSettings.effects)});
   menuCloseButton.addEventListener('click',()=>{menuShade.hidden=true;syncAchievementPopup()});resumeButton.addEventListener('click',()=>{if(menuShade.dataset.view==='patchnotes'){setMenuTab('settings');return}menuShade.hidden=true;syncAchievementPopup()});
   menuShade.addEventListener('pointerdown',event=>{if(event.target===menuShade){menuShade.hidden=true;syncAchievementPopup()}});
@@ -4300,6 +4310,7 @@
       groundDrops:groundDrops.map(drop=>({id:drop.id,type:drop.type,amount:drop.amount,x:drop.x,y:drop.y,z:drop.z,age:drop.age,settled:drop.settled,scene:drop.scene,depth:drop.depth,sourceChest:drop.sourceChest,sourcePocket:drop.sourcePocket})),feedback:{floaters:floaters.map(item=>item.text),pickupCount:pickupBatch.count,particleCount:particles.length,shake:miningFeedback.shake,flash:miningFeedback.flash,hitStop:miningFeedback.hitStop,terrainHitIndex:miningFeedback.terrainHitIndex,lastDiscovery:miningFeedback.lastDiscovery,lastDepositBeat:miningFeedback.lastDepositBeat,lastPocketReward:miningFeedback.lastPocketReward},activeContext
     })),
     reset:resetProgress,
+    resetAll:resetAllProgress,
     evaluateAchievements:()=>evaluateAchievements(),
     settleAchievement:()=>settleAchievementPopup(),
     dismissAchievement:()=>dismissAchievementPopup(),

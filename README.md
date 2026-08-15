@@ -1,8 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.34.5 - Achievement Spotlight**
+Current build: **Ever Deeper v0.34.6 - Fresh Expedition**
 
-Tapping a newly earned achievement now opens the achievement list, scrolls directly to that record, and lights it up so the reward feels properly connected to its details.
+Settings now includes a confirmed full reset that clears both the expedition save and all achievement records for clean testing.
 
 Fifty persistent achievements now cover mining, precision, resources, exploration, treasure, veins, equipment, Depth 2, and the final victory. Every unlock has its own transparent reliquary sprite, an earned-at record with a clear reason, and a hero-following five-turn reveal that settles before it can be claimed.
 

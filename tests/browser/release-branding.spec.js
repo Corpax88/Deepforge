@@ -12,20 +12,20 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   const logo=page.locator('.brand-logo');
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('alt','Ever Deeper');
-  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0345');
+  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0346');
   const logoState=await logo.evaluate(image=>({complete:image.complete,width:image.naturalWidth,height:image.naturalHeight,bounds:image.getBoundingClientRect().toJSON()}));
   expect(logoState).toMatchObject({complete:true,width:800,height:297});
   expect(logoState.bounds.width).toBeGreaterThanOrEqual(124);
   expect(logoState.bounds.right).toBeLessThanOrEqual(await page.evaluate(()=>innerWidth));
 
-  await expect(page.locator('#buildVersion')).toHaveText('v0.34.5');
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.34.5 · DEEPGLASS PREMIUM');
-  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0345');
-  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0345');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.34.6');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.34.6 · DEEPGLASS PREMIUM');
+  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0346');
+  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0346');
   await page.evaluate(()=>window.__everDeeperTest.dismissStartMenu());
   await page.evaluate(()=>window.__everDeeperTest.setPosition(455,250));
   await expect(page.locator('#contextPanel')).toBeVisible();
-  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=0345$/);
+  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=0346$/);
   const release=await page.evaluate(()=>{
     const api=window.__everDeeperTest;
     api.reset();api.save();
@@ -39,7 +39,7 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
     };
   });
   expect(release).toEqual({
-    build:{version:'0.34.5',name:'DEEPGLASS PREMIUM'},
+    build:{version:'0.34.6',name:'DEEPGLASS PREMIUM'},
     music:'assets/audio/ever-deeper-drift-loop.mp3',
     retiredMarkup:false,
     retiredStorage:false,
@@ -60,6 +60,14 @@ test('all resource symbols use the shared production drop assets',async({page})=
   await expect(page.locator('#inventoryGrid [data-resource="emberstone"] img')).toHaveAttribute('src',/emberstone-drop\.png/);
   await expect(page.locator('.resource.gold [data-resource="gold"] img')).toHaveAttribute('src',/gold-drop\.png/);
   expect(await page.locator('.resource-gem').count()).toBe(0);
+});
+
+test('settings reset starts a fresh expedition and clears achievements',async({page})=>{
+  await page.goto('/');await page.waitForFunction(()=>window.__everDeeperTest);
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.dismissStartMenu();api.grantMined('stone',12);api.grantGold(90);api.evaluateAchievements()});
+  await page.locator('#menuButton').click();await expect(page.locator('#resetProgressButton')).toBeVisible();page.once('dialog',dialog=>dialog.accept());await page.locator('#resetProgressButton').click();
+  const fresh=await page.evaluate(()=>({snapshot:window.__everDeeperTest.snapshot(),achievements:JSON.parse(localStorage.getItem('everDeeperAchievementsV1'))}));
+  expect(fresh.snapshot.state.gold).toBe(0);expect(fresh.snapshot.state.mined.stone).toBe(0);expect(fresh.snapshot.state.pickaxeLevel).toBe(1);expect(fresh.snapshot.achievements.count).toBe(0);expect(fresh.snapshot.achievements.active).toBeNull();expect(fresh.achievements.records).toEqual({});await expect(page.locator('#menuShade')).toBeHidden();
 });
 
 test('achievement reliquaries settle before FIFO dismissal and persist full records',async({page})=>{
