@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0355';
+  const ASSET_VERSION='0356';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -391,8 +391,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.35.5',name:'PICKAXE TINK'};
+  const BUILD={version:'0.35.6',name:'VISIBLE WALL FIT'};
   const PATCH_NOTES=[
+    {version:'0.35.6',date:'16 AUG 2026',title:'Visible Wall Fit',items:['Surface wall collision now matches the actual painted width of each premium boundary PNG.','The oversized invisible strip beside opened gates is removed while the visible cliff remains solid.','Closed gates still block across their full portal footprint.']},
     {version:'0.35.5',date:'15 AUG 2026',title:'Pickaxe Tink',items:['Pickaxe mining now lands with a short, bright metallic tink instead of the previous heavy synthetic impact.','Repeated swings form a clean tink-tink-tink rhythm, while drills retain their separate heavier sound.','Material and pickaxe tier still add subtle pitch variation without muddying the hit.']},
     {version:'0.35.4',date:'15 AUG 2026',title:'Passage Fit',items:['Opened-gate floor marks now fill the complete passage using the visible bounds of their premium PNGs.','Boundary collision now follows each painted cliff edge, so the miner can no longer stand inside the rock face.','Closed gates block across their full visual footprint while remaining easy to approach and open.']},
     {version:'0.35.3',date:'15 AUG 2026',title:'Integrated Gates',items:['Biome boundary PNGs now render their complete hand-painted natural openings instead of hard rectangular crops.','All three premium gates are larger and seated directly inside their matching rock passage.','Gate collision, costs, sinking transitions, and progression are unchanged.']},
