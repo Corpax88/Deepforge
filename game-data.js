@@ -174,6 +174,7 @@
       caverns.push({id:scene+depthPrefix+'_cavern_'+(index+1),name:depth===2?'Deep '+baseName:baseName,x:(col+.5)*MINE_TILE_SIZE,y:(row+.5)*MINE_TILE_SIZE,rx,ry,reward,depth});
     }
     const insideCavern=(x,y,padding=0)=>caverns.some(cavern=>Math.pow((x-cavern.x)/(cavern.rx+padding),2)+Math.pow((y-cavern.y)/(cavern.ry+padding),2)<1);
+    const insidePermanentWall=(x,y,padding=42)=>depth===1&&mine.solids.some(solid=>x+padding>solid.x&&x-padding<solid.x+solid.w&&y+padding>solid.y&&y-padding<solid.y+solid.h);
     const directions=[[1,0],[1,1],[0,1],[-1,1]],occupiedCells=new Set();
     for(let depositIndex=0;depositIndex<veinCount;depositIndex++){
       const rare=(depositIndex+1)%(depth===2?4:5)===0,type=rare?resources.rare:depthRandom()<(depth===2?.28:.18)?resources.secondary:resources.main;
@@ -187,7 +188,7 @@
           const col=Math.max(2,Math.min(cols-3,startCol+direction[0]*step+(direction[1]?wobble:0)));
           const row=Math.max(firstDeepRow,Math.min(rows-3,startRow+direction[1]*step+(direction[0]?wobble:0)));
           const key=col+','+row,x=(col+.5)*MINE_TILE_SIZE,y=(row+.5)*MINE_TILE_SIZE;
-          if(used.has(key)||occupiedCells.has(key)||insideCavern(x,y,72))continue;
+          if(used.has(key)||occupiedCells.has(key)||insideCavern(x,y,72)||insidePermanentWall(x,y))continue;
           used.add(key);candidate.push([x,y]);
         }
         if(candidate.length>=4)positions=candidate;
@@ -226,7 +227,7 @@
           for(let step=0;step<length;step++){
             const col=Math.max(2,Math.min(cols-3,startCol+(horizontal?step:step%2))),row=Math.max(firstDeepRow,Math.min(rows-3,startRow+(horizontal?step%2:step)));
             const key=col+','+row,x=(col+.5)*MINE_TILE_SIZE,y=(row+.5)*MINE_TILE_SIZE;
-            if(occupiedCells.has(key)||insideCavern(x,y,72))continue;
+            if(occupiedCells.has(key)||insideCavern(x,y,72)||insidePermanentWall(x,y))continue;
             candidate.push([x,y]);
           }
           if(candidate.length>=4)positions=candidate;
@@ -234,7 +235,7 @@
         if(positions.length<4){
           for(let row=firstDeepRow+gatedIndex*5;row<rows-3&&positions.length<4;row++)for(let col=3;col<cols-3&&positions.length<4;col++){
             const key=col+','+row,x=(col+.5)*MINE_TILE_SIZE,y=(row+.5)*MINE_TILE_SIZE;
-            if(!occupiedCells.has(key)&&!insideCavern(x,y,72))positions.push([x,y]);
+            if(!occupiedCells.has(key)&&!insideCavern(x,y,72)&&!insidePermanentWall(x,y))positions.push([x,y]);
           }
         }
         if(positions.length<4)continue;
