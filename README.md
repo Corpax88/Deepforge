@@ -1,8 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.34.2 - In-Game Patch Notes**
+Current build: **Ever Deeper v0.34.3 - Free-Move Controls**
 
-Players can now browse recent updates from the Patch Notes entry inside Settings. The release history lives in one structured list so future notes stay easy to add.
+The movement joystick now appears wherever the player first presses in the playfield, then follows that drag while a second thumb remains free to mine. The old fixed-corner activation area is gone.
 
 Fifty persistent achievements now cover mining, precision, resources, exploration, treasure, veins, equipment, Depth 2, and the final victory. Every unlock has its own transparent reliquary sprite, an earned-at record with a clear reason, and a hero-following five-turn reveal that settles before it can be claimed.
 
@@ -45,7 +45,7 @@ A standalone, framework-free HTML5 prototype for the mining loop:
 ## Controls
 
 - Desktop: `WASD` / arrow keys to move, hold `Space` to mine, `E` to interact.
-- Mobile: left joystick to move, hold the `MINE` button to swing.
+- Mobile: press anywhere in the playfield to place the floating joystick, drag to move, and hold the `MINE` button to swing.
 - Your latest movement direction aims the pickaxe, so push toward a mine wall while holding mine to carve a tunnel.
 - Walk near the Sell Chest, Forge, storage chests, or a sealed gate to reveal their action.
 

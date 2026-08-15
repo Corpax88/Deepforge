@@ -12,20 +12,20 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   const logo=page.locator('.brand-logo');
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('alt','Ever Deeper');
-  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0342');
+  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0343');
   const logoState=await logo.evaluate(image=>({complete:image.complete,width:image.naturalWidth,height:image.naturalHeight,bounds:image.getBoundingClientRect().toJSON()}));
   expect(logoState).toMatchObject({complete:true,width:800,height:297});
   expect(logoState.bounds.width).toBeGreaterThanOrEqual(124);
   expect(logoState.bounds.right).toBeLessThanOrEqual(await page.evaluate(()=>innerWidth));
 
-  await expect(page.locator('#buildVersion')).toHaveText('v0.34.2');
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.34.2 · DEEPGLASS PREMIUM');
-  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0342');
-  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0342');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.34.3');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.34.3 · DEEPGLASS PREMIUM');
+  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0343');
+  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0343');
   await page.evaluate(()=>window.__everDeeperTest.dismissStartMenu());
   await page.evaluate(()=>window.__everDeeperTest.setPosition(455,250));
   await expect(page.locator('#contextPanel')).toBeVisible();
-  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=0342$/);
+  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=0343$/);
   const release=await page.evaluate(()=>{
     const api=window.__everDeeperTest;
     api.reset();api.save();
@@ -39,7 +39,7 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
     };
   });
   expect(release).toEqual({
-    build:{version:'0.34.2',name:'DEEPGLASS PREMIUM'},
+    build:{version:'0.34.3',name:'DEEPGLASS PREMIUM'},
     music:'assets/audio/ever-deeper-drift-loop.mp3',
     retiredMarkup:false,
     retiredStorage:false,

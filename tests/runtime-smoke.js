@@ -24,22 +24,23 @@ assert.doesNotMatch(source,/function drawRockBody/,'resource nodes must not reta
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'0342');
+assert.equal(latest.version,'0343');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0342/);
-assert.match(html,/script\.js\?v=0342/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0342/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0342/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0342/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0342/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0342"/);
+assert.match(html,/style\.css\?v=0343/);
+assert.match(html,/script\.js\?v=0343/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0343/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0343/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0343/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0343/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0343"/);
 assert.match(source,/const EMBER_CRAFT_MATERIAL_REQUIRED=100;/);
 assert.match(source,/const STARFORGE_MATERIAL_REQUIRED=200;/);
 assert.match(css,/\.context-panel\{bottom:136px;/);
 assert.match(html,/id="startScreen" class="start-screen"/);
 assert.match(html,/id="continueButton"/);assert.match(html,/id="newGameButton"/);assert.match(html,/id="startAchievementsButton"/);assert.match(html,/id="startSettingsButton"/);assert.match(html,/id="patchNotesButton"/);assert.match(html,/id="patchNotesPanel"/);assert.match(html,/id="patchNotesList"/);
-assert.match(source,/const PATCH_NOTES=\[/);assert.match(source,/version:'0\.34\.2'.+title:'News from the Depths'/);assert.match(css,/\.patch-note\.latest/);
+assert.match(source,/const PATCH_NOTES=\[/);assert.match(source,/version:'0\.34\.3'.+title:'Free-Move Controls'/);assert.match(css,/\.patch-note\.latest/);
+assert.match(source,/viewport\.addEventListener\('pointerdown',beginFloatingJoystick\)/);assert.match(source,/floatingJoystick:true.+pressAnywhere:true.+independentMinePointer:true/);assert.match(css,/\.joystick\.active\{opacity:1\}/);
 assert.doesNotMatch(html,/id="achievementsTab"/);
 assert.match(html,/id="achievementPopup"/);assert.match(html,/id="achievementPopupImage"/);assert.match(html,/id="achievementAnnouncement"[^>]+role="status"[^>]+aria-live="polite"/);assert.match(html,/id="achievementCount"/);assert.match(html,/id="achievementList"/);
 assert.match(source,/ACHIEVEMENTS_KEY='everDeeperAchievementsV1'/);assert.match(css,/@keyframes achievement-coin-rise/);assert.match(css,/rotateY\(5turn\)/);assert.match(css,/achievement-coin-rise 2\.65s cubic-bezier/);
@@ -249,12 +250,15 @@ for(const [relative,[assetWidth,assetHeight,options]] of Object.entries({...moon
 const storage=new Map();
 
 function createElement(id){
-  const classes=new Set();
+  const classes=new Set(),listeners=new Map(),style={removeProperty(name){delete this[name]}};
   return{
-    id,textContent:'',hidden:false,style:{},dataset:{},disabled:false,
+    id,textContent:'',hidden:false,style,dataset:{},disabled:false,clientWidth:390,clientHeight:700,
+    get offsetWidth(){return id==='joystick'?104:390},get offsetHeight(){return id==='joystick'?104:700},
     classList:{add:value=>classes.add(value),remove:value=>classes.delete(value),toggle:(value,force)=>force===undefined?(classes.has(value)?classes.delete(value):classes.add(value)):force?classes.add(value):classes.delete(value),contains:value=>classes.has(value)},
-    addEventListener(){},setAttribute(name,value){this[name]=String(value)},setPointerCapture(){},contains(){return true},querySelector(){return null},
-    getBoundingClientRect(){return{left:0,top:0,width:390,height:700,right:390,bottom:700}}
+    addEventListener(type,listener){if(!listeners.has(type))listeners.set(type,[]);listeners.get(type).push(listener)},
+    dispatchEvent(event){if(!event.target)event.target=this;if(!event.preventDefault)event.preventDefault=function(){this.defaultPrevented=true};for(const listener of listeners.get(event.type)||[])listener(event);return!event.defaultPrevented},
+    setAttribute(name,value){this[name]=String(value)},setPointerCapture(){},contains(){return true},querySelector(){return null},
+    getBoundingClientRect(){const left=Number.parseFloat(style.left)||0,top=Number.parseFloat(style.top)||0,width=this.offsetWidth,height=this.offsetHeight;return{left,top,x:left,y:top,width,height,right:left+width,bottom:top+height}}
   };
 }
 
@@ -286,15 +290,23 @@ function createRuntime({failWalkSheets=false,reducedMotion=false}={}){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.34.2');
+assert.equal(api.snapshot().build.version,'0.34.3');
 assert.equal(api.snapshot().build.name,'DEEPGLASS PREMIUM');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.34.2');
-assert.equal(api.snapshot().assetVersion,'0342');
-assert.equal(api.snapshot().patchNotes.length,3);assert.equal(api.snapshot().patchNotes[0].version,'0.34.2');assert.match(api.snapshot().patchNotes[1].items.join(' '),/100 Emberstone/);assert.match(api.snapshot().patchNotes[1].items.join(' '),/200 Astralite and 200 Crownstone/);
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.34.3');
+assert.equal(api.snapshot().assetVersion,'0343');
+assert.equal(api.snapshot().patchNotes.length,4);assert.equal(api.snapshot().patchNotes[0].version,'0.34.3');assert.match(api.snapshot().patchNotes[2].items.join(' '),/100 Emberstone/);assert.match(api.snapshot().patchNotes[2].items.join(' '),/200 Astralite and 200 Crownstone/);
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0342',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0343',volume:1,loop:true,paused:false}));
+api.dismissStartMenu();
+const viewportElement=runtime.elements.get('viewport'),canvasElement=runtime.elements.get('gameCanvas'),joystickElement=runtime.elements.get('joystick'),mineElement=runtime.elements.get('mineButton');
+viewportElement.dispatchEvent({type:'pointerdown',target:canvasElement,pointerId:301,button:0,clientX:120,clientY:260});
+assert.equal(joystickElement.classList.contains('active'),true);assert.equal(joystickElement.style.left,'68px');assert.equal(joystickElement.style.top,'208px');
+viewportElement.dispatchEvent({type:'pointermove',pointerId:301,clientX:190,clientY:248});mineElement.dispatchEvent({type:'pointerdown',pointerId:302});
+assert.equal(JSON.stringify(api.snapshot().controls),JSON.stringify({floatingJoystick:true,activationSurface:'gameCanvas',pressAnywhere:true,independentMinePointer:true,joystickPointer:301,moveX:1,moveY:-12/(104*.31),mineHeld:true}));
+mineElement.dispatchEvent({type:'pointerup',pointerId:302});viewportElement.dispatchEvent({type:'pointerup',pointerId:301});
+assert.equal(JSON.stringify(api.snapshot().controls),JSON.stringify({floatingJoystick:true,activationSurface:'gameCanvas',pressAnywhere:true,independentMinePointer:true,joystickPointer:null,moveX:0,moveY:0,mineHeld:false}));assert.equal(joystickElement.classList.contains('active'),false);
 assert.equal(api.setAudioSetting('music',false),false);assert.equal(api.snapshot().music.enabled,false);assert.equal(api.snapshot().music.started,false);
 assert.equal(api.setAudioSetting('effects',false),false);assert.equal(api.snapshot().music.effectsEnabled,false);
 assert.equal(api.setAudioSetting('music',true),true);assert.equal(api.setAudioSetting('effects',true),true);

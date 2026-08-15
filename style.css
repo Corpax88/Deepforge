@@ -792,6 +792,10 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
   .start-logo{width:min(220px,72%)}.start-menu-card>p{margin-bottom:10px}.start-actions{gap:6px}.start-actions button{min-height:47px;padding-block:6px}.start-version{margin-top:11px}
 }
 
+/* The movement stick floats to the player's first touch instead of owning a fixed corner. */
+.joystick{opacity:0;pointer-events:none;will-change:left,top,opacity;transition:opacity .08s ease-out}
+.joystick.active{opacity:1}
+
 @media (prefers-reduced-motion:reduce){.menu-shade,.inventory-shade,.menu-card,.inventory-card,.context-panel{animation:none}.context-panel button,.primary-button,.inventory-summary>button,.base-module button{transition:none}}
 
 @media (orientation:landscape) and (max-height:620px){
