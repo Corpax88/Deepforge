@@ -1,8 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.34.1 - Ember & Starforge Pacing**
+Current build: **Ever Deeper v0.34.2 - In-Game Patch Notes**
 
-Ember progression now asks for 100 Emberstone or Sunslag per step, while each Starforge form asks for 200 Astralite and 200 Crownstone.
+Players can now browse recent updates from the Patch Notes entry inside Settings. The release history lives in one structured list so future notes stay easy to add.
 
 Fifty persistent achievements now cover mining, precision, resources, exploration, treasure, veins, equipment, Depth 2, and the final victory. Every unlock has its own transparent reliquary sprite, an earned-at record with a clear reason, and a hero-following five-turn reveal that settles before it can be claimed.
 
