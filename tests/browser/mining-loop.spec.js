@@ -1338,6 +1338,7 @@ test('settings opens first and keeps audio choices separate from stats',async({p
   await expect(page.locator('#statsPanel')).toBeVisible();
   await expect(page.locator('#achievementsTab')).toHaveCount(0);
   await page.reload();
+  await page.locator('#continueButton').click();
   await page.locator('#menuButton').click();
   await expect(page.locator('#musicToggle')).toHaveAttribute('aria-pressed','false');
 });
