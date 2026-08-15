@@ -3964,9 +3964,9 @@
   });
   window.addEventListener('keyup',event=>{input.keys.delete(event.code);if(event.code==='Space'){input.mineHeld=false;mineButton.classList.remove('active')}});
   window.addEventListener('blur',()=>{input.keys.clear();releaseTouchControls()});
-  window.addEventListener('pagehide',()=>{releaseTouchControls();saveState(true)});
+  window.addEventListener('pagehide',()=>{releaseTouchControls();if(loadedExistingSave||startScreen.hidden)saveState(true)});
   document.addEventListener('visibilitychange',()=>{
-    if(document.hidden){releaseTouchControls();saveState(true);if(backgroundMusic&&!backgroundMusic.paused)backgroundMusic.pause()}
+    if(document.hidden){releaseTouchControls();if(loadedExistingSave||startScreen.hidden)saveState(true);if(backgroundMusic&&!backgroundMusic.paused)backgroundMusic.pause()}
     else if(musicStarted)startBackgroundMusic();
   });
   contextButton.addEventListener('click',performContext);
