@@ -747,14 +747,14 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
   .objective-requirement{height:24px;padding-inline:4px}
   .objective-resource{width:18px;height:18px}
   .focus-meter{top:49px}
-  .context-panel{bottom:112px;width:calc(100% - 20px);min-height:67px;padding:8px;grid-template-columns:47px minmax(0,1fr) auto;gap:8px}
+  .context-panel{bottom:136px;width:calc(100% - 20px);min-height:67px;padding:8px;grid-template-columns:47px minmax(0,1fr) auto;gap:8px}
   .context-icon{display:grid;width:45px;height:45px}
   .context-copy b{font-size:12px}.context-copy small{font-size:7px}
   .context-panel button{min-width:72px;min-height:43px;padding-inline:7px;font-size:8px}
   .context-panel button.secondary{min-width:49px}
   .context-panel.starforge-open{width:calc(100% - 18px);grid-template-columns:1fr}
   .context-panel.starforge-open .context-icon{display:none}
-  .context-panel:not([hidden])~.toast{bottom:204px}
+  .context-panel:not([hidden])~.toast{bottom:228px}
   .joystick{left:max(13px,env(safe-area-inset-left));bottom:max(15px,env(safe-area-inset-bottom));width:94px;height:94px}
   .joystick::after{inset:22px}.joystick>div{width:44px;height:44px}
   .action-cluster{right:max(14px,env(safe-area-inset-right));bottom:max(17px,env(safe-area-inset-bottom))}
@@ -788,7 +788,7 @@ button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
   .topbar{min-height:54px}.brand-logo{width:108px}.resource,.icon-button{height:36px}.resource{min-width:49px}
   .objective{top:5px;min-height:32px}.objective-marker{width:19px;height:19px}.focus-meter{top:42px}
   .progress-bar{min-height:51px}.joystick{width:80px;height:80px}.joystick>div{width:38px;height:38px}.mine-button{width:78px;height:78px}.mine-tool{height:23px}.mine-button small{display:none}
-  .context-panel{bottom:88px;min-height:51px}.context-icon{width:38px;height:38px}.context-panel:not([hidden])~.toast{bottom:158px}
+  .context-panel{bottom:104px;min-height:51px}.context-icon{width:38px;height:38px}.context-panel:not([hidden])~.toast{bottom:174px}
   .start-logo{width:min(220px,72%)}.start-menu-card>p{margin-bottom:10px}.start-actions{gap:6px}.start-actions button{min-height:47px;padding-block:6px}.start-version{margin-top:11px}
 }
 
