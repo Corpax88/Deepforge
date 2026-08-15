@@ -9,9 +9,9 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   await page.goto('/');
   await page.waitForFunction(()=>window.__everDeeperTest);
   const scripts=await page.locator('script[src]').evaluateAll(elements=>elements.map(script=>({src:script.getAttribute('src'),type:script.type})));
-  const gameDataIndex=scripts.findIndex(script=>script.src==='game-data.js?v=0359'),engineIndex=scripts.findIndex(script=>script.src==='script.js?v=0359');
+  const gameDataIndex=scripts.findIndex(script=>script.src==='game-data.js?v=03510'),engineIndex=scripts.findIndex(script=>script.src==='script.js?v=03510');
   expect(gameDataIndex).toBeGreaterThanOrEqual(0);expect(engineIndex).toBeGreaterThan(gameDataIndex);
-  expect(scripts.every(script=>script.type===''&&script.src.endsWith('?v=0359'))).toBe(true);
+  expect(scripts.every(script=>script.type===''&&script.src.endsWith('?v=03510'))).toBe(true);
 
   await expect(page).toHaveTitle('Ever Deeper');
   await expect(page.locator('meta[name="application-name"]')).toHaveAttribute('content','Ever Deeper');
@@ -21,20 +21,20 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   const logo=page.locator('.brand-logo');
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('alt','Ever Deeper');
-  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0359');
+  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=03510');
   const logoState=await logo.evaluate(image=>({complete:image.complete,width:image.naturalWidth,height:image.naturalHeight,bounds:image.getBoundingClientRect().toJSON()}));
   expect(logoState).toMatchObject({complete:true,width:800,height:297});
   expect(logoState.bounds.width).toBeGreaterThanOrEqual(124);
   expect(logoState.bounds.right).toBeLessThanOrEqual(await page.evaluate(()=>innerWidth));
 
-  await expect(page.locator('#buildVersion')).toHaveText('v0.35.9');
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.35.9 · CLEAR VEINS');
-  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0359');
-  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=0359');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.35.10');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.35.10 · CLEAR REQUIREMENT');
+  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=03510');
+  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=03510');
   await page.evaluate(()=>window.__everDeeperTest.dismissStartMenu());
   await page.evaluate(()=>window.__everDeeperTest.setPosition(455,250));
   await expect(page.locator('#contextPanel')).toBeVisible();
-  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=0359$/);
+  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=03510$/);
   const release=await page.evaluate(()=>{
     const api=window.__everDeeperTest;
     api.reset();api.save();
@@ -48,7 +48,7 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
     };
   });
   expect(release).toEqual({
-    build:{version:'0.35.9',name:'CLEAR VEINS'},
+    build:{version:'0.35.10',name:'CLEAR REQUIREMENT'},
     music:'assets/audio/ever-deeper-drift-loop.mp3',
     retiredMarkup:false,
     retiredStorage:false,

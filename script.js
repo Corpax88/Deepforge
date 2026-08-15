@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0359';
+  const ASSET_VERSION='03510';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -391,8 +391,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.35.9',name:'CLEAR VEINS'};
+  const BUILD={version:'0.35.10',name:'CLEAR REQUIREMENT'};
   const PATCH_NOTES=[
+    {version:'0.35.10',date:'16 AUG 2026',title:'Clear Requirement',items:['The locked Voidstar entrance now says DEEPCORE DRILL REQUIRED.','The requirement can no longer be mistaken for a separate material called Deepcore.','Progression and the Deepcore Drill recipe are unchanged.']},
     {version:'0.35.9',date:'16 AUG 2026',title:'Clear Veins',items:['Generated mine veins now keep a full node-width margin from every permanent wall.','Eight unreachable Astralite nodes were removed from the Starfall deep-access wall.','The safety rule applies to every mine without changing vein totals or resource balance.']},
     {version:'0.35.8',date:'16 AUG 2026',title:'Ember Ramp',items:['Ember Mastery Sunslag recipes now rise through 30, 40, 50, 60, and 70.','The full mastery climb now costs 250 Sunslag instead of 500, removing the flat midgame grind.','Power, speed, yield bonuses, gold costs, and Starforge requirements are unchanged.']},
     {version:'0.35.7',date:'16 AUG 2026',title:'Quiet Misses',items:['Holding Mine without a valid target is now silent instead of repeating the empty-hit sound.','A fresh manual press still gives one short miss response so the control never feels broken.','Successful pickaxe tink and drill impact sounds are unchanged.']},
@@ -2535,7 +2536,7 @@
       const mine=currentMine();contextEyebrow.textContent='MINE EXIT';contextTitle.textContent='Return to '+titleCase(mine.surfaceName);contextDetail.textContent='Your cargo and cleared passages are preserved.';contextButton.textContent='LEAVE';contextButton.disabled=false;
     }else if(activeContext==='depthEntrance'){
       const voidstarLocked=currentScene==='starMine'&&state.drillLevel<DRILLS.length-1;
-      contextEyebrow.textContent='HIDDEN DESCENT';contextTitle.textContent=titleCase(MINE_DEPTH_PROFILES[currentScene].name);contextDetail.textContent=voidstarLocked?'The final depth can only be entered with the Deepcore Drill.':'Depth 2 has harder dirt, richer veins and its own persistent tunnels.';contextButton.textContent=voidstarLocked?'DEEPCORE REQUIRED':'DESCEND';contextButton.disabled=voidstarLocked;
+      contextEyebrow.textContent='HIDDEN DESCENT';contextTitle.textContent=titleCase(MINE_DEPTH_PROFILES[currentScene].name);contextDetail.textContent=voidstarLocked?'The final depth can only be entered with the Deepcore Drill.':'Depth 2 has harder dirt, richer veins and its own persistent tunnels.';contextButton.textContent=voidstarLocked?'DEEPCORE DRILL REQUIRED':'DESCEND';contextButton.disabled=voidstarLocked;
     }else if(activeContext==='depthExit'){
       contextEyebrow.textContent='RETURN SHAFT';contextTitle.textContent='Return to Depth 1';contextDetail.textContent='This is the only passage between the two depths.';contextButton.textContent='CLIMB';contextButton.disabled=false;
     }else if(activeContext==='depthSell'){
