@@ -1,6 +1,6 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.35.4 - Passage Fit**
+Current build: **Ever Deeper v0.35.5 - Pickaxe Tink**
 
 Every surface biome now ends at a dedicated transparent production-PNG ridge with its world gate as the only passage. The complete boundary art provides each natural opening, while the enlarged premium gate sits directly inside the painted rock instead of a rectangular code-cut gap. Inside all four mines, every permanent collision wall uses a dedicated biome-specific unbreakable-bedrock PNG, visibly distinct from chipped mineable terrain.
 

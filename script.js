@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0354';
+  const ASSET_VERSION='0355';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -391,8 +391,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.35.4',name:'PASSAGE FIT'};
+  const BUILD={version:'0.35.5',name:'PICKAXE TINK'};
   const PATCH_NOTES=[
+    {version:'0.35.5',date:'15 AUG 2026',title:'Pickaxe Tink',items:['Pickaxe mining now lands with a short, bright metallic tink instead of the previous heavy synthetic impact.','Repeated swings form a clean tink-tink-tink rhythm, while drills retain their separate heavier sound.','Material and pickaxe tier still add subtle pitch variation without muddying the hit.']},
     {version:'0.35.4',date:'15 AUG 2026',title:'Passage Fit',items:['Opened-gate floor marks now fill the complete passage using the visible bounds of their premium PNGs.','Boundary collision now follows each painted cliff edge, so the miner can no longer stand inside the rock face.','Closed gates block across their full visual footprint while remaining easy to approach and open.']},
     {version:'0.35.3',date:'15 AUG 2026',title:'Integrated Gates',items:['Biome boundary PNGs now render their complete hand-painted natural openings instead of hard rectangular crops.','All three premium gates are larger and seated directly inside their matching rock passage.','Gate collision, costs, sinking transitions, and progression are unchanged.']},
     {version:'0.35.2',date:'15 AUG 2026',title:'Bedrock Language',items:['Every first-depth mine now has a dedicated premium unbreakable-wall PNG.','Permanent walls use massive continuous bedrock while mineable terrain keeps smaller chipped forms, damage cracks, and target feedback.','Collision and mine routes are unchanged; the visual rule now matches the gameplay rule.']},
@@ -1495,6 +1496,13 @@
     source.connect(filter);filter.connect(gain);gain.connect(audioContext.destination);source.start(start);source.stop(start+duration);
   }
 
+  function playPickaxeTink(materialTone,emphasis=1,delay=0){
+    const pitch=1320+materialTone*.58+(state.pickaxeLevel-1)*42;
+    playTone(pitch*1.07,pitch,.058,.052*emphasis,'sine',delay);
+    playTone(pitch*1.94,pitch*1.66,.034,.022*emphasis,'triangle',delay+.002);
+    playTone(330,235,.044,.012*emphasis,'triangle',delay+.004);
+  }
+
   function addParticle(particle){
     if(particles.length>=MAX_MINING_PARTICLES)particles.splice(0,particles.length-MAX_MINING_PARTICLES+1);
     particles.push(particle);
@@ -1519,10 +1527,11 @@
     if(!audioSettings.effects||!audioContext)return;
     const materialTone={stone:0,copper:95,moonglass:260,gold:175,starshard:340,emberstone:-25,sunslag:125,astralite:410,crownstone:520}[resourceType]||0;
     if(kind==='precision'){
-      playTone(128,48,.14,.105,'triangle');playTone(760+materialTone,1380+materialTone,.11,.05,'sine',.006);playTone(1120+materialTone,620,.08,.025,'square',.018);playImpactNoise(.075,.046,1450+materialTone);
+      playPickaxeTink(materialTone,1.34);playTone(1780+materialTone,2380+materialTone,.075,.026,'sine',.018);
     }else if(kind==='hit'){
       const strength=(state.pickaxeLevel-1)*18;
-      playTone(105-strength*.35,52,.1,.09,'triangle');playTone(680+strength+materialTone,230+materialTone*.25,.048,.026,'square',.004);playImpactNoise(.055,.032,1050+strength*8+materialTone,.003);
+      if(currentDrill()){playTone(105-strength*.35,52,.1,.09,'triangle');playTone(680+strength+materialTone,230+materialTone*.25,.048,.026,'square',.004);playImpactNoise(.055,.032,1050+strength*8+materialTone,.003)}
+      else playPickaxeTink(materialTone);
     }else if(kind==='break'){
       playTone(82,32,.22,.13,'triangle');playTone(310+materialTone,88+materialTone*.25,.13,.042,'square',.008);playImpactNoise(.18,.085,760+materialTone);
     }else if(kind==='coin'){

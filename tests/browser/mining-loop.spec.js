@@ -1321,8 +1321,8 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.35.4',name:'PASSAGE FIT'});
-  expect(snapshot.assetVersion).toBe('0354');
+  expect(snapshot.build).toEqual({version:'0.35.5',name:'PICKAXE TINK'});
+  expect(snapshot.assetVersion).toBe('0355');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true,emberMine:true,starMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:COMPLETE_DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
@@ -1346,18 +1346,18 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.35.4');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.35.5');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.35.4 · PASSAGE FIT');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.35.5 · PICKAXE TINK');
 });
 
 test('premium start menu owns continue, new game, achievements, and settings',async({page})=>{
   await page.goto('/');await page.waitForFunction(()=>window.__everDeeperTest);
   await expect(page.locator('#startScreen')).toBeVisible();
   await expect(page.locator('#continueButton')).toBeDisabled();
-  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0354');
+  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=0355');
   await page.locator('#startAchievementsButton').click();
   await expect(page.locator('#achievementsPanel')).toBeVisible();
   await expect(page.locator('.menu-tabs')).toBeHidden();
@@ -1384,12 +1384,13 @@ test('settings opens first and keeps audio choices separate from stats',async({p
   await page.locator('#patchNotesButton').click();
   await expect(page.locator('#menuTitle')).toHaveText('Patch Notes');
   await expect(page.locator('#patchNotesPanel')).toBeVisible();
-  await expect(page.locator('.patch-note')).toHaveCount(13);
-  await expect(page.locator('.patch-note.latest')).toContainText('v0.35.4');
-  await expect(page.locator('.patch-note.latest')).toContainText('complete passage');
-  await expect(page.locator('.patch-note').nth(1)).toContainText('natural openings');
-  await expect(page.locator('.patch-note').nth(2)).toContainText('unbreakable-wall PNG');
-  await expect(page.locator('.patch-note').nth(3)).toContainText('production PNGs');
+  await expect(page.locator('.patch-note')).toHaveCount(14);
+  await expect(page.locator('.patch-note.latest')).toContainText('v0.35.5');
+  await expect(page.locator('.patch-note.latest')).toContainText('tink-tink-tink');
+  await expect(page.locator('.patch-note').nth(1)).toContainText('complete passage');
+  await expect(page.locator('.patch-note').nth(2)).toContainText('natural openings');
+  await expect(page.locator('.patch-note').nth(3)).toContainText('unbreakable-wall PNG');
+  await expect(page.locator('.patch-note').nth(4)).toContainText('production PNGs');
   await expect(page.locator('.patch-note').nth(3)).toContainText('Physical biome walls');
   await expect(page.locator('.patch-note').nth(4)).toContainText('Gameplay, balance, progression, controls, and visuals are unchanged');
   await expect(page.locator('.patch-note').nth(5)).toContainText('Reset All Progress');
@@ -1740,11 +1741,11 @@ test('real resource art is shared by goals, bags, recipes, stats and world drops
   expect(contract).toMatchObject({paths:COMPLETE_DROP_PATHS,completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false});
 });
 
-test('v0.35.4 exposes the complete production contracts and premium walk renderer',async({page})=>{
+test('v0.35.5 exposes the complete production contracts and premium walk renderer',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.35.4',name:'PASSAGE FIT'});
-  expect(snapshot.assetVersion).toBe('0354');
+  expect(snapshot.build).toEqual({version:'0.35.5',name:'PICKAXE TINK'});
+  expect(snapshot.assetVersion).toBe('0355');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.surfaceEmberdeepRendering).toEqual(SURFACE_EMBERDEEP_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);
