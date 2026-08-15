@@ -16,6 +16,7 @@
   <title>Ever Deeper</title>
   <script>
     (()=>{
+      const currentVersion='0350';
       const checkLatest=()=>fetch('version.json?t='+Date.now(),{cache:'no-store'})
         .then(response=>response.ok?response.json():null)
         .then(latest=>{
@@ -23,7 +24,8 @@
           const url=new URL(window.location.href);
           if(url.searchParams.get('v')===latest.version)return;
           url.searchParams.set('v',latest.version);
-          window.location.replace(url.href);
+          if(latest.version===currentVersion)window.history.replaceState(null,'',url.href);
+          else window.location.replace(url.href);
         }).catch(()=>{});
       checkLatest();
       window.addEventListener('pageshow',event=>{if(event.persisted)checkLatest()});
