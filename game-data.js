@@ -63,9 +63,9 @@
     {id:'starfall',name:'STARFALL DEPTHS',start:WORLD.starfallGateX,end:WORLD.width,floor:'#17172a',accent:'#b8c3ff',detail:'#eee4ff'}
   ];
   const SURFACE_BOUNDARIES=Object.freeze([
-    Object.freeze({id:'moonglass',x:WORLD.gateX,y:WORLD.gateY,gap:WORLD.gateHalfGap,unlockKey:'areaUnlocked',wall:'#202a24',edge:'#71947b',accent:'#78e4df'}),
-    Object.freeze({id:'emberdeep',x:WORLD.emberGateX,y:WORLD.gateY,gap:WORLD.gateHalfGap,unlockKey:'emberdeepUnlocked',wall:'#30201a',edge:'#a05235',accent:'#ff8a50'}),
-    Object.freeze({id:'starfall',x:WORLD.starfallGateX,y:WORLD.gateY,gap:WORLD.gateHalfGap,unlockKey:'fourthUnlocked',wall:'#202039',edge:'#7177ac',accent:'#c1c9ff'})
+    Object.freeze({id:'moonglass',x:WORLD.gateX,y:WORLD.gateY,gap:WORLD.gateHalfGap,unlockKey:'areaUnlocked',renderWidth:320,collisionHalfWidth:48}),
+    Object.freeze({id:'emberdeep',x:WORLD.emberGateX,y:WORLD.gateY,gap:WORLD.gateHalfGap,unlockKey:'emberdeepUnlocked',renderWidth:320,collisionHalfWidth:48}),
+    Object.freeze({id:'starfall',x:WORLD.starfallGateX,y:WORLD.gateY,gap:WORLD.gateHalfGap,unlockKey:'fourthUnlocked',renderWidth:320,collisionHalfWidth:48})
   ]);
   const MATERIAL_FEEDBACK={
     stone:{shape:'chip',gravity:390,spread:1},copper:{shape:'spark',gravity:350,spread:1.05},gold:{shape:'spark',gravity:310,spread:1.12},

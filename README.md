@@ -1,8 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.35.0 - Gatebound Depths**
+Current build: **Ever Deeper v0.35.1 - Gatebound Depths**
 
-Every surface biome now ends at a persistent physical ridge with its world gate as the only passage. Inside all four mines, a clearly rendered deep-access wall prevents players from tunneling below the route early; the descent opens from the right only after the final ore barrier has been mined.
+Every surface biome now ends at a dedicated transparent production-PNG ridge with its world gate as the only passage. Inside all four mines, the deep-access shelf reuses that biome's premium wall asset—without a procedural face overlay—and prevents players from tunneling below the route early; the descent opens from the right only after the final ore barrier has been mined.
 
 Static game data lives in its own ordered module, protected by parity checks that catch accidental balance or progression changes.
 
