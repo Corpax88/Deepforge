@@ -24,16 +24,18 @@ assert.doesNotMatch(source,/function drawRockBody/,'resource nodes must not reta
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'0340');
+assert.equal(latest.version,'0341');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=0340/);
-assert.match(html,/script\.js\?v=0340/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0340/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0340/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0340/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0340/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0340"/);
+assert.match(html,/style\.css\?v=0341/);
+assert.match(html,/script\.js\?v=0341/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=0341/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=0341/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0341/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=0341/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=0341"/);
+assert.match(source,/const EMBER_CRAFT_MATERIAL_REQUIRED=100;/);
+assert.match(source,/const STARFORGE_MATERIAL_REQUIRED=200;/);
 assert.match(css,/\.context-panel\{bottom:136px;/);
 assert.match(html,/id="startScreen" class="start-screen"/);
 assert.match(html,/id="continueButton"/);assert.match(html,/id="newGameButton"/);assert.match(html,/id="startAchievementsButton"/);assert.match(html,/id="startSettingsButton"/);
@@ -283,14 +285,14 @@ function createRuntime({failWalkSheets=false,reducedMotion=false}={}){
 
 let runtime=createRuntime();
 let api=runtime.api;
-assert.equal(api.snapshot().build.version,'0.34.0');
+assert.equal(api.snapshot().build.version,'0.34.1');
 assert.equal(api.snapshot().build.name,'DEEPGLASS PREMIUM');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.34.0');
-assert.equal(api.snapshot().assetVersion,'0340');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.34.1');
+assert.equal(api.snapshot().assetVersion,'0341');
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0340',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=0341',volume:1,loop:true,paused:false}));
 assert.equal(api.setAudioSetting('music',false),false);assert.equal(api.snapshot().music.enabled,false);assert.equal(api.snapshot().music.started,false);
 assert.equal(api.setAudioSetting('effects',false),false);assert.equal(api.snapshot().music.effectsEnabled,false);
 assert.equal(api.setAudioSetting('music',true),true);assert.equal(api.setAudioSetting('effects',true),true);
@@ -829,10 +831,10 @@ const forge={...after.state.base.forge};api.setPosition(forge.x,forge.y);assert.
 const movedChest={...after.state.base.chests[1]};api.exitMine();api.setPosition(movedChest.x,movedChest.y);assert.equal(api.packBaseModule(movedChest.id),true);api.enterMine('mossMine');assert.equal(api.placeBaseModule(movedChest.id),true);api.save();
 runtime=createRuntime();after=runtime.api.snapshot();assert.equal(after.state.base.forge.scene,'mossMine');assert.equal(after.state.base.chests.find(chest=>chest.id===movedChest.id).scene,'mossMine');assert.equal(Object.values(after.state.base.chests[0].items).reduce((total,amount)=>total+amount,0),20);
 
-api=runtime.api;api.reset();api.openChest('moss_supply');api.collectGroundDrops();api.unlockAllAreas();api.setPickaxeLevel(4);api.grantGold(625);api.grantMined('moonglass',1);api.grantMined('emberstone',1);api.grantCargo('emberstone',199);api.setPosition(455,250);api.step(.01);api.interact();after=api.snapshot();
-assert.equal(after.state.pickaxeLevel,4);assert.equal(JSON.stringify(after.goal.requirements),JSON.stringify([{type:'emberstone',amount:200,current:199}]));assert.equal(after.protectedCargo.emberstone,199);
+api=runtime.api;api.reset();api.openChest('moss_supply');api.collectGroundDrops();api.unlockAllAreas();api.setPickaxeLevel(4);api.grantGold(625);api.grantMined('moonglass',1);api.grantMined('emberstone',1);api.grantCargo('emberstone',99);api.setPosition(455,250);api.step(.01);api.interact();after=api.snapshot();
+assert.equal(after.state.pickaxeLevel,4);assert.equal(JSON.stringify(after.goal.requirements),JSON.stringify([{type:'emberstone',amount:100,current:99}]));assert.equal(after.protectedCargo.emberstone,99);
 api.grantCargo('emberstone',1);api.interact();after=api.snapshot();assert.equal(after.state.pickaxeLevel,5);assert.equal(after.state.cargo.emberstone,0);
-api.grantGold(450);api.grantCargo('sunslag',199);api.interact();assert.equal(api.snapshot().state.emberMastery,0);api.grantCargo('sunslag',1);api.interact();after=api.snapshot();assert.equal(after.state.emberMastery,1);assert.equal(after.state.cargo.sunslag,0);
+api.grantGold(450);api.grantCargo('sunslag',99);api.interact();assert.equal(api.snapshot().state.emberMastery,0);api.grantCargo('sunslag',1);api.interact();after=api.snapshot();assert.equal(after.state.emberMastery,1);assert.equal(after.state.cargo.sunslag,0);
 
 api.reset();api.unlockStarfall();api.grantCargo('astralite',199);api.grantCargo('crownstone',199);api.forgeStarVariant('crusher');assert.equal(api.snapshot().state.starforgeVariant,null);
 api.grantCargo('astralite',1);api.grantCargo('crownstone',1);api.forgeStarVariant('crusher');after=api.snapshot();assert.equal(after.state.starforgeVariant,'crusher');assert.equal(after.state.cargo.astralite,0);assert.equal(after.state.cargo.crownstone,0);

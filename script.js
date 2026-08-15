@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0340';
+  const ASSET_VERSION='0341';
   const MOONGLASS_SURFACE_BLEND=190;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=190;
@@ -351,7 +351,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.34.0',name:'DEEPGLASS PREMIUM'};
+  const BUILD={version:'0.34.1',name:'DEEPGLASS PREMIUM'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='EVER DEEPER v'+BUILD.version+' · '+BUILD.name;
 
@@ -430,8 +430,9 @@
   const ACHIEVEMENTS_KEY='everDeeperAchievementsV1';
   const GATE_COST=120;
   const EMBER_GATE_COST=360;
-  const CRAFT_MATERIAL_REQUIRED=200;
-  const EMBER_PICKAXE_ORE_REQUIRED=CRAFT_MATERIAL_REQUIRED;
+  const EMBER_CRAFT_MATERIAL_REQUIRED=100;
+  const STARFORGE_MATERIAL_REQUIRED=200;
+  const EMBER_PICKAXE_ORE_REQUIRED=EMBER_CRAFT_MATERIAL_REQUIRED;
   const GROUND_DROP_LIFETIME=300;
   const LOOT_SWEEP_WARNING_SECONDS=30;
   const GROUND_DROP_PICKUP_RADIUS=48;
@@ -445,11 +446,11 @@
   const MAX_MINING_PARTICLES=260;
   const EMBER_MASTERY=[
     {rank:0,power:31,cooldown:.23,gold:0,sunslag:0,label:'Awakened',shellPower:.72,bonusYield:.22,precisionDelay:1},
-    {rank:1,power:38,cooldown:.215,gold:450,sunslag:CRAFT_MATERIAL_REQUIRED,label:'Tempered',shellPower:.85,bonusYield:.27,precisionDelay:.96},
-    {rank:2,power:46,cooldown:.20,gold:850,sunslag:CRAFT_MATERIAL_REQUIRED,label:'Kindled',shellPower:1,bonusYield:.32,precisionDelay:.92},
-    {rank:3,power:66,cooldown:.185,gold:1450,sunslag:CRAFT_MATERIAL_REQUIRED,label:'Blazing',shellPower:1.15,bonusYield:.38,precisionDelay:.88},
-    {rank:4,power:92,cooldown:.17,gold:2300,sunslag:CRAFT_MATERIAL_REQUIRED,label:'Infernal',shellPower:1.3,bonusYield:.45,precisionDelay:.82},
-    {rank:5,power:128,cooldown:.155,gold:3600,sunslag:CRAFT_MATERIAL_REQUIRED,label:'Depth Master',shellPower:1.5,bonusYield:.55,precisionDelay:.75}
+    {rank:1,power:38,cooldown:.215,gold:450,sunslag:EMBER_CRAFT_MATERIAL_REQUIRED,label:'Tempered',shellPower:.85,bonusYield:.27,precisionDelay:.96},
+    {rank:2,power:46,cooldown:.20,gold:850,sunslag:EMBER_CRAFT_MATERIAL_REQUIRED,label:'Kindled',shellPower:1,bonusYield:.32,precisionDelay:.92},
+    {rank:3,power:66,cooldown:.185,gold:1450,sunslag:EMBER_CRAFT_MATERIAL_REQUIRED,label:'Blazing',shellPower:1.15,bonusYield:.38,precisionDelay:.88},
+    {rank:4,power:92,cooldown:.17,gold:2300,sunslag:EMBER_CRAFT_MATERIAL_REQUIRED,label:'Infernal',shellPower:1.3,bonusYield:.45,precisionDelay:.82},
+    {rank:5,power:128,cooldown:.155,gold:3600,sunslag:EMBER_CRAFT_MATERIAL_REQUIRED,label:'Depth Master',shellPower:1.5,bonusYield:.55,precisionDelay:.75}
   ];
   const MINING_RANGE=116;
   const MINE_TILE_SIZE=48;
@@ -609,9 +610,9 @@
     {name:'Ember Pickaxe',power:31,cooldown:.23,cost:650}
   ];
   const STARFORGE_VARIANTS={
-    crusher:{name:'Astral Crusher',short:'Heavy power',cost:{astralite:CRAFT_MATERIAL_REQUIRED,crownstone:CRAFT_MATERIAL_REQUIRED},powerMultiplier:1.55,cooldownMultiplier:1.18,shellMultiplier:1.2,yieldBonus:0,color:'#cfd5ff'},
-    swift:{name:'Comet Edge',short:'Rapid strikes',cost:{astralite:CRAFT_MATERIAL_REQUIRED,crownstone:CRAFT_MATERIAL_REQUIRED},powerMultiplier:1.08,cooldownMultiplier:.58,shellMultiplier:.9,yieldBonus:0,color:'#8ff5ff'},
-    prospector:{name:'Crownseeker',short:'Bonus yield',cost:{astralite:CRAFT_MATERIAL_REQUIRED,crownstone:CRAFT_MATERIAL_REQUIRED},powerMultiplier:1,cooldownMultiplier:.88,shellMultiplier:1,yieldBonus:.28,color:'#ffe19b'}
+    crusher:{name:'Astral Crusher',short:'Heavy power',cost:{astralite:STARFORGE_MATERIAL_REQUIRED,crownstone:STARFORGE_MATERIAL_REQUIRED},powerMultiplier:1.55,cooldownMultiplier:1.18,shellMultiplier:1.2,yieldBonus:0,color:'#cfd5ff'},
+    swift:{name:'Comet Edge',short:'Rapid strikes',cost:{astralite:STARFORGE_MATERIAL_REQUIRED,crownstone:STARFORGE_MATERIAL_REQUIRED},powerMultiplier:1.08,cooldownMultiplier:.58,shellMultiplier:.9,yieldBonus:0,color:'#8ff5ff'},
+    prospector:{name:'Crownseeker',short:'Bonus yield',cost:{astralite:STARFORGE_MATERIAL_REQUIRED,crownstone:STARFORGE_MATERIAL_REQUIRED},powerMultiplier:1,cooldownMultiplier:.88,shellMultiplier:1,yieldBonus:.28,color:'#ffe19b'}
   };
   const DRILLS=[
     null,
@@ -2774,7 +2775,7 @@
     else if(nextMastery()){
       const next=nextMastery();progress=Math.min(1,state.gold/next.gold,state.cargo.sunslag/next.sunslag);label='EMBER MASTERY '+state.emberMastery+'/5 - SUNSLAG '+Math.min(next.sunslag,state.cargo.sunslag)+'/'+next.sunslag;
     }else if(!state.fourthUnlocked){progress=0;label='OPEN STARFALL DEPTHS'}
-    else if(!state.starforgeVariant){progress=Math.min(1,state.cargo.astralite/CRAFT_MATERIAL_REQUIRED,state.cargo.crownstone/CRAFT_MATERIAL_REQUIRED);label='STARFORGE MATERIALS '+Math.min(CRAFT_MATERIAL_REQUIRED,state.cargo.astralite)+'/'+CRAFT_MATERIAL_REQUIRED+' · '+Math.min(CRAFT_MATERIAL_REQUIRED,state.cargo.crownstone)+'/'+CRAFT_MATERIAL_REQUIRED}
+    else if(!state.starforgeVariant){progress=Math.min(1,state.cargo.astralite/STARFORGE_MATERIAL_REQUIRED,state.cargo.crownstone/STARFORGE_MATERIAL_REQUIRED);label='STARFORGE MATERIALS '+Math.min(STARFORGE_MATERIAL_REQUIRED,state.cargo.astralite)+'/'+STARFORGE_MATERIAL_REQUIRED+' · '+Math.min(STARFORGE_MATERIAL_REQUIRED,state.cargo.crownstone)+'/'+STARFORGE_MATERIAL_REQUIRED}
     else{progress=Object.values(state.starforgeUnlocked).filter(Boolean).length/3;label='STARFORGE FORMS '+Object.values(state.starforgeUnlocked).filter(Boolean).length+'/3'}
     unlockFill.style.width=(progress*100)+'%';unlockLabel.textContent=label;
     objective.hidden=false;
