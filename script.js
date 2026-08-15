@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='0310';
+  const ASSET_VERSION='0320';
   const MOONGLASS_SURFACE_BLEND=190;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=190;
@@ -124,6 +124,7 @@
     'pickaxe-worn':'assets/tools/pickaxe-worn.png','pickaxe-iron':'assets/tools/pickaxe-iron.png','pickaxe-runed':'assets/tools/pickaxe-runed.png','pickaxe-moonglass':'assets/tools/pickaxe-moonglass.png','pickaxe-ember':'assets/tools/pickaxe-ember.png',
     'starforge-crusher':'assets/tools/starforge-crusher.png','starforge-swift':'assets/tools/starforge-swift.png','starforge-prospector':'assets/tools/starforge-prospector.png'
   });
+  const UI_TOOL_PATHS=Object.freeze({...PLAYER_TOOL_PATHS,'drill-burrower':'assets/tools/'+'drill-burrower.png','drill-pulse':'assets/tools/'+'drill-pulse.png','drill-deepcore':'assets/tools/'+'drill-deepcore.png'});
   const PLAYER_DRILL_CHARACTER_PATHS=Object.freeze({
     'drill-burrower':'assets/characters/miner-b-drill-burrower.png',
     'drill-pulse':'assets/characters/miner-b-drill-pulse.png',
@@ -291,6 +292,8 @@
   const focusMeter=document.getElementById('focusMeter');
   const focusCount=document.getElementById('focusCount');
   const contextPanel=document.getElementById('contextPanel');
+  const contextIcon=document.getElementById('contextIcon');
+  const contextIconImage=document.getElementById('contextIconImage');
   const contextEyebrow=document.getElementById('contextEyebrow');
   const contextTitle=document.getElementById('contextTitle');
   const contextDetail=document.getElementById('contextDetail');
@@ -299,11 +302,13 @@
   const contextSecondaryButton=document.getElementById('contextSecondaryButton');
   const starforgeChoices=document.getElementById('starforgeChoices');
   const mineButton=document.getElementById('mineButton');
+  const mineToolIcon=document.getElementById('mineToolIcon');
   const mineAction=document.getElementById('mineAction');
   const mineHint=document.getElementById('mineHint');
   const joystick=document.getElementById('joystick');
   const joystickKnob=document.getElementById('joystickKnob');
   const pickaxeName=document.getElementById('pickaxeName');
+  const toolIcon=document.getElementById('toolIcon');
   const toolKind=document.getElementById('toolKind');
   const powerValue=document.getElementById('powerValue');
   const speedValue=document.getElementById('speedValue');
@@ -336,7 +341,7 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.31.0',name:'STARFALL COMPLETE'};
+  const BUILD={version:'0.32.0',name:'DEEPGLASS PREMIUM'};
   document.getElementById('buildVersion').textContent='v'+BUILD.version;
   document.getElementById('menuBuildVersion').textContent='EVER DEEPER v'+BUILD.version+' · '+BUILD.name;
 
@@ -931,6 +936,27 @@
     if(state.starforgeVariant)return'starforge-'+state.starforgeVariant;
     return['','pickaxe-worn','pickaxe-iron','pickaxe-runed','pickaxe-moonglass','pickaxe-ember'][state.pickaxeLevel];
   }
+  function currentToolPath(){return UI_TOOL_PATHS[currentPlayerToolKey()]||PLAYER_TOOL_PATHS['pickaxe-worn']}
+  function depthUiPaths(scene=currentScene){
+    return scene==='mossMine'?ROOTWOUND_PATHS:scene==='moonMine'?PRISMATIC_PATHS:scene==='emberMine'?MOLTEN_PATHS:VOIDSTAR_PATHS;
+  }
+  function moduleUiPath(kind){return kind==='forge'?STARTER_PATHS.forgeStation:kind==='sell'?STARTER_PATHS.sellStation:STARTER_PATHS.storageChest}
+  function contextUiAsset(baseContext){
+    if(baseContext)return moduleUiPath(baseContext.kind);
+    if(!activeContext)return'';
+    if(activeContext.startsWith('mineEntrance:'))return MINE_ENTRANCE_PATHS[activeContext.slice(13)];
+    if(activeContext==='mineExit')return MINE_ENTRANCE_PATHS[currentScene];
+    if(activeContext==='depthEntrance'||activeContext==='depthExit')return depthUiPaths().shaft;
+    if(activeContext==='depthSell')return depthUiPaths().sellStation;
+    if(activeContext==='drillForge')return depthUiPaths().drillForge;
+    if(activeContext.startsWith('chest:'))return STARTER_PATHS.treasureClosed;
+    if(activeContext==='speedShop')return STARTER_PATHS.wayfarerShop;
+    if(activeContext==='gate')return STARTER_PATHS.moonglassGate;
+    if(activeContext==='emberGate')return STARTER_PATHS.emberdeepSeal;
+    if(activeContext==='starfallGate')return STARTER_PATHS.starfallSeal;
+    if(activeContext==='starforge')return STARTER_PATHS.starforgeStation;
+    return STARTER_PATHS.forgeStation;
+  }
   function activePlayerWalkKey(){return state.drillLevel?currentPlayerToolKey():'base'}
   function activePlayerWalkPath(){return PLAYER_WALK_PATHS[activePlayerWalkKey()]}
   let loadedPlayerWalkKey='base';
@@ -1185,7 +1211,7 @@
       const contents=module.kind==='storage'?(items.length?items.map(([type,amount])=>resourceAmountMarkup(type,'×'+amount,'storage-resource')).join(''):'Empty · '+chestTypeCount(module)+' / '+STORAGE_CHEST_CAPACITY+' types'):(module.kind==='forge'?'Pickaxe upgrades and Ember Mastery.':'Sell carried resources while protecting upgrade materials.');
       const action=module.packed?'<button data-base-place="'+module.id+'">PLACE HERE</button>':placedHere&&nearbyModule?'<button class="secondary" data-base-pack="'+module.id+'">PACK</button>':'<button disabled>'+moduleLocationLabel(module)+'</button>';
       const take=module.kind==='storage'&&placedHere&&nearbyStorage?'<button data-chest-take="'+module.id+'"'+(items.length?'':' disabled')+'>TAKE ALL</button>':'';
-      return'<article class="base-module"><div class="base-module-head"><h4>'+title+'</h4><small>'+(module.kind==='storage'?chestTypeCount(module)+' / '+STORAGE_CHEST_CAPACITY+' TYPES':'BASE MODULE')+'</small></div><small>'+moduleLocationLabel(module)+'</small><div class="base-module-items">'+contents+'</div><div class="base-module-actions">'+action+take+'</div></article>';
+      return'<article class="base-module"><div class="base-module-visual"><img src="'+moduleUiPath(module.kind)+'?v='+ASSET_VERSION+'" alt="" aria-hidden="true"></div><div class="base-module-content"><div class="base-module-head"><h4>'+title+'</h4><small>'+(module.kind==='storage'?chestTypeCount(module)+' / '+STORAGE_CHEST_CAPACITY+' TYPES':'BASE MODULE')+'</small></div><small>'+moduleLocationLabel(module)+'</small><div class="base-module-items">'+contents+'</div><div class="base-module-actions">'+action+take+'</div></div></article>';
     }).join('');
   }
 
@@ -2489,6 +2515,7 @@
     uiDirty=false;
     if(!goldTween){displayedGold=state.gold;goldValue.textContent=String(Math.floor(displayedGold))}cargoValue.textContent=String(cargoCount());
     pickaxeName.textContent=currentPickaxeName();powerValue.textContent=String(currentPower());
+    const toolPath=currentToolPath()+'?v='+ASSET_VERSION;if(toolIcon.dataset.asset!==toolPath){toolIcon.dataset.asset=toolPath;toolIcon.src=toolPath;mineToolIcon.src=toolPath}
     game.dataset.pickaxeTier=String(state.pickaxeLevel);
     game.dataset.masteryRank=String(state.emberMastery);
     game.dataset.drillLevel=String(state.drillLevel);
@@ -2496,7 +2523,7 @@
     toolKind.textContent=drilling?'YOUR DRILL':'YOUR PICKAXE';mineAction.textContent=drilling?'DRILL':'MINE';mineHint.textContent=miningRush.timer>0?'RUSH '+Math.ceil(miningRush.timer)+'s':'HOLD';mineButton.ariaLabel=drilling?'Drill nearby rock':'Mine nearby rock';
     game.dataset.rushActive=miningRush.timer>0?'true':'false';
     speedValue.textContent=(PICKAXES[1].cooldown/currentCooldown()).toFixed(1)+'x';
-    const biome=currentBiome();areaName.textContent=biome.name;game.dataset.biome=biome.id;
+    const biome=currentBiome();areaName.textContent=biome.name;game.dataset.biome=biome.id;game.style['--biome-accent']=biome.accent;game.style['--biome-detail']=biome.detail;
     let progress=1,label='DEPTH MASTERED';
     if(currentMine()){
       const mine=currentMine(),cleared=mine.barriers.filter(barrier=>mineBarrierCleared(barrier.id)).length;
@@ -2544,6 +2571,7 @@
     contextPanel.classList.toggle('mine-context',['mineExit','depthEntrance','depthExit','depthSell','drillForge'].includes(activeContext)||!!activeContext&&activeContext.startsWith('mineEntrance:'));
     contextButton.hidden=false;contextActions.hidden=activeContext==='starforge';contextSecondaryButton.hidden=!baseContext;starforgeChoices.hidden=activeContext!=='starforge';
     if(!activeContext)return;
+    const contextAsset=contextUiAsset(baseContext);contextIcon.dataset.kind=baseContext?baseContext.kind:activeContext.split(':')[0];contextIconImage.src=contextAsset+'?v='+ASSET_VERSION;
     if(activeContext.startsWith('mineEntrance:')){
       const mine=MINE_DEFINITIONS[activeContext.slice(13)];
       contextEyebrow.textContent='DUNGEON ENTRANCE';contextTitle.textContent=titleCase(mine.name);contextDetail.textContent='Explore a unique mine layout, clear permanent passages and uncover richer resources.';contextButton.textContent='ENTER';contextButton.disabled=false;

@@ -1,6 +1,6 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.31.0 - Starfall Complete**
+Current build: **Ever Deeper v0.32.0 - Deepglass Premium UI**
 
 Starfall is now a complete production-art world: its own seamless surface, an untouched biome road with a naturally joined cave branch, a correctly oriented Starfall Hollow entrance, sinking Master Seal and permanent astral ground mark, celestial chests, Starforge station, lattice sockets, and distinct background formations. Starfall Hollow and Voidstar Depths have dedicated floors, walls, barriers, chambers, stations, portals, buried wall hints, mineable nodes, and rewards.
 

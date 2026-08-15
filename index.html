@@ -26,24 +26,29 @@
       window.addEventListener('pageshow',event=>{if(event.persisted)checkLatest()});
     })();
   </script>
-  <link rel="preload" as="image" href="assets/branding/ever-deeper-logo.png?v=0310">
-  <link rel="preload" as="image" href="assets/characters/miner-b-walk.png?v=0310">
-  <link rel="stylesheet" href="style.css?v=0310">
+  <link rel="preload" as="image" href="assets/branding/ever-deeper-logo.png?v=0320">
+  <link rel="preload" as="image" href="assets/characters/miner-b-walk.png?v=0320">
+  <link rel="preload" as="image" href="assets/tools/pickaxe-worn.png?v=0320">
+  <link rel="stylesheet" href="style.css?v=0320">
 </head>
 <body>
   <main id="game" aria-label="Ever Deeper mining game">
     <header class="topbar">
       <div class="brand" aria-label="Ever Deeper">
-        <img class="brand-logo" src="assets/branding/ever-deeper-logo.png?v=0310" alt="Ever Deeper">
+        <img class="brand-logo" src="assets/branding/ever-deeper-logo.png?v=0320" alt="Ever Deeper">
         <div class="brand-meta">
-          <span id="buildVersion">v0.31.0</span>
+          <span id="buildVersion">v0.32.0</span>
           <small id="areaName">MOSSVEIN QUARRY</small>
         </div>
       </div>
       <div class="resources" aria-label="Resources">
-        <div class="resource gold" title="Gold"><span class="resource-icon topbar-resource" data-resource="gold"><img src="assets/drops/gold-drop.png?v=0310" alt="" aria-hidden="true"></span><b id="goldValue">0</b></div>
-        <button id="inventoryButton" class="resource cargo" type="button" title="Resource inventory" aria-label="Open resource inventory"><i aria-hidden="true"></i><b id="cargoValue">0</b></button>
-        <button id="menuButton" class="icon-button settings-button" type="button" aria-label="Open settings" title="Settings"><span aria-hidden="true"></span></button>
+        <div class="resource gold" title="Gold"><span class="resource-icon topbar-resource" data-resource="gold"><img src="assets/drops/gold-drop.png?v=0320" alt="" aria-hidden="true"></span><b id="goldValue">0</b></div>
+        <button id="inventoryButton" class="resource cargo" type="button" title="Resource inventory" aria-label="Open resource inventory">
+          <svg class="hud-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M8 12.5h16l2 14H6l2-14Z"/><path d="M11 13V9.5a5 5 0 0 1 10 0V13"/><path d="M10 18h12"/></svg><b id="cargoValue">0</b>
+        </button>
+        <button id="menuButton" class="icon-button settings-button" type="button" aria-label="Open settings" title="Settings">
+          <svg class="hud-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="5"/><path d="M16 3v6M16 23v6M3 16h6M23 16h6M6.8 6.8l4.2 4.2M21 21l4.2 4.2M25.2 6.8 21 11M11 21l-4.2 4.2"/></svg>
+        </button>
       </div>
     </header>
 
@@ -56,6 +61,7 @@
       </div>
 
       <div id="objective" class="objective" aria-live="polite">
+        <i class="objective-marker" aria-hidden="true"><span></span></i>
         <div class="objective-copy">
           <span>NEXT GOAL</span>
           <b id="objectiveText">Mine a rock</b>
@@ -71,7 +77,7 @@
       </div>
 
       <aside id="contextPanel" class="context-panel" hidden>
-        <div class="context-icon" id="contextIcon" aria-hidden="true"></div>
+        <div class="context-icon" id="contextIcon" aria-hidden="true"><img id="contextIconImage" alt=""></div>
         <div class="context-copy">
           <span id="contextEyebrow">WORKSHOP</span>
           <b id="contextTitle">Copper Pickaxe</b>
@@ -95,7 +101,7 @@
 
       <div class="action-cluster">
         <button id="mineButton" class="mine-button" type="button" aria-label="Mine nearby rock">
-          <span class="pickaxe-icon" aria-hidden="true"></span>
+          <span class="mine-tool" aria-hidden="true"><img id="mineToolIcon" src="assets/tools/pickaxe-worn.png?v=0320" alt=""></span>
           <b id="mineAction">MINE</b>
           <small id="mineHint">HOLD</small>
         </button>
@@ -105,7 +111,7 @@
     </section>
 
     <footer class="progress-bar">
-      <div class="tool-badge"><span class="pickaxe-icon small" aria-hidden="true"></span></div>
+      <div class="tool-badge"><img id="toolIcon" src="assets/tools/pickaxe-worn.png?v=0320" alt="" aria-hidden="true"></div>
       <div class="tool-copy">
         <span id="toolKind">YOUR PICKAXE</span>
         <b id="pickaxeName">Worn Pickaxe</b>
@@ -123,8 +129,8 @@
     <div id="inventoryShade" class="inventory-shade" hidden>
       <section class="inventory-card" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
         <header class="inventory-header">
-          <div><span>MINER STORAGE</span><h2 id="inventoryTitle">Resources</h2></div>
-          <button id="inventoryCloseButton" class="inventory-close" type="button" aria-label="Close resource inventory">×</button>
+          <div class="dialog-title"><i aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M8 12.5h16l2 14H6l2-14Z"/><path d="M11 13V9.5a5 5 0 0 1 10 0V13"/></svg></i><div><span>MINER STORAGE</span><h2 id="inventoryTitle">Resources</h2></div></div>
+          <button id="inventoryCloseButton" class="inventory-close close-button" type="button" aria-label="Close resource inventory"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
         </header>
         <div class="inventory-summary">
           <div><span>CARRIED</span><b id="inventoryTotal">0</b></div>
@@ -145,22 +151,22 @@
     <div id="menuShade" class="menu-shade" hidden>
       <section class="menu-card" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
         <header class="menu-header">
-          <div><span id="menuBuildVersion">EVER DEEPER v0.31.0 · STARFALL COMPLETE</span><h2 id="menuTitle">Settings</h2></div>
-          <button id="menuCloseButton" class="menu-close" type="button" aria-label="Close settings">×</button>
+          <div class="dialog-title"><i aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="5"/><path d="M16 3v6M16 23v6M3 16h6M23 16h6M6.8 6.8l4.2 4.2M21 21l4.2 4.2M25.2 6.8 21 11M11 21l-4.2 4.2"/></svg></i><div><span id="menuBuildVersion">EVER DEEPER v0.32.0 · DEEPGLASS PREMIUM</span><h2 id="menuTitle">Settings</h2></div></div>
+          <button id="menuCloseButton" class="menu-close close-button" type="button" aria-label="Close settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
         </header>
         <nav class="menu-tabs" aria-label="Game menu">
-          <button id="settingsTab" class="active" type="button" role="tab" aria-selected="true" aria-controls="settingsPanel"><i aria-hidden="true">⚙</i><span>SETTINGS</span></button>
-          <button id="statsTab" type="button" role="tab" aria-selected="false" aria-controls="statsPanel"><i aria-hidden="true">◆</i><span>STATS</span></button>
-          <button id="achievementsTab" type="button" role="tab" aria-selected="false" aria-controls="achievementsPanel"><i aria-hidden="true">★</i><span>ACHIEVEMENTS</span></button>
+          <button id="settingsTab" class="active" type="button" role="tab" aria-selected="true" aria-controls="settingsPanel"><i aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="5"/><path d="M16 3v6M16 23v6M3 16h6M23 16h6M6.8 6.8l4.2 4.2M21 21l4.2 4.2M25.2 6.8 21 11M11 21l-4.2 4.2"/></svg></i><span>SETTINGS</span></button>
+          <button id="statsTab" type="button" role="tab" aria-selected="false" aria-controls="statsPanel"><i aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M5 27V16h6v11H5Zm8 0V6h6v21h-6Zm8 0V11h6v16h-6Z"/><path d="M3 29h26"/></svg></i><span>STATS</span></button>
+          <button id="achievementsTab" type="button" role="tab" aria-selected="false" aria-controls="achievementsPanel"><i aria-hidden="true"><svg viewBox="0 0 32 32"><path d="m16 3 3.8 7.8 8.6 1.2-6.2 6 1.5 8.5L16 22.4l-7.7 4.1L9.8 18l-6.2-6 8.6-1.2L16 3Z"/></svg></i><span>ACHIEVEMENTS</span></button>
         </nav>
         <div id="settingsPanel" class="menu-panel settings-panel" role="tabpanel" aria-labelledby="settingsTab">
           <button id="musicToggle" class="setting-row" type="button" aria-pressed="true">
-            <span class="setting-icon music-icon" aria-hidden="true">♪</span><span class="setting-copy"><b>Music</b><small>Background soundtrack</small></span><i class="setting-switch" aria-hidden="true"></i>
+            <span class="setting-icon music-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M12 22V8l15-3v14"/><circle cx="8" cy="24" r="4"/><circle cx="23" cy="21" r="4"/></svg></span><span class="setting-copy"><b>Music</b><small>Background soundtrack</small></span><i class="setting-switch" aria-hidden="true"></i>
           </button>
           <button id="effectsToggle" class="setting-row" type="button" aria-pressed="true">
-            <span class="setting-icon sound-icon" aria-hidden="true">)))</span><span class="setting-copy"><b>Sound effects</b><small>Mining, loot and actions</small></span><i class="setting-switch" aria-hidden="true"></i>
+            <span class="setting-icon sound-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M5 13h6l7-6v18l-7-6H5v-6Z"/><path d="M22 12c2 2 2 6 0 8M25 8c5 5 5 13 0 18"/></svg></span><span class="setting-copy"><b>Sound effects</b><small>Mining, loot and actions</small></span><i class="setting-switch" aria-hidden="true"></i>
           </button>
-          <button id="resetButton" class="danger-setting" type="button"><span aria-hidden="true">↻</span><b>Reset progress</b></button>
+          <button id="resetButton" class="danger-setting" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 8V3m0 0h5M5 3l3.5 3.5A8 8 0 1 1 4 13"/></svg></span><b>Reset progress</b></button>
         </div>
         <div id="statsPanel" class="menu-panel" role="tabpanel" aria-labelledby="statsTab" hidden>
           <div class="ledger-grid">
@@ -183,7 +189,7 @@
           </div>
         </div>
         <div id="achievementsPanel" class="menu-panel achievements-panel" role="tabpanel" aria-labelledby="achievementsTab" hidden>
-          <div class="achievement-seal" aria-hidden="true">★</div>
+          <div class="achievement-seal" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="m16 3 3.8 7.8 8.6 1.2-6.2 6 1.5 8.5L16 22.4l-7.7 4.1L9.8 18l-6.2-6 8.6-1.2L16 3Z"/></svg></div>
           <h3>Achievements</h3>
           <p>Coming in a future expedition.</p>
         </div>
@@ -191,6 +197,6 @@
       </section>
     </div>
   </main>
-  <script src="script.js?v=0310"></script>
+  <script src="script.js?v=0320"></script>
 </body>
 </html>

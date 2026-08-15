@@ -1,11 +1,11 @@
 {
   "name": "ever-deeper",
-  "version": "0.31.0",
+  "version": "0.32.0",
   "private": true,
   "description": "A mobile-first fantasy mining game prototype.",
   "scripts": {
     "test": "playwright test",
-    "test:release": "playwright test tests/browser/release-branding.spec.js && playwright test tests/browser/mining-loop.spec.js --grep \"Starfall|Starforge|Voidstar|v0.31.0\"",
+    "test:release": "playwright test tests/browser/release-branding.spec.js && playwright test tests/browser/mining-loop.spec.js --grep \"Starfall|Starforge|Voidstar|v0.32.0\"",
     "test:smoke": "node tests/runtime-smoke.js",
     "test:desktop": "playwright test --project=desktop",
     "test:mobile": "playwright test --project=iphone"
