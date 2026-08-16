@@ -1,6 +1,6 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.37.1 - Premium Impacts**
+Current build: **Ever Deeper v0.37.2 - Mining Clarity**
 
 Routine mining, discoveries, upgrades, gates, pickups, and chest openings no longer add generic canvas rings or procedural debris over the production art. Pickaxe and drill impacts now rely on the biome-specific premium response sheets, while sold materials travel to the exchange as their real drop assets. Gameplay-critical targeting, health bars, timed-vein indicators, lighting, and readable text remain intact.
 
