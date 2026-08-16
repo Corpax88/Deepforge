@@ -1,6 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.35.11 - Drill Age Pacing**
+Current build: **Ever Deeper v0.36.0 - Living Worlds**
+
+Each biome now has its own hand-painted ambient creature: Mossvein glowmoths, Moonglass prism moths, Emberdeep cinder skinks, and Starfall astral rays. They inhabit both the surface and safe open cave cells, occasionally cross the landscape in small groups, freeze under Reduced Motion, and remain strictly visual with tight mobile draw and memory budgets.
 
 Every surface biome now ends at a dedicated transparent production-PNG ridge with its world gate as the only passage. The complete boundary art provides each natural opening, while the enlarged premium gate sits directly inside the painted rock instead of a rectangular code-cut gap. Inside all four mines, every permanent collision wall uses a dedicated biome-specific unbreakable-bedrock PNG, visibly distinct from chipped mineable terrain.
 

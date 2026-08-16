@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='03511';
+  const ASSET_VERSION='03600';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -91,6 +91,32 @@
     astralCacheClosed:'assets/surface/astral-cache-closed.png',astralCacheOpen:'assets/surface/astral-cache-open.png',celestialCofferClosed:'assets/surface/celestial-coffer-closed.png',celestialCofferOpen:'assets/surface/celestial-coffer-open.png'
   });
   const STARFALL_SURFACE_CHEST_ART={star_cache:{closed:null,open:null},star_coffer:{closed:null,open:null}};
+  const AMBIENT_ART={mossvein:null,moonglass:null,emberdeep:null,starfall:null};
+  const AMBIENT_PATHS=Object.freeze({
+    mossvein:'assets/ambient/mossvein-glowmoth.png',
+    moonglass:'assets/ambient/moonglass-prism-moth.png',
+    emberdeep:'assets/ambient/emberdeep-cinder-skink.png',
+    starfall:'assets/ambient/starfall-astral-ray.png'
+  });
+  const AMBIENT_FRAME_COUNT=4,AMBIENT_FRAME_SIZE=256,AMBIENT_SURFACE_MAX_VISIBLE=10,AMBIENT_MINE_MAX_VISIBLE=6;
+  const AMBIENT_PROFILES=Object.freeze({
+    mossvein:Object.freeze({key:'mossvein',scene:'mossMine',name:'Glowmoth',seed:17011,size:50,fps:7.5,flying:true,glow:'#e7b951'}),
+    moonglass:Object.freeze({key:'moonglass',scene:'moonMine',name:'Prism Moth',seed:29021,size:52,fps:7,flying:true,glow:'#72e9ff'}),
+    emberdeep:Object.freeze({key:'emberdeep',scene:'emberMine',name:'Cinder Skink',seed:43037,size:58,fps:6,flying:false,directional:true,baseline:[0,5,10,1],glow:'#ff7b3b'}),
+    starfall:Object.freeze({key:'starfall',scene:'starMine',name:'Astral Ray',seed:61051,size:56,fps:6.5,flying:true,directional:true,glow:'#aa93ff'})
+  });
+  const AMBIENT_SCENE_KEYS=Object.freeze({mossMine:'mossvein',moonMine:'moonglass',emberMine:'emberdeep',starMine:'starfall'});
+  const AMBIENT_SURFACE_ANCHORS=Object.freeze({
+    mossvein:Object.freeze([[120,180],[350,340],[640,150],[870,330],[990,1020],[760,1190],[510,880],[250,1120],[840,760]]),
+    moonglass:Object.freeze([[1190,160],[1460,260],[1770,160],[2110,340],[1210,850],[1440,1190],[1870,1120],[2160,920],[1700,720]]),
+    emberdeep:Object.freeze([[2320,180],[2670,150],[3010,250],[3280,420],[2350,1120],[2720,850],[3120,1120],[3250,800],[2860,650]]),
+    starfall:Object.freeze([[3420,190],[3650,150],[3970,240],[4310,420],[3480,1140],[3760,840],[4230,1120],[4360,760],[4010,650]])
+  });
+  const AMBIENT_RENDER_CONTRACT=Object.freeze({
+    frameCount:AMBIENT_FRAME_COUNT,frameSize:AMBIENT_FRAME_SIZE,spriteSheetWidth:1024,spriteSheetHeight:256,decodedMemoryBudgetBytes:4194304,premiumSpriteSheets:true,trueAnimationFrames:true,deterministicPlacement:true,
+    surfaceMaxVisible:AMBIENT_SURFACE_MAX_VISIBLE,mineMaxVisible:AMBIENT_MINE_MAX_VISIBLE,rareSurfaceCrossings:true,reducedMotionSafe:true,
+    collisionFree:true,gameplayNeutral:true,proceduralCreaturePrimitives:false
+  });
   const MINE_ENTRANCE_PATHS=Object.freeze({mossMine:'assets/entrances/mossvein-entrance.png',moonMine:'assets/entrances/moonglass-entrance.png',emberMine:'assets/entrances/emberdeep-entrance.png',starMine:'assets/entrances/starfall-entrance.png',depthLamp:'assets/entrances/depth-work-lamp.png'});
   const MOONGLASS_ART={floor:null,floorPattern:null,wall:null,routeMarker:null,pocket:null,rewards:{cache:null,shrine:null},nodes:{},wallHints:{},barriers:{}};
   const MOONGLASS_PATHS=Object.freeze({
@@ -271,6 +297,7 @@
   STARFALL_SURFACE_CHEST_ART.star_cache.open=loadMappedImage(SURFACE_STARFALL_PATHS.astralCacheOpen,STARFALL_SURFACE_CHEST_ART.star_cache,'open');
   STARFALL_SURFACE_CHEST_ART.star_coffer.closed=loadMappedImage(SURFACE_STARFALL_PATHS.celestialCofferClosed,STARFALL_SURFACE_CHEST_ART.star_coffer,'closed');
   STARFALL_SURFACE_CHEST_ART.star_coffer.open=loadMappedImage(SURFACE_STARFALL_PATHS.celestialCofferOpen,STARFALL_SURFACE_CHEST_ART.star_coffer,'open');
+  for(const [biome,path] of Object.entries(AMBIENT_PATHS))AMBIENT_ART[biome]=loadMappedImage(path,AMBIENT_ART,biome);
   DISCOVERY_ART.crystalPocket=loadDiscoveryImage('assets/mossvein/magic-crystal-pocket.png','crystalPocket');
   for(const [key,path] of Object.entries(STARTER_PATHS))STARTER_ART[key]=loadMappedImage(path,STARTER_ART,key);
   for(const [key,path] of Object.entries(MOSSVEIN_REWARD_PATHS))MOSSVEIN_REWARD_ART[key]=loadMappedImage(path,MOSSVEIN_REWARD_ART,key);
@@ -391,8 +418,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.35.11',name:'DRILL AGE PACING'};
+  const BUILD={version:'0.36.0',name:'LIVING WORLDS'};
   const PATCH_NOTES=[
+    {version:'0.36.0',date:'16 AUG 2026',title:'Living Worlds',items:['Four premium animated creatures now inhabit Mossvein, Moonglass, Emberdeep, and Starfall.','Surface trails and caves use deterministic ambient paths, with occasional biome crossings that never alter collision or progression.','Reduced Motion freezes every creature cleanly, while strict draw budgets keep mobile performance steady.']},
     {version:'0.35.11',date:'16 AUG 2026',title:'Drill Age Pacing',items:['The journey from Starforge to Deepcore now spans full expeditions through Rootwound, Prismatic, and Molten Depths.','Burrower now costs 5,000 gold, 50 Rootiron, and 5 Ambercore; Pulse costs 12,000 gold, 60 Burrowsteel, 40 Prismite, and 4 Lunacore.','Deepcore now costs 25,000 gold, 70 Phase Crystal, 50 Magmaite, 5 Furnace Heart, and 70 Infernium.']},
     {version:'0.35.10',date:'16 AUG 2026',title:'Clear Requirement',items:['The locked Voidstar entrance now says DEEPCORE DRILL REQUIRED.','The requirement can no longer be mistaken for a separate material called Deepcore.','Progression and the Deepcore Drill recipe are unchanged.']},
     {version:'0.35.9',date:'16 AUG 2026',title:'Clear Veins',items:['Generated mine veins now keep a full node-width margin from every permanent wall.','Eight unreachable Astralite nodes were removed from the Starfall deep-access wall.','The safety rule applies to every mine without changing vein totals or resource balance.']},
@@ -2636,13 +2664,13 @@
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
     ctx.save();ctx.scale(viewZoom,viewZoom);
     if(currentMine()){
-      readableTextCapture=true;drawMineGround();drawMineTerrain();drawMineWalls();
+      readableTextCapture=true;drawMineGround();drawMineTerrain();drawAmbientLife();drawMineWalls();
       if(currentDepth===1)drawMineEntrance(false,currentMine());
       if(currentDepth===2||state.discoveredDepthEntrances[currentScene])drawDepthEntrance();
       if(currentDepth===2)drawDepthStations();
       drawBaseModules();drawRocks();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);readableTextCapture=false;drawMineLighting();drawWorldLabels();drawVisualGuide();drawReadableTextOverlay();
     }else{
-      lightingLastSources=[];lightingOreCount=0;drawGround();drawBiomeStructure();drawDecorations();drawSurfaceBoundaryWalls();drawStations();drawSurfaceMineEntrances();drawGate();drawVeins();drawRocks();drawChests();drawWorldLabels();drawVisualGuide();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
+      lightingLastSources=[];lightingOreCount=0;drawGround();drawBiomeStructure();drawDecorations();drawAmbientLife();drawSurfaceBoundaryWalls();drawStations();drawSurfaceMineEntrances();drawGate();drawVeins();drawRocks();drawChests();drawWorldLabels();drawVisualGuide();drawEffects(false);drawGroundDrops();drawPlayer();drawEffects(true);
     }
     ctx.restore();
   }
@@ -2686,6 +2714,130 @@
   function visualNoise(x,y,salt=0){
     let value=Math.imul((x|0)+salt*101,374761393)^Math.imul((y|0)-salt*53,668265263);
     value=Math.imul(value^(value>>>13),1274126177);return((value^(value>>>16))>>>0)/4294967295;
+  }
+
+  function ambientProfileForLocation(){
+    const key=currentScene==='surface'?BIOMES[regionIndexAt(player.x)].id:AMBIENT_SCENE_KEYS[currentScene];return AMBIENT_PROFILES[key]||AMBIENT_PROFILES.mossvein;
+  }
+
+  function ambientSeed(profile,index,salt=0){
+    return seededRandom((state.worldSeed^profile.seed^Math.imul(index+1,2654435761)^salt)>>>0);
+  }
+
+  function ambientResident(profile,index,x,y,mine=false){
+    const random=ambientSeed(profile,index,mine?currentDepth*7919:0),phase=random()*AMBIENT_FRAME_COUNT,speed=.38+random()*.24,scale=.82+random()*.25;
+    let worldX=x,worldY=y,flip=random()>.5;
+    if(!reducedMotion){
+      const wave=time*speed+phase*1.7;
+      if(profile.flying){worldX+=Math.sin(wave)*(.8+random()*9);worldY+=Math.cos(wave*1.31)*(2+random()*7)}
+      else{worldX+=Math.sin(wave*.72)*(4+random()*8);worldY+=Math.abs(Math.sin(wave*1.44))*1.4}
+      if(profile.directional)flip=Math.cos(wave*(profile.flying?1:.72))<0;
+    }
+    if(mine&&!ambientMinePointOpenAt(worldX,worldY)){worldX=x;worldY=y}
+    return{id:(mine?currentScene+':'+currentDepth:profile.key)+':resident:'+index,profile:profile.key,asset:AMBIENT_PATHS[profile.key],x:worldX,y:worldY,anchorX:x,anchorY:y,frame:reducedMotion?0:Math.floor((time*profile.fps+phase)%AMBIENT_FRAME_COUNT),size:profile.size*scale,flip,event:false};
+  }
+
+  function ambientOnScreen(instance,margin=70){
+    const p=worldToScreen(instance.x,instance.y);return p.x>=-margin&&p.y>=-margin&&p.x<=viewWidth+margin&&p.y<=viewHeight+margin;
+  }
+
+  function ambientRareEventState(){
+    const interval=48,duration=6.6,offset=(state.worldSeed%2300)/100,cycle=(time+offset)%interval,enabled=currentScene==='surface'&&!reducedMotion,active=enabled&&cycle<duration;
+    return{enabled,active,interval,duration,progress:active?cycle/duration:0,nextIn:active?0:interval-cycle};
+  }
+
+  function ambientRareEventInstances(){
+    const event=ambientRareEventState();if(!event.active)return[];
+    const biome=BIOMES[regionIndexAt(player.x)],profile=AMBIENT_PROFILES[biome.id],reverse=((state.worldSeed^profile.seed)&1)===1,cycle=event.progress*event.duration,travelDuration=5.25,instances=[];
+    for(let index=0;index<3;index++){
+      const local=(cycle-index*.5)/travelDuration;if(local<0||local>1)continue;
+      const progress=reverse?1-local:local,start=biome.start-70,end=biome.end+70,x=start+(end-start)*progress;
+      const lane=profile.flying?310+index*145:995+index*18,y=clamp(lane+Math.sin(time*(profile.flying?2.1:5.4)+index)* (profile.flying?18:3),56,WORLD.height-56),phase=index*.83;
+      instances.push({id:profile.key+':crossing:'+index,profile:profile.key,asset:AMBIENT_PATHS[profile.key],x,y,anchorX:x,anchorY:y,frame:Math.floor((time*profile.fps+phase)%AMBIENT_FRAME_COUNT),size:profile.size*(.82+index*.07),flip:profile.directional?reverse:index%2===1,event:true});
+    }
+    return instances;
+  }
+
+  function surfaceAmbientInstances(){
+    const instances=[];
+    for(const profile of Object.values(AMBIENT_PROFILES)){
+      const anchors=AMBIENT_SURFACE_ANCHORS[profile.key];
+      for(let index=0;index<anchors.length;index++){
+        const instance=ambientResident(profile,index,anchors[index][0],anchors[index][1]);if(ambientOnScreen(instance))instances.push(instance);
+      }
+    }
+    instances.push(...ambientRareEventInstances().filter(instance=>ambientOnScreen(instance,90)));
+    const centerX=camera.x+viewWidth*.5,centerY=camera.y+viewHeight*.5;
+    instances.sort((a,b)=>Number(b.event)-Number(a.event)||distance(a.x,a.y,centerX,centerY)-distance(b.x,b.y,centerX,centerY));
+    return instances.slice(0,AMBIENT_SURFACE_MAX_VISIBLE);
+  }
+
+  function ambientMinePointOpenAt(x,y){
+    const terrain=currentTerrain();if(!terrain||x<36||y<36||x>currentMine().width-36||y>currentMine().height-36)return false;
+    const concealed=mossveinConcealedCells(terrain),radius=36,minCol=Math.max(0,Math.floor((x-radius)/MINE_TILE_SIZE)),maxCol=Math.min(terrain.cols-1,Math.floor((x+radius)/MINE_TILE_SIZE)),minRow=Math.max(0,Math.floor((y-radius)/MINE_TILE_SIZE)),maxRow=Math.min(terrain.rows-1,Math.floor((y+radius)/MINE_TILE_SIZE));
+    for(let row=minRow;row<=maxRow;row++)for(let col=minCol;col<=maxCol;col++){
+      const nearestX=clamp(x,(col)*MINE_TILE_SIZE,(col+1)*MINE_TILE_SIZE),nearestY=clamp(y,row*MINE_TILE_SIZE,(row+1)*MINE_TILE_SIZE),index=row*terrain.cols+col;
+      if(distance(x,y,nearestX,nearestY)<=radius&&(terrainTypeAt(terrain,col,row)||concealed.has(index)))return false;
+    }
+    for(const solid of activeMineSolids())if(x+radius>solid.x&&x-radius<solid.x+solid.w&&y+radius>solid.y&&y-radius<solid.y+solid.h)return false;
+    for(const rock of currentRocks())if(!rock.broken&&distance(x,y,rock.x,rock.y)<76)return false;
+    for(const module of allBaseModules())if(moduleIsHere(module)&&distance(x,y,module.x,module.y)<86)return false;
+    for(const cavern of terrain.caverns)if(!state.claimedPocketRewards[cavern.reward.id]&&distance(x,y,cavern.x,cavern.y)<92)return false;
+    const mine=currentMine(),entry=currentDepth===1?mine.entrance:depthEntrances[currentScene];if(distance(x,y,entry.x,entry.y)<105)return false;
+    const shaft=depthEntrances[currentScene];if(distance(x,y,shaft.x,shaft.y)<112)return false;
+    if(currentDepth===2){const stations=depthStations();if(distance(x,y,stations.sell.x,stations.sell.y)<105||distance(x,y,stations.forge.x,stations.forge.y)<105)return false}
+    return true;
+  }
+
+  function mineAmbientAnchors(terrain,profile){
+    const discoveryKey=terrain.caverns.map(cavern=>cavernIsDiscovered(cavern.id)?'1':'0').join('')+(terrain.depthEntrance&&state.discoveredDepthEntrances[currentScene]?'1':'0'),cacheKey=state.worldSeed+':'+profile.key+':'+currentDepth+':'+discoveryKey;
+    if(terrain._ambientAnchorKey===cacheKey&&terrain._ambientAnchors)return terrain._ambientAnchors;
+    const blockCells=5,anchors=[];
+    for(let blockRow=0;blockRow<Math.ceil(terrain.rows/blockCells);blockRow++)for(let blockCol=0;blockCol<Math.ceil(terrain.cols/blockCells);blockCol++){
+      const candidates=[];
+      for(let localRow=0;localRow<blockCells;localRow++)for(let localCol=0;localCol<blockCells;localCol++){
+        const row=blockRow*blockCells+localRow,col=blockCol*blockCells+localCol;if(row>=terrain.rows||col>=terrain.cols)continue;
+        candidates.push({row,col,score:visualNoise(col,row,profile.seed+currentDepth*97+(state.worldSeed&1023))});
+      }
+      candidates.sort((a,b)=>a.score-b.score);
+      for(const candidate of candidates){
+        const x=(candidate.col+.5)*MINE_TILE_SIZE,y=(candidate.row+.5)*MINE_TILE_SIZE;
+        if(!ambientMinePointOpenAt(x,y)||anchors.some(anchor=>distance(anchor.x,anchor.y,x,y)<112))continue;
+        anchors.push({id:blockRow*Math.ceil(terrain.cols/blockCells)+blockCol,x,y,score:candidate.score});break;
+      }
+    }
+    terrain._ambientAnchorKey=cacheKey;terrain._ambientAnchors=anchors;return anchors;
+  }
+
+  function mineAmbientInstances(){
+    const terrain=currentTerrain(),profile=ambientProfileForLocation();if(!terrain)return[];
+    const visible=mineAmbientAnchors(terrain,profile).filter(anchor=>ambientOnScreen(anchor)&&ambientMinePointOpenAt(anchor.x,anchor.y));
+    visible.sort((a,b)=>a.score-b.score);
+    return visible.slice(0,AMBIENT_MINE_MAX_VISIBLE).map(anchor=>ambientResident(profile,anchor.id,anchor.x,anchor.y,true));
+  }
+
+  function ambientVisibleInstances(){return currentScene==='surface'?surfaceAmbientInstances():mineAmbientInstances()}
+
+  function ambientLifeSnapshot(){
+    const visible=ambientVisibleInstances(),event=ambientRareEventState();
+    return{
+      ...AMBIENT_RENDER_CONTRACT,assets:{...AMBIENT_PATHS},activeProfile:ambientProfileForLocation().key,
+      location:currentScene==='surface'?'surface':currentScene+':'+currentDepth,reducedMotion,
+      maxVisible:currentScene==='surface'?AMBIENT_SURFACE_MAX_VISIBLE:AMBIENT_MINE_MAX_VISIBLE,
+      visible:visible.map(instance=>({id:instance.id,profile:instance.profile,asset:instance.asset,x:instance.x,y:instance.y,anchorX:instance.anchorX,anchorY:instance.anchorY,frame:instance.frame,size:instance.size,flip:instance.flip,event:instance.event})),
+      event
+    };
+  }
+
+  function drawAmbientLife(){
+    for(const instance of ambientVisibleInstances()){
+      const image=AMBIENT_ART[instance.profile];if(!imageReady(image))continue;
+      const p=worldToScreen(instance.x,instance.y),profile=AMBIENT_PROFILES[instance.profile],size=instance.size,baseline=profile.baseline?.[instance.frame]||0;
+      ctx.save();ctx.translate(p.x,p.y);ctx.globalAlpha=instance.event?.96:.88;
+      if(!profile.flying){ctx.fillStyle='rgba(5,4,3,.24)';ctx.beginPath();ctx.ellipse(0,size*.31,size*.29,size*.075,0,0,Math.PI*2);ctx.fill()}
+      if(instance.flip)ctx.scale(-1,1);
+      ctx.drawImage(image,instance.frame*AMBIENT_FRAME_SIZE,0,AMBIENT_FRAME_SIZE,AMBIENT_FRAME_SIZE,-size*.5,-size*.5+baseline,size,size);ctx.restore();
+    }
   }
 
   function drawMossveinFloorArt(deep){
@@ -3937,7 +4089,7 @@
 
   window.__everDeeperTest={
     snapshot:()=>JSON.parse(JSON.stringify({
-      build:BUILD,patchNotes:PATCH_NOTES,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,startMenu:{visible:!startScreen.hidden,hasSave:loadedExistingSave,actions:['continue','new-game','achievements','settings'],achievementsInPause:false},achievements:{storageKey:ACHIEVEMENTS_KEY,total:ACHIEVEMENT_DEFINITIONS.length,count:Object.keys(achievementProgress.records).length,definitions:ACHIEVEMENT_DEFINITIONS.map(({predicate,...definition})=>definition),records:achievementProgress.records,queue:achievementQueue.slice(),active:activeAchievementId,highlighted:highlightedAchievementId,settled:achievementPopupSettled,popupVisible:!achievementPopup.hidden,metrics:achievementMetrics()},music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted,enabled:audioSettings.music,effectsEnabled:audioSettings.effects},controls:{floatingJoystick:true,activationSurface:'gameCanvas',pressAnywhere:true,independentMinePointer:true,joystickPointer:input.joystickPointer,moveX:input.moveX,moveY:input.moveY,mineHeld:input.mineHeld},resourceRendering:{...RESOURCE_RENDER_CONTRACT,paths:DROP_PATHS,bounds:RESOURCE_IMAGE_BOUNDS},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true,emberMine:true,starMine:true},surfaceBoundaries:{walls:SURFACE_BOUNDARIES.map(boundary=>({...boundary,locked:!state[boundary.unlockKey]})),assets:SURFACE_BOUNDARY_PATHS,premiumAssets:true,fullHeightAssets:true,naturalAssetOpenings:true,legacyCanvasWalls:false,legacyRectangularGateCuts:false,groundBlendWidth:MOONGLASS_SURFACE_BLEND,gateOnlyPassage:true,persistentAfterUnlock:true,portalFocus:true},surfaceAssetRendering:{mossveinGround:true,mainRoad:SURFACE_ROAD_PATHS,seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:MOSSVEIN_MINE_PATH,mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
+      build:BUILD,patchNotes:PATCH_NOTES,state,scene:currentScene,depth:currentDepth,assetVersion:ASSET_VERSION,startMenu:{visible:!startScreen.hidden,hasSave:loadedExistingSave,actions:['continue','new-game','achievements','settings'],achievementsInPause:false},achievements:{storageKey:ACHIEVEMENTS_KEY,total:ACHIEVEMENT_DEFINITIONS.length,count:Object.keys(achievementProgress.records).length,definitions:ACHIEVEMENT_DEFINITIONS.map(({predicate,...definition})=>definition),records:achievementProgress.records,queue:achievementQueue.slice(),active:activeAchievementId,highlighted:highlightedAchievementId,settled:achievementPopupSettled,popupVisible:!achievementPopup.hidden,metrics:achievementMetrics()},music:{asset:MUSIC_PATH.split('?')[0],volume:MUSIC_VOLUME,loop:true,started:musicStarted,enabled:audioSettings.music,effectsEnabled:audioSettings.effects},controls:{floatingJoystick:true,activationSurface:'gameCanvas',pressAnywhere:true,independentMinePointer:true,joystickPointer:input.joystickPointer,moveX:input.moveX,moveY:input.moveY,mineHeld:input.mineHeld},ambientLife:ambientLifeSnapshot(),resourceRendering:{...RESOURCE_RENDER_CONTRACT,paths:DROP_PATHS,bounds:RESOURCE_IMAGE_BOUNDS},assetRendering:{stone:['node'],copper:['wall','node'],gold:['wall','node']},entranceAssetRendering:{mossMine:true,moonMine:true,emberMine:true,starMine:true},surfaceBoundaries:{walls:SURFACE_BOUNDARIES.map(boundary=>({...boundary,locked:!state[boundary.unlockKey]})),assets:SURFACE_BOUNDARY_PATHS,premiumAssets:true,fullHeightAssets:true,naturalAssetOpenings:true,legacyCanvasWalls:false,legacyRectangularGateCuts:false,groundBlendWidth:MOONGLASS_SURFACE_BLEND,gateOnlyPassage:true,persistentAfterUnlock:true,portalFocus:true},surfaceAssetRendering:{mossveinGround:true,mainRoad:SURFACE_ROAD_PATHS,seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:MOSSVEIN_MINE_PATH,mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false},starterRendering:{sellStation:STARTER_PATHS.sellStation,forgeStation:STARTER_PATHS.forgeStation,storageChest:STARTER_PATHS.storageChest,wayfarerShop:STARTER_PATHS.wayfarerShop,treasureClosed:STARTER_PATHS.treasureClosed,treasureOpen:STARTER_PATHS.treasureOpen,groundDrops:DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false},rootwoundRendering:{floor:ROOTWOUND_PATHS.floor,wall:ROOTWOUND_PATHS.wall,nodes:['rootiron','deepstone','ambercore','burrowsteel'],rootironWall:ROOTWOUND_PATHS.rootironWall,shaft:ROOTWOUND_PATHS.shaft,sellStation:ROOTWOUND_PATHS.sellStation,drillForge:ROOTWOUND_PATHS.drillForge,legacyFloorDecorations:false,legacyTerrainTexture:false,legacyDepthShaft:false,legacyDepthStations:false,legacyResourceNodes:false},
       surfaceMoonglassRendering:{ground:SURFACE_MOONGLASS_PATHS.ground,crystals:SURFACE_MOONGLASS_PATHS.crystals,bloomBed:SURFACE_MOONGLASS_PATHS.bloomBed,entrance:MINE_ENTRANCE_PATHS.moonMine,gateMark:STARTER_PATHS.moonglassGateMark,emberdeepSeal:STARTER_PATHS.emberdeepSeal,openBoundaryGatesRemoved:true,animatedGateTransition:true,smoothMossveinBlend:true,backgroundCrystalsDistinct:true,chests:{crystalCache:{closed:SURFACE_MOONGLASS_PATHS.crystalCacheClosed,open:SURFACE_MOONGLASS_PATHS.crystalCacheOpen},reliquary:{closed:SURFACE_MOONGLASS_PATHS.reliquaryClosed,open:SURFACE_MOONGLASS_PATHS.reliquaryOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyEmberdeepSeal:false},
       surfaceEmberdeepRendering:{ground:SURFACE_EMBERDEEP_PATHS.ground,slag:SURFACE_EMBERDEEP_PATHS.slag,faultBed:SURFACE_EMBERDEEP_PATHS.faultBed,minePath:SURFACE_EMBERDEEP_PATHS.minePath,minePathBounds:{...EMBERDEEP_MINE_PATH_BOUNDS},minePathRotation:EMBERDEEP_MINE_PATH_ROTATION,minePathPivot:{...EMBERDEEP_MINE_PATH_PIVOT},minePathMouthTarget:{x:2480,y:1015},entrance:MINE_ENTRANCE_PATHS.emberMine,entrancePosition:{...MINE_DEFINITIONS.emberMine.surfaceEntrance},entranceFlipped:true,gateSeal:STARTER_PATHS.emberdeepSeal,gateMark:STARTER_PATHS.emberdeepSealMark,animatedGateTransition:true,smoothMoonglassBlend:true,continuousBlendUnderlay:true,backgroundSlagDistinct:true,chests:{foundry:{closed:SURFACE_EMBERDEEP_PATHS.foundryClosed,open:SURFACE_EMBERDEEP_PATHS.foundryOpen},vault:{closed:SURFACE_EMBERDEEP_PATHS.vaultClosed,open:SURFACE_EMBERDEEP_PATHS.vaultOpen}},legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyGate:false},
       surfaceStarfallRendering:{ground:SURFACE_STARFALL_PATHS.ground,shards:SURFACE_STARFALL_PATHS.shards,latticeBed:SURFACE_STARFALL_PATHS.latticeBed,minePath:SURFACE_STARFALL_PATHS.minePath,minePathBounds:{...STARFALL_MINE_PATH_BOUNDS},minePathMouthTarget:{x:3505,y:1000},entrance:MINE_ENTRANCE_PATHS.starMine,entrancePosition:{...MINE_DEFINITIONS.starMine.surfaceEntrance},gateSeal:STARTER_PATHS.starfallSeal,gateMark:STARTER_PATHS.starfallSealMark,starforge:STARTER_PATHS.starforgeStation,chests:{astralCache:{closed:SURFACE_STARFALL_PATHS.astralCacheClosed,open:SURFACE_STARFALL_PATHS.astralCacheOpen},celestialCoffer:{closed:SURFACE_STARFALL_PATHS.celestialCofferClosed,open:SURFACE_STARFALL_PATHS.celestialCofferOpen}},animatedGateTransition:true,smoothEmberdeepBlend:true,continuousBlendUnderlay:true,backgroundShardsDistinct:true,legacyGrid:false,legacyDecorations:false,legacyChests:false,legacyEntrance:false,legacyGate:false,legacyStarforge:false},

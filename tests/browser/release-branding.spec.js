@@ -9,9 +9,9 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   await page.goto('/');
   await page.waitForFunction(()=>window.__everDeeperTest);
   const scripts=await page.locator('script[src]').evaluateAll(elements=>elements.map(script=>({src:script.getAttribute('src'),type:script.type})));
-  const gameDataIndex=scripts.findIndex(script=>script.src==='game-data.js?v=03511'),engineIndex=scripts.findIndex(script=>script.src==='script.js?v=03511');
+  const gameDataIndex=scripts.findIndex(script=>script.src==='game-data.js?v=03600'),engineIndex=scripts.findIndex(script=>script.src==='script.js?v=03600');
   expect(gameDataIndex).toBeGreaterThanOrEqual(0);expect(engineIndex).toBeGreaterThan(gameDataIndex);
-  expect(scripts.every(script=>script.type===''&&script.src.endsWith('?v=03511'))).toBe(true);
+  expect(scripts.every(script=>script.type===''&&script.src.endsWith('?v=03600'))).toBe(true);
 
   await expect(page).toHaveTitle('Ever Deeper');
   await expect(page.locator('meta[name="application-name"]')).toHaveAttribute('content','Ever Deeper');
@@ -21,20 +21,20 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
   const logo=page.locator('.brand-logo');
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('alt','Ever Deeper');
-  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=03511');
+  await expect(logo).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=03600');
   const logoState=await logo.evaluate(image=>({complete:image.complete,width:image.naturalWidth,height:image.naturalHeight,bounds:image.getBoundingClientRect().toJSON()}));
   expect(logoState).toMatchObject({complete:true,width:800,height:297});
   expect(logoState.bounds.width).toBeGreaterThanOrEqual(124);
   expect(logoState.bounds.right).toBeLessThanOrEqual(await page.evaluate(()=>innerWidth));
 
-  await expect(page.locator('#buildVersion')).toHaveText('v0.35.11');
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.35.11 · DRILL AGE PACING');
-  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=03511');
-  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=03511');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.36.0');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.36.0 · LIVING WORLDS');
+  await expect(page.locator('#toolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=03600');
+  await expect(page.locator('#mineToolIcon')).toHaveAttribute('src','assets/tools/pickaxe-worn.png?v=03600');
   await page.evaluate(()=>window.__everDeeperTest.dismissStartMenu());
   await page.evaluate(()=>window.__everDeeperTest.setPosition(455,250));
   await expect(page.locator('#contextPanel')).toBeVisible();
-  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=03511$/);
+  await expect(page.locator('#contextIconImage')).toHaveAttribute('src',/assets\/surface\/forge-station\.png\?v=03600$/);
   const release=await page.evaluate(()=>{
     const api=window.__everDeeperTest;
     api.reset();api.save();
@@ -48,7 +48,7 @@ test('Ever Deeper release branding is complete and mobile-safe',async({page})=>{
     };
   });
   expect(release).toEqual({
-    build:{version:'0.35.11',name:'DRILL AGE PACING'},
+    build:{version:'0.36.0',name:'LIVING WORLDS'},
     music:'assets/audio/ever-deeper-drift-loop.mp3',
     retiredMarkup:false,
     retiredStorage:false,
@@ -179,4 +179,48 @@ test('premium walk sheets are clean, directional, lazy, and reduced-motion safe'
   await page.emulateMedia({reducedMotion:'reduce'});await page.reload();await page.waitForFunction(()=>window.__everDeeperTest);
   const reduced=await page.evaluate(()=>{const api=window.__everDeeperTest;api.reset();api.setPosition(600,700);const before=api.snapshot().player.x;api.setMoveVector(1,0);api.step(.08);const snapshot=api.snapshot();return{before,after:snapshot.player.x,frame:snapshot.player.walkFrame,reduced:snapshot.characterRendering.reducedMotion}});
   expect(reduced).toEqual(expect.objectContaining({frame:0,reduced:true}));expect(reduced.after).toBeGreaterThan(reduced.before);
+});
+
+test('premium ambient life is bounded, collision-free, animated, and reduced-motion safe',async({page})=>{
+  await page.goto('/');
+  await page.waitForFunction(()=>window.__everDeeperTest);
+  const assets={mossvein:'assets/ambient/mossvein-glowmoth.png',moonglass:'assets/ambient/moonglass-prism-moth.png',emberdeep:'assets/ambient/emberdeep-cinder-skink.png',starfall:'assets/ambient/starfall-astral-ray.png'};
+  const surface=await page.evaluate(()=>{
+    const api=window.__everDeeperTest;api.reset();api.dismissStartMenu();const before=api.snapshot(),state=JSON.stringify(before.state);api.renderOnce();const after=api.snapshot();
+    return{life:before.ambientLife,stateUnchanged:JSON.stringify(after.state)===state,stateKeys:Object.keys(after.state)};
+  });
+  expect(surface.life).toMatchObject({frameCount:4,frameSize:256,premiumSpriteSheets:true,trueAnimationFrames:true,deterministicPlacement:true,surfaceMaxVisible:10,mineMaxVisible:6,rareSurfaceCrossings:true,reducedMotionSafe:true,collisionFree:true,gameplayNeutral:true,proceduralCreaturePrimitives:false,activeProfile:'mossvein',location:'surface',maxVisible:10});
+  expect(surface.life.assets).toEqual(assets);expect(surface.life.visible.length).toBeGreaterThan(0);expect(surface.life.visible.length).toBeLessThanOrEqual(10);expect(surface.stateUnchanged).toBe(true);expect(surface.stateKeys).not.toContain('ambientLife');
+
+  const sheetQa=await page.evaluate(async paths=>{
+    const results=[];
+    for(const [profile,src] of Object.entries(paths)){
+      const image=new Image();image.src=src;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(image,0,0);const pixels=context.getImageData(0,0,canvas.width,canvas.height).data,frames=[];
+      for(let frame=0;frame<4;frame++){
+        let alphaPixels=0,transparentPixels=0,borderAlpha=0,hash=2166136261;
+        for(let y=0;y<256;y++)for(let x=0;x<256;x++){
+          const offset=(y*canvas.width+frame*256+x)*4,alpha=pixels[offset+3];if(alpha>12)alphaPixels++;if(alpha===0)transparentPixels++;if(!x||x===255||!y||y===255)borderAlpha=Math.max(borderAlpha,alpha);
+          if(x%4===0&&y%4===0){hash^=pixels[offset];hash=Math.imul(hash,16777619);hash^=pixels[offset+1];hash=Math.imul(hash,16777619);hash^=pixels[offset+2];hash=Math.imul(hash,16777619);hash^=alpha;hash=Math.imul(hash,16777619)}
+        }
+        frames.push({alphaPixels,transparentPixels,borderAlpha,hash:hash>>>0});
+      }
+      results.push({profile,src,width:image.naturalWidth,height:image.naturalHeight,frames});
+    }
+    return results;
+  },assets);
+  expect(sheetQa).toHaveLength(4);
+  for(const sheet of sheetQa){expect([sheet.width,sheet.height]).toEqual([1024,256]);expect(sheet.frames).toHaveLength(4);expect(sheet.frames.every(frame=>frame.alphaPixels>7000&&frame.transparentPixels>38000&&frame.borderAlpha===0)).toBe(true);expect(new Set(sheet.frames.map(frame=>frame.hash)).size).toBe(4)}
+
+  const reduced=await page.evaluate(()=>{
+    const api=window.__everDeeperTest;api.setReducedMotion(true);const before=api.snapshot().ambientLife;api.step(2);const after=api.snapshot().ambientLife;api.setReducedMotion(false);return{before,after};
+  });
+  expect(reduced.after).toMatchObject({reducedMotion:true,event:{enabled:false,active:false}});expect(reduced.after.visible.every(instance=>instance.frame===0&&instance.x===instance.anchorX&&instance.y===instance.anchorY)).toBe(true);expect(reduced.after.visible.map(({id,x,y})=>({id,x,y}))).toEqual(reduced.before.visible.map(({id,x,y})=>({id,x,y})));
+
+  const mines=await page.evaluate(()=>{
+    const api=window.__everDeeperTest,results=[];api.unlockAllAreas();api.unlockStarfall();
+    for(const scene of ['mossMine','moonMine','emberMine','starMine']){api.enterMine(scene);const life=api.snapshot().ambientLife;results.push({scene,life,blocked:life.visible.filter(instance=>api.mineCollisionAt(instance.x,instance.y)).map(instance=>instance.id)});api.exitMine()}
+    return results;
+  });
+  const profiles={mossMine:'mossvein',moonMine:'moonglass',emberMine:'emberdeep',starMine:'starfall'};
+  for(const mine of mines){expect(mine.life).toMatchObject({activeProfile:profiles[mine.scene],location:`${mine.scene}:1`,maxVisible:6});expect(mine.life.visible.length).toBeGreaterThan(0);expect(mine.life.visible.length).toBeLessThanOrEqual(6);expect(mine.life.visible.every(instance=>instance.profile===profiles[mine.scene]&&instance.asset===assets[profiles[mine.scene]])).toBe(true);expect(mine.blocked).toEqual([])}
 });
