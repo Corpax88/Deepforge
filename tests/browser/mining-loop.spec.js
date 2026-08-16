@@ -2533,7 +2533,7 @@ test('Underground Hub unlocks, builds by drag, stores resources, lights the room
   await expect(page.locator('#hubBuildToolbar')).toBeVisible();
   await expect(page.locator('#mineAction')).toHaveText('DONE');
   const toolbarBox=await page.locator('#hubBuildToolbar').boundingBox(),doneBox=await page.locator('#mineButton').boundingBox();
-  expect(toolbarBox.right).toBeLessThanOrEqual(doneBox.left+2);
+  expect(toolbarBox.x+toolbarBox.width).toBeLessThanOrEqual(doneBox.x+2);
   const pointFor=async(col,row)=>page.evaluate(({col,row})=>{const snapshot=window.__everDeeperTest.snapshot(),grid=snapshot.hub.grid,rect=document.getElementById('gameCanvas').getBoundingClientRect(),scale=rect.width/snapshot.camera.viewWidth;return{x:rect.left+(grid.originX+(col+.5)*grid.tileSize-snapshot.camera.x)*scale,y:rect.top+(grid.originY+(row+.5)*grid.tileSize-snapshot.camera.y)*scale}},{col,row});
   const wallStart=await pointFor(3,8),wallEnd=await pointFor(5,8);
   await page.mouse.move(wallStart.x,wallStart.y);await page.mouse.down();await page.mouse.move(wallEnd.x,wallEnd.y,{steps:12});await page.mouse.up();
