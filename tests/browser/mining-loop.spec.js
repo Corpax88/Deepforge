@@ -707,6 +707,11 @@ test('all five Ember Mastery ranks improve mining and persist',async({page},test
   await expect(page.locator('#contextButton')).toHaveText('MASTERED');
   await expect(page.locator('#unlockLabel')).toHaveText('OPEN STARFALL DEPTHS');
   await expect(page.locator('#powerValue')).toHaveText('128');
+  await expect(page.locator('#heatTutorialShade')).toBeVisible();
+  await expect(page.locator('#heatTutorialTitle')).toHaveText('Heat Streak Unlocked');
+  await expect(page.locator('.heat-tutorial-card')).toContainText(/UP TO 1\.30x SPEED/);
+  await page.locator('#heatTutorialButton').click();
+  await expect(page.locator('#heatTutorialShade')).toBeHidden();
   expect((await page.evaluate(()=>window.__everDeeperTest.snapshot())).state.cargo.sunslag).toBe(0);
   await page.screenshot({path:testInfo.outputPath('ember-mastery-complete.png'),fullPage:true});
 
@@ -716,6 +721,25 @@ test('all five Ember Mastery ranks improve mining and persist',async({page},test
   const persisted=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(persisted.state.emberMastery).toBe(5);
   expect(persisted.effectivePickaxe).toMatchObject({power:128,cooldown:.155,shellPower:1.5,sunslagHits:1});
+  expect(persisted.state.heatStreakTutorialSeen).toBe(true);
+});
+
+test('Heat Streak rewards continuous mining and resets as soon as mining stops',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{
+    const api=window.__everDeeperTest;
+    api.setStarforgeVariant('swift');api.enterMine('mossMine');api.setPosition(180,503);api.setAim(.899,-.438);api.setMoveVector(.899,-.438);api.setMiningHeld(true);
+    for(let index=0;index<65;index++)api.step(.1);
+  });
+  let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.heatStreak).toMatchObject({unlocked:true,active:true,maxSpeed:1.3,buildSeconds:5});
+  expect(snapshot.heatStreak.speedMultiplier).toBeCloseTo(1.3,5);
+  await expect(page.locator('#heatMeter')).toBeVisible();
+  await expect(page.locator('#heatValue')).toHaveText('1.30x');
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.setMiningHeld(false);api.stopMove()});
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.heatStreak).toMatchObject({active:false,elapsed:0,progress:0,speedMultiplier:1});
+  await expect(page.locator('#heatMeter')).toBeHidden();
 });
 
 test('Depth Master breaks Sunslag shell and core with one normal swing',async({page})=>{
@@ -1334,8 +1358,8 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.37.4',name:'ALIGNED GATES'});
-  expect(snapshot.assetVersion).toBe('03704');
+  expect(snapshot.build).toEqual({version:'0.37.5',name:'HEAT STREAK'});
+  expect(snapshot.assetVersion).toBe('03705');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true,emberMine:true,starMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:COMPLETE_DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
@@ -1359,18 +1383,18 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.37.4');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.37.5');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.37.4 · ALIGNED GATES');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.37.5 · HEAT STREAK');
 });
 
 test('premium start menu owns continue, new game, achievements, and settings',async({page})=>{
   await page.goto('/');await page.waitForFunction(()=>window.__everDeeperTest);
   await expect(page.locator('#startScreen')).toBeVisible();
   await expect(page.locator('#continueButton')).toBeDisabled();
-  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=03704');
+  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=03705');
   await page.locator('#startAchievementsButton').click();
   await expect(page.locator('#achievementsPanel')).toBeVisible();
   await expect(page.locator('.menu-tabs')).toBeHidden();
@@ -1398,8 +1422,8 @@ test('settings opens first and keeps audio choices separate from stats',async({p
   await expect(page.locator('#menuTitle')).toHaveText('Patch Notes');
   await expect(page.locator('#patchNotesPanel')).toBeVisible();
   const patchNotes=page.locator('.patch-note');
-  await expect(patchNotes).toHaveCount(30);
-  await expect(page.locator('.patch-note.latest')).toContainText('v0.37.4');
+  await expect(patchNotes).toHaveCount(31);
+  await expect(page.locator('.patch-note.latest')).toContainText('v0.37.5');
   await expect(page.locator('.patch-note.latest')).toContainText('same high three-quarter perspective');
   await expect(page.locator('.patch-note.latest')).toContainText('west to east');
   await expect(patchNotes.filter({hasText:'v0.37.3'})).toContainText('brief light through its premium silhouette');
@@ -1775,11 +1799,11 @@ test('real resource art is shared by goals, bags, recipes, stats and world drops
   expect(contract).toMatchObject({paths:COMPLETE_DROP_PATHS,completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false});
 });
 
-test('v0.37.4 exposes the complete production contracts and premium walk renderer',async({page})=>{
+test('v0.37.5 exposes the complete production contracts and premium walk renderer',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.37.4',name:'ALIGNED GATES'});
-  expect(snapshot.assetVersion).toBe('03704');
+  expect(snapshot.build).toEqual({version:'0.37.5',name:'HEAT STREAK'});
+  expect(snapshot.assetVersion).toBe('03705');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.surfaceEmberdeepRendering).toEqual(SURFACE_EMBERDEEP_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);

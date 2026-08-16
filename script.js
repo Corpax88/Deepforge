@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='03704';
+  const ASSET_VERSION='03705';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=2.4;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -384,6 +384,9 @@
   const objectiveRequirements=document.getElementById('objectiveRequirements');
   const focusMeter=document.getElementById('focusMeter');
   const focusCount=document.getElementById('focusCount');
+  const heatMeter=document.getElementById('heatMeter');
+  const heatFill=document.getElementById('heatFill');
+  const heatValue=document.getElementById('heatValue');
   const contextPanel=document.getElementById('contextPanel');
   const contextIcon=document.getElementById('contextIcon');
   const contextIconImage=document.getElementById('contextIconImage');
@@ -425,6 +428,9 @@
   const achievementPopup=document.getElementById('achievementPopup');
   const achievementPopupImage=document.getElementById('achievementPopupImage');
   const achievementAnnouncement=document.getElementById('achievementAnnouncement');
+  const heatTutorialShade=document.getElementById('heatTutorialShade');
+  const heatTutorialButton=document.getElementById('heatTutorialButton');
+  heatTutorialShade.hidden=true;
   const musicToggle=document.getElementById('musicToggle');
   const effectsToggle=document.getElementById('effectsToggle');
   const resetProgressButton=document.getElementById('resetProgressButton');
@@ -448,8 +454,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.37.4',name:'ALIGNED GATES'};
+  const BUILD={version:'0.37.5',name:'HEAT STREAK'};
   const PATCH_NOTES=[
+    {version:'0.37.5',date:'16 AUG 2026',title:'Heat Streak',items:['Ember Mastery 5 now unlocks Heat Streak.','Holding Mine through a continuous run gradually accelerates pickaxe mining up to 1.30x speed; releasing Mine resets the bonus.','A one-time unlock tutorial explains the new ability as soon as the final Ember rank is reforged.']},
     {version:'0.37.4',date:'16 AUG 2026',title:'Aligned Gates',items:['All three world gates now use new premium assets painted in the same high three-quarter perspective as their biome cliffs.','Gate structures run north-to-south with the wall while the passage reads clearly from west to east.','The old front-facing silhouette, duplicate canvas light seam, and pasted-on shadow are gone.']},
     {version:'0.37.3',date:'16 AUG 2026',title:'Gate Awakening',items:['Every world gate now answers activation with a brief light through its premium silhouette, then shakes loose before sinking into the ground.','Gates keep their full painted proportions throughout the sequence instead of being squashed flat, and the permanent passage art appears only as the gate clears it.','The passage remains physically locked until the gate is fully below ground; Reduced Motion preserves the readable sink while removing flashes and shaking.']},
     {version:'0.37.2',date:'16 AUG 2026',title:'Mining Clarity',items:['Four dedicated premium mining sheets now throw compact Mossvein chips, Moonglass splinters, Emberdeep fragments, and Starfall shards without circular silhouettes.','Fast drills no longer stack multiple impact animations on the same target.','Routine damage, shell, tunnel, pickup, and partial-vein text has been removed; only meaningful discoveries and completion beats claim the center of the action.']},
@@ -517,6 +524,8 @@
   const player={x:330,y:690,radius:23,facing:1,aimX:1,aimY:0,walk:0,walkPhase:0,walkDistance:0,walkFrame:0,direction:'right',moving:false,swing:null,swingCooldown:0,hitRockId:null,hitTerrainIndex:-1};
   const miningFocus={streak:0,timer:0};
   const miningRush={timer:0,lastSecond:0};
+  const HEAT_STREAK_BUILD_SECONDS=5,HEAT_STREAK_MAX_SPEED=1.3;
+  const heatStreak={elapsed:0,active:false,lastPercent:-1};
   let loadedExistingSave=false;
   const state=loadState();
   let currentScene=state.location.scene;
@@ -601,7 +610,7 @@
 
   function defaultState(){
     return{
-      gold:0,pickaxeLevel:1,emberMastery:0,drillLevel:0,drillGoalScene:null,movementSpeedLevel:0,nextLootSweepAt:Date.now()+GROUND_DROP_LIFETIME*1000,areaUnlocked:false,discoveredSecond:false,emberdeepUnlocked:false,discoveredThird:false,fourthUnlocked:false,discoveredFourth:false,victory:false,
+      gold:0,pickaxeLevel:1,emberMastery:0,heatStreakTutorialSeen:false,drillLevel:0,drillGoalScene:null,movementSpeedLevel:0,nextLootSweepAt:Date.now()+GROUND_DROP_LIFETIME*1000,areaUnlocked:false,discoveredSecond:false,emberdeepUnlocked:false,discoveredThird:false,fourthUnlocked:false,discoveredFourth:false,victory:false,
       cargo:{stone:0,copper:0,moonglass:0,gold:0,starshard:0,emberstone:0,sunslag:0,astralite:0,crownstone:0,deepstone:0,rootiron:0,ambercore:0,prismite:0,lunacore:0,magmaite:0,furnaceheart:0,voidglass:0,singularity:0,burrowsteel:0,phasecrystal:0,infernium:0},
       mined:{stone:0,copper:0,moonglass:0,gold:0,starshard:0,emberstone:0,sunslag:0,astralite:0,crownstone:0,deepstone:0,rootiron:0,ambercore:0,prismite:0,lunacore:0,magmaite:0,furnaceheart:0,voidglass:0,singularity:0,burrowsteel:0,phasecrystal:0,infernium:0},
       veinsCompleted:{copper_run:0,moonglass_bloom:0,ember_fault:0,starfall_lattice:0},
@@ -790,6 +799,7 @@
       base.gold=Math.max(0,Number(raw.gold)||0);
       base.pickaxeLevel=Math.max(1,Math.min(PICKAXES.length-1,Number(raw.pickaxeLevel)||1));
       base.emberMastery=base.pickaxeLevel===PICKAXES.length-1?Math.max(0,Math.min(EMBER_MASTERY.length-1,Number(raw.emberMastery)||0)):0;
+      base.heatStreakTutorialSeen=raw.heatStreakTutorialSeen===true;
       base.drillLevel=Math.max(0,Math.min(DRILLS.length-1,Number(raw.drillLevel)||0));
       base.movementSpeedLevel=Math.max(0,Math.floor(Number(raw.movementSpeedLevel)||0));
       base.nextLootSweepAt=Number.isFinite(Number(raw.nextLootSweepAt))?Number(raw.nextLootSweepAt):base.nextLootSweepAt;
@@ -875,10 +885,10 @@
     resetVeins();groundDrops.length=0;terrainResponses.length=0;nextDropId=1;nextTerrainResponseId=1;lastTerrainImpactAt=-Infinity;
     pickupBatch.items=Object.create(null);pickupBatch.count=0;pickupBatch.quiet=0;pickupBatch.bestType=null;
     currentScene='surface';currentDepth=1;player.x=330;player.y=690;player.swing=null;player.swingCooldown=0;resetPlayerWalk('right');
-    miningFocus.streak=0;miningFocus.timer=0;miningRush.timer=0;miningRush.lastSecond=0;saleMotes.length=0;goldTween=null;displayedGold=0;
+    miningFocus.streak=0;miningFocus.timer=0;miningRush.timer=0;miningRush.lastSecond=0;resetHeatStreak();saleMotes.length=0;goldTween=null;displayedGold=0;
     lootSweepCheck=0;lootSweepWarned30=false;lootSweepWarned10=false;moonglassGateTransition=null;emberdeepGateTransition=null;starfallGateTransition=null;
     Object.assign(miningFeedback,{shake:0,shakeTime:0,flash:0,hitStop:0,terrainHitIndex:-1,terrainHitTime:0,lastDiscovery:null,lastDepositBeat:null,lastPocketReward:null});
-    lastRegion=-1;activeContext=null;menuShade.hidden=true;inventoryShade.hidden=true;uiDirty=true;saveState(true);showToast('A fresh vein awaits.');
+    lastRegion=-1;activeContext=null;menuShade.hidden=true;inventoryShade.hidden=true;heatTutorialShade.hidden=true;uiDirty=true;saveState(true);showToast('A fresh vein awaits.');
   }
 
   function resetAllProgress(){
@@ -954,10 +964,29 @@
   function hasDeepTool(){return state.drillLevel>0||!!state.starforgeVariant}
   function currentPickaxeName(){const drill=currentDrill(),variant=currentStarforge();return drill?drill.name:variant?variant.name:currentPickaxe().name+(state.emberMastery?' +'+state.emberMastery:'')}
   function currentPower(){const drill=currentDrill();if(drill)return drill.power;const base=state.pickaxeLevel===PICKAXES.length-1?currentMastery().power:currentPickaxe().power,variant=currentStarforge();return variant?Math.round(base*variant.powerMultiplier):base}
+  function heatStreakUnlocked(){return state.emberMastery>=5&&!state.drillLevel}
+  function heatStreakProgress(){return heatStreakUnlocked()?clamp(heatStreak.elapsed/HEAT_STREAK_BUILD_SECONDS,0,1):0}
+  function heatStreakSpeed(){return 1+(HEAT_STREAK_MAX_SPEED-1)*heatStreakProgress()}
+  function renderHeatStreak(){
+    const progress=heatStreakProgress(),percent=Math.round(progress*100),speed=heatStreakSpeed();
+    heatMeter.hidden=!heatStreakUnlocked()||!heatStreak.active||heatStreak.elapsed<.12;
+    heatFill.style.width=percent+'%';heatValue.textContent=speed.toFixed(2)+'x';heatMeter.setAttribute('aria-label','Heat Streak '+percent+' percent, mining speed '+speed.toFixed(2)+' times');
+    game.dataset.heatActive=progress>0?'true':'false';game.dataset.heatMaxed=progress>=1?'true':'false';
+  }
+  function resetHeatStreak(){
+    const changed=heatStreak.elapsed>0||heatStreak.active;heatStreak.elapsed=0;heatStreak.active=false;heatStreak.lastPercent=-1;if(changed)renderHeatStreak();
+  }
+  function updateHeatStreak(dt){
+    if(!heatStreakUnlocked()||!input.mineHeld){resetHeatStreak();return}
+    if(!heatStreak.active)return;
+    if(!player.swing&&!nearestRock(MINING_RANGE)&&!nearestTerrainCell(MINING_RANGE))return;
+    heatStreak.elapsed=Math.min(HEAT_STREAK_BUILD_SECONDS,heatStreak.elapsed+dt);
+    const percent=Math.round(heatStreakProgress()*100);if(percent!==heatStreak.lastPercent){heatStreak.lastPercent=percent;renderHeatStreak()}
+  }
   function currentCooldown(){
     const drill=currentDrill(),base=drill?drill.cooldown:state.pickaxeLevel===PICKAXES.length-1?currentMastery().cooldown:currentPickaxe().cooldown,variant=currentStarforge();
     const toolCooldown=!drill&&variant?base*variant.cooldownMultiplier:base;
-    return toolCooldown*(miningRush.timer>0?MINING_RUSH_COOLDOWN_MULTIPLIER:1);
+    return toolCooldown*(miningRush.timer>0?MINING_RUSH_COOLDOWN_MULTIPLIER:1)/heatStreakSpeed();
   }
   function currentShellPower(){const drill=currentDrill();if(drill)return drill.shellPower;const base=state.pickaxeLevel===PICKAXES.length-1?currentMastery().shellPower:.72,variant=currentStarforge();return variant?base*variant.shellMultiplier:base}
   function currentBonusYieldChance(){const drill=currentDrill();if(drill)return drill.yieldBonus;const base=state.pickaxeLevel<4?0:state.pickaxeLevel===PICKAXES.length-1?currentMastery().bonusYield:.22,variant=currentStarforge();return Math.min(.92,base+(variant?variant.yieldBonus:0))}
@@ -1537,7 +1566,18 @@
   }
 
   function enterGame(){
-    unlockAudio();startScreen.hidden=true;menuShade.hidden=true;inventoryShade.hidden=true;lastFrame=0;saveState(true);syncAchievementPopup();
+    unlockAudio();startScreen.hidden=true;menuShade.hidden=true;inventoryShade.hidden=true;lastFrame=0;saveState(true);syncAchievementPopup();maybeShowHeatTutorial();
+  }
+
+  function showHeatTutorial(){
+    if(!heatStreakUnlocked()||state.heatStreakTutorialSeen||!startScreen.hidden)return false;
+    releaseTouchControls();heatTutorialShade.hidden=false;return true;
+  }
+
+  function maybeShowHeatTutorial(){return showHeatTutorial()}
+
+  function dismissHeatTutorial(){
+    heatTutorialShade.hidden=true;state.heatStreakTutorialSeen=true;saveState(true);lastFrame=0;return true;
   }
 
   function startNewGame(){
@@ -1788,6 +1828,7 @@
     if(player.swing||player.swingCooldown>0)return false;
     const rock=nearestRock(MINING_RANGE),terrainTarget=rock?null:nearestTerrainCell(MINING_RANGE);
     if(!rock&&!terrainTarget){if(manualPress)sound('empty');if(!input.mineHeld)showToast(currentMine()?'Face the mountain to dig.':'Move closer to a rock.');player.swingCooldown=.16;return false}
+    if(heatStreakUnlocked()&&input.mineHeld)heatStreak.active=true;
     if(terrainTarget){
       player.facing=terrainTarget.x>=player.x?1:-1;player.hitRockId=null;player.hitTerrainIndex=terrainTarget.index;
       player.swing={elapsed:0,duration:currentCooldown(),hit:false,precision:false,target:'terrain'};
@@ -2233,6 +2274,7 @@
     sound('upgrade');
     floaters.push({x:player.x,y:player.y-53,text:'EMBER MASTERY '+next.rank,color:'#ffd38c',age:0,life:1.65,size:18});
     showToast(next.label+' - Power '+oldPower+' -> '+currentPower()+' - Shell '+Math.round(oldShellPower*100)+'% -> '+Math.round(currentShellPower()*100)+'%');uiDirty=true;saveState();
+    if(next.rank===5)showHeatTutorial();
   }
 
   function unlockArea(){
@@ -2334,8 +2376,9 @@
   }
 
   function update(dt){
-    updateLootSweep(dt);achievementCheckTimer=Math.max(0,achievementCheckTimer-dt);if(achievementCheckTimer===0){evaluateAchievements();achievementCheckTimer=.12}if(!menuShade.hidden||!inventoryShade.hidden)return;
+    updateLootSweep(dt);achievementCheckTimer=Math.max(0,achievementCheckTimer-dt);if(achievementCheckTimer===0){evaluateAchievements();achievementCheckTimer=.12}if(!menuShade.hidden||!inventoryShade.hidden||!heatTutorialShade.hidden)return;
     time+=dt;
+    updateHeatStreak(dt);
     const ambientMining=!!player.swing||input.mineHeld;
     if(ambientMining){
       if(!ambientDisturbance.active||ambientDisturbance.scene!==currentScene||ambientDisturbance.depth!==currentDepth){ambientDisturbance.scene=currentScene;ambientDisturbance.depth=currentDepth;ambientDisturbance.startX=player.x;ambientDisturbance.startY=player.y;ambientDisturbance.startedAt=time;ambientDisturbance.activeDuration=0}
@@ -2512,6 +2555,7 @@
     toolKind.textContent=drilling?'YOUR DRILL':'YOUR PICKAXE';mineAction.textContent=drilling?'DRILL':'MINE';mineHint.textContent=miningRush.timer>0?'RUSH '+Math.ceil(miningRush.timer)+'s':'HOLD';mineButton.ariaLabel=drilling?'Drill nearby rock':'Mine nearby rock';
     game.dataset.rushActive=miningRush.timer>0?'true':'false';
     speedValue.textContent=(PICKAXES[1].cooldown/currentCooldown()).toFixed(1)+'x';
+    renderHeatStreak();
     const biome=currentBiome();areaName.textContent=biome.name;game.dataset.biome=biome.id;game.style['--biome-accent']=biome.accent;game.style['--biome-detail']=biome.detail;
     let progress=1,label='DEPTH MASTERED';
     if(currentMine()){
@@ -4126,7 +4170,7 @@
   function frame(timestamp){
     const raw=Math.min(.05,Math.max(0,(timestamp-lastFrame)/1000||0));lastFrame=timestamp;
     const frozen=Math.min(raw,miningFeedback.hitStop);miningFeedback.hitStop=Math.max(0,miningFeedback.hitStop-frozen);
-    if(startScreen.hidden&&menuShade.hidden&&inventoryShade.hidden)update((raw-frozen)*timeScale);draw();requestAnimationFrame(frame);
+    if(startScreen.hidden&&menuShade.hidden&&inventoryShade.hidden&&heatTutorialShade.hidden)update((raw-frozen)*timeScale);draw();requestAnimationFrame(frame);
   }
 
   function setJoystickFromEvent(event){
@@ -4139,7 +4183,7 @@
     setTimeout(()=>{if(input.joystickPointer===null){joystick.style.removeProperty('left');joystick.style.removeProperty('top');joystick.style.removeProperty('bottom')}},100);
   }
   function beginFloatingJoystick(event){
-    if(event.target!==canvas||input.joystickPointer!==null||!startScreen.hidden||!menuShade.hidden||!inventoryShade.hidden)return;
+    if(event.target!==canvas||input.joystickPointer!==null||!startScreen.hidden||!menuShade.hidden||!inventoryShade.hidden||!heatTutorialShade.hidden)return;
     if(event.button!==undefined&&event.button!==0)return;
     event.preventDefault();unlockAudio();
     const rect=viewport.getBoundingClientRect(),width=joystick.offsetWidth,height=joystick.offsetHeight;
@@ -4156,7 +4200,7 @@
     event.preventDefault();unlockAudio();input.minePointers.add(event.pointerId);input.mineHeld=true;mineButton.classList.add('active');startSwing(true);
     try{mineButton.setPointerCapture(event.pointerId)}catch(error){}
   });
-  function releaseMine(event){input.minePointers.delete(event.pointerId);input.mineHeld=input.minePointers.size>0;if(!input.mineHeld)mineButton.classList.remove('active')}
+  function releaseMine(event){input.minePointers.delete(event.pointerId);input.mineHeld=input.minePointers.size>0;if(!input.mineHeld){mineButton.classList.remove('active');resetHeatStreak()}}
   mineButton.addEventListener('pointerup',releaseMine);mineButton.addEventListener('pointercancel',releaseMine);mineButton.addEventListener('lostpointercapture',releaseMine);
 
   canvas.addEventListener('pointerdown',event=>{
@@ -4175,7 +4219,7 @@
   document.addEventListener('touchmove',event=>{if(event.touches.length>1&&game.contains(event.target))event.preventDefault()},{passive:false});
 
   function releaseTouchControls(){
-    input.minePointers.clear();input.mineHeld=false;mineButton.classList.remove('active');releaseJoystick({});player.moving=false;
+    input.minePointers.clear();input.mineHeld=false;mineButton.classList.remove('active');resetHeatStreak();releaseJoystick({});player.moving=false;
   }
 
   window.addEventListener('keydown',event=>{
@@ -4185,7 +4229,7 @@
     if(event.code==='KeyE')performContext();
     if(event.code==='Escape'){if(!inventoryShade.hidden)closeInventory();else if(!menuShade.hidden){menuShade.hidden=true;syncAchievementPopup()}}
   });
-  window.addEventListener('keyup',event=>{input.keys.delete(event.code);if(event.code==='Space'){input.mineHeld=false;mineButton.classList.remove('active')}});
+  window.addEventListener('keyup',event=>{input.keys.delete(event.code);if(event.code==='Space'){input.mineHeld=false;mineButton.classList.remove('active');resetHeatStreak()}});
   window.addEventListener('blur',()=>{input.keys.clear();releaseTouchControls()});
   window.addEventListener('pagehide',()=>{releaseTouchControls();if(loadedExistingSave||startScreen.hidden)saveState(true)});
   document.addEventListener('visibilitychange',()=>{
@@ -4193,6 +4237,7 @@
     else if(musicStarted)startBackgroundMusic();
   });
   contextButton.addEventListener('click',performContext);
+  heatTutorialButton.addEventListener('click',dismissHeatTutorial);
   contextSecondaryButton.addEventListener('click',performSecondaryContext);
   starforgeChoices.addEventListener('click',event=>{const button=event.target.closest('[data-starforge]');if(button&&!button.disabled){unlockAudio();forgeStarVariant(button.dataset.starforge)}});
   inventoryButton.addEventListener('click',()=>{unlockAudio();releaseTouchControls();menuShade.hidden=true;openInventory()});inventoryCloseButton.addEventListener('click',closeInventory);
@@ -4231,7 +4276,7 @@
       discoveryRendering:{crystalPocketAsset:'assets/mossvein/magic-crystal-pocket.png',cacheAsset:MOSSVEIN_REWARD_PATHS.cache,shrineAsset:MOSSVEIN_REWARD_PATHS.shrine,legacyCavernRings:false,legacyMossveinPocketRewards:false,biomeGlow:true,routineDiscoveryText:false,rareDiscoveryText:false},bonusVeinRendering:{worldLabels:false,textPrompts:false,sleepingCracks:true,movingReadyPulse:true,radialTimer:true,completionBurst:true},miningFeedbackRendering:{routineImpactRings:false,routineBreakRings:false,routineImpactParticles:false,routineBreakParticles:false,discoveryCanvasBursts:false,upgradeCanvasRings:false,routineDamageText:false,routineBreakText:false,routinePickupText:false,majorEventTextOnly:true,premiumTerrainResponses:true,dedicatedImpactSheets:true,nonStackingImpactAssets:true,premiumSaleAssets:true,drillVibration:true,drillVibrationMaxOffset:2.05,cameraShake:false},characterRendering:{baseAsset:'assets/characters/miner-b.png',activeToolKey:currentPlayerToolKey(),activeRenderAsset:state.drillLevel?PLAYER_DRILL_CHARACTER_PATHS[currentPlayerToolKey()]:PLAYER_TOOL_PATHS[currentPlayerToolKey()],walkSheets:PLAYER_WALK_PATHS,activeWalkAsset:activePlayerWalkPath(),walkGrid:{columns:PLAYER_RENDER_CONTRACT.walkColumns,rows:PLAYER_RENDER_CONTRACT.walkRows,cellSize:PLAYER_RENDER_CONTRACT.walkCellSize,directions:PLAYER_WALK_DIRECTIONS},walkRenderSize:PLAYER_RENDER_CONTRACT.walkRenderSize,toolLayerCount:Object.keys(PLAYER_TOOL_PATHS).length,drillCompositeCount:Object.keys(PLAYER_DRILL_CHARACTER_PATHS).length,gripCrop:PLAYER_RENDER_CONTRACT.gripCrop,gripPivot:PLAYER_RENDER_CONTRACT.gripPivot,gripPoint:PLAYER_RENDER_CONTRACT.gripPoint,layeredTools:PLAYER_RENDER_CONTRACT.layeredTools,animatedGrip:PLAYER_RENDER_CONTRACT.animatedGrip,bodyReaction:PLAYER_RENDER_CONTRACT.bodyReaction,sharedGripAnchor:PLAYER_RENDER_CONTRACT.sharedGripAnchor,fullDrillComposites:PLAYER_RENDER_CONTRACT.fullDrillComposites,directionalWalk:PLAYER_RENDER_CONTRACT.directionalWalk,distanceDrivenWalk:PLAYER_RENDER_CONTRACT.distanceDrivenWalk,holsteredWalkTools:PLAYER_RENDER_CONTRACT.holsteredWalkTools,lazyDrillWalkSheets:PLAYER_RENDER_CONTRACT.lazyDrillWalkSheets,staticMiningFallback:PLAYER_RENDER_CONTRACT.staticMiningFallback,reducedMotion,legacyDrillLimbCrops:PLAYER_RENDER_CONTRACT.legacyDrillLimbCrops,legacyCanvasCharacter:PLAYER_RENDER_CONTRACT.legacyCanvasCharacter,legacyCanvasTools:PLAYER_RENDER_CONTRACT.legacyCanvasTools},mineralNodeRenderScale:MINERAL_NODE_RENDER_SCALE,
       starterGateRendering:{moonglassGate:STARTER_PATHS.moonglassGate,moonglassGateMark:STARTER_PATHS.moonglassGateMark,emberdeepSeal:STARTER_PATHS.emberdeepSeal,emberdeepSealMark:STARTER_PATHS.emberdeepSealMark,starfallSeal:STARTER_PATHS.starfallSeal,starfallSealMark:STARTER_PATHS.starfallSealMark,renderBounds:{maxWidth:260,maxHeight:238,bottom:110},markRenderWidth:GATE_MARK_RENDERING.width,markSourceBounds:{moonglass:{x:14,y:55,w:484,h:222},emberdeep:{x:28,y:6,w:456,h:329},starfall:{x:34,y:54,w:449,h:231}},collisionFollowsPaintedCliff:true,integratedBoundaryScale:true,biomeAlignedPerspective:true,northSouthStructure:true,westEastPassage:true,premiumEnergyBarrier:true,duplicateCanvasSeam:false,proceduralGateShadow:false,animatedMoonglassTransition:true,animatedEmberdeepTransition:true,animatedStarfallTransition:true,activationSequence:['flash','shake','sink'],assetSilhouetteFlash:true,preSinkShake:true,unscaledGroundSink:true,collisionLocksUntilSunk:true,reducedMotionSafe:true,openWorldGatesRemoved:true,legacyStarterGate:false},
       effectivePickaxe:{name:currentPickaxeName(),power:currentPower(),cooldown:currentCooldown(),shellPower:currentShellPower(),bonusYield:currentBonusYieldChance(),emberstoneHits:armoredHitsRequired('emberstone',currentPower(),currentShellPower()),sunslagHits:armoredHitsRequired('sunslag',currentPower(),currentShellPower()),astraliteHits:armoredHitsRequired('astralite',currentPower(),currentShellPower()),depthMainHits:currentMine()&&currentDepth===2?armoredHitsRequired(DEPTH2_RESOURCE_PROFILES[currentScene].main,currentPower(),currentShellPower()):null},
-      goal:mainGoal(),progression:{finalVictory:{completed:!!state.victory,requiresDrill:'Deepcore Drill',resource:'singularity',scene:'starMine',depth:2}},guide:(()=>{const guide=visualGuide();return guide?{...guide,distance:distance(player.x,player.y,guide.x,guide.y),visible:distance(player.x,player.y,guide.x,guide.y)>guide.closeRadius}:null})(),markerStyle:{bonusVeinRings:false},toolMode:state.drillLevel?'drill':'pickaxe',protectedCargo:protectedProgressCargo(),sellableCargo:sellableCargo(),movement:{level:state.movementSpeedLevel,multiplier:movementSpeedMultiplier(),nextCost:movementSpeedCost()},miningRush:{...miningRush},lootSweep:{remaining:lootSweepRemaining(),nextAt:state.nextLootSweepAt},
+      goal:mainGoal(),progression:{finalVictory:{completed:!!state.victory,requiresDrill:'Deepcore Drill',resource:'singularity',scene:'starMine',depth:2}},guide:(()=>{const guide=visualGuide();return guide?{...guide,distance:distance(player.x,player.y,guide.x,guide.y),visible:distance(player.x,player.y,guide.x,guide.y)>guide.closeRadius}:null})(),markerStyle:{bonusVeinRings:false},toolMode:state.drillLevel?'drill':'pickaxe',protectedCargo:protectedProgressCargo(),sellableCargo:sellableCargo(),movement:{level:state.movementSpeedLevel,multiplier:movementSpeedMultiplier(),nextCost:movementSpeedCost()},miningRush:{...miningRush},heatStreak:{unlocked:heatStreakUnlocked(),active:heatStreak.active,elapsed:heatStreak.elapsed,progress:heatStreakProgress(),speedMultiplier:heatStreakSpeed(),maxSpeed:HEAT_STREAK_MAX_SPEED,buildSeconds:HEAT_STREAK_BUILD_SECONDS,tutorialVisible:!heatTutorialShade.hidden},lootSweep:{remaining:lootSweepRemaining(),nextAt:state.nextLootSweepAt},
       player:{x:player.x,y:player.y,aimX:player.aimX,aimY:player.aimY,direction:player.direction,moving:player.moving,walkFrame:player.walkFrame,walkDistance:player.walkDistance},camera:{x:camera.x,y:camera.y,viewWidth,viewHeight},biome:currentBiome().id,moonglassGateTransition:moonglassGateTransition?{active:true,progress:clamp(moonglassGateTransition.elapsed/moonglassGateTransition.duration,0,1)}:{active:false,progress:state.areaUnlocked?1:0},emberdeepGateTransition:emberdeepGateTransition?{active:true,progress:clamp(emberdeepGateTransition.elapsed/emberdeepGateTransition.duration,0,1)}:{active:false,progress:state.emberdeepUnlocked?1:0},starfallGateTransition:starfallGateTransition?{active:true,progress:clamp(starfallGateTransition.elapsed/starfallGateTransition.duration,0,1)}:{active:false,progress:state.fourthUnlocked?1:0},
       lighting:{enabled:!!currentMine()&&!!lightCtx,technique:'low-resolution-raycast-lightmap',occlusion:true,readableTextOverlay:true,textPass:'after-lighting',bufferScale:LIGHTING.bufferScale,bufferWidth:lightCanvas?lightCanvas.width:0,bufferHeight:lightCanvas?lightCanvas.height:0,darkness:currentDepth===2?LIGHTING.darknessDepth2:LIGHTING.darknessDepth1,beamLength:LIGHTING.beamLength,beamHalfAngle:LIGHTING.beamHalfAngle,maxOreLights:LIGHTING.maxOreLights,maxNaturalLights:LIGHTING.maxNaturalLights,depthLampAsset:MINE_ENTRANCE_PATHS.depthLamp,oreLights:currentMine()?lightingOreCount:0,naturalLights:currentMine()?lightingLastSources.length:0,sources:currentMine()?lightingLastSources:[],hierarchy:{stone:LIGHTING.stoneIntensity,rockOre:LIGHTING.rockOreIntensity,rareRockOre:LIGHTING.rareRockOreIntensity,wallOre:LIGHTING.wallOreIntensity,rareWallOre:LIGHTING.rareWallOreIntensity,depthLamp:LIGHTING.depthLampIntensity,bonusCrystalCollected:LIGHTING.collectedBonusCrystalIntensity,bonusCrystal:LIGHTING.bonusCrystalIntensity},rayChecks:currentMine()?lightingRayChecks:0},
       mine:currentMine()?{
@@ -4251,6 +4296,7 @@
     evaluateAchievements:()=>evaluateAchievements(),
     settleAchievement:()=>settleAchievementPopup(),
     dismissAchievement:()=>dismissAchievementPopup(),
+    dismissHeatTutorial:()=>dismissHeatTutorial(),
     openAchievementPopup:()=>openAchievementFromPopup(),
     openAchievements:()=>showOverlayMenu('achievements','start'),
     dismissStartMenu:enterGame,
@@ -4261,6 +4307,7 @@
     mineCollisionAt:(x,y)=>collidesWithMine(Number(x),Number(y)),
     setMoveVector:(x,y)=>{input.moveX=clamp(Number(x)||0,-1,1);input.moveY=clamp(Number(y)||0,-1,1);return{x:input.moveX,y:input.moveY}},
     stopMove:()=>{input.moveX=0;input.moveY=0;player.moving=false;return true},
+    setMiningHeld:value=>{input.mineHeld=!!value;if(!input.mineHeld)resetHeatStreak();else startSwing(true);return input.mineHeld},
     setReducedMotion:value=>{reducedMotion=!!value;player.walkFrame=reducedMotion?0:Math.floor(player.walkPhase)%PLAYER_RENDER_CONTRACT.walkColumns;if(reducedMotion)terrainResponses.length=0;return reducedMotion},
     setAim:(x,y)=>{const length=Math.hypot(Number(x)||0,Number(y)||0);if(length){player.aimX=Number(x)/length;player.aimY=Number(y)/length;player.facing=player.aimX<0?-1:1}},
     sampleHeadlampRay:()=>{const angle=Math.atan2(player.aimY,player.aimX),helmet=playerHelmetLightOffsets();return traceLightDistance(player.x+helmet.traceX,player.y+helmet.traceY,angle,LIGHTING.beamLength,currentTerrain(),activeMineSolids(),currentWorld())},
@@ -4290,7 +4337,7 @@
     packBaseModule:id=>packBaseModule(id),
     takeAllFromChest:id=>takeAllFromChest(id),
     setPickaxeLevel:level=>{state.pickaxeLevel=clamp(Math.floor(Number(level)||1),1,PICKAXES.length-1);if(state.pickaxeLevel<PICKAXES.length-1){state.emberMastery=0;state.starforgeVariant=null}uiDirty=true},
-    setDrillLevel:level=>{state.drillLevel=clamp(Math.floor(Number(level)||0),0,DRILLS.length-1);ensurePlayerWalkSheet();uiDirty=true},
+    setDrillLevel:level=>{state.drillLevel=clamp(Math.floor(Number(level)||0),0,DRILLS.length-1);resetHeatStreak();ensurePlayerWalkSheet();uiDirty=true},
     startMoonglassGateTransition:()=>{state.areaUnlocked=true;state.discoveredSecond=false;moonglassGateTransition={elapsed:0,duration:MOONGLASS_GATE_TRANSITION_DURATION};uiDirty=true;return true},
     startEmberdeepGateTransition:()=>{state.emberdeepUnlocked=true;state.discoveredThird=false;emberdeepGateTransition={elapsed:0,duration:EMBERDEEP_GATE_TRANSITION_DURATION};uiDirty=true;return true},
     startStarfallGateTransition:()=>{state.fourthUnlocked=true;state.discoveredFourth=false;starfallGateTransition={elapsed:0,duration:STARFALL_GATE_TRANSITION_DURATION};uiDirty=true;return true},

@@ -78,17 +78,17 @@ assert.doesNotMatch(pickupBatchSource,/floaters\.push/,'routine pickups must sta
 assert.match(source,/WORLD_LIFE_ART\[response\.kind==='footstep'\?'response':'impact'\]/,'mining must use dedicated impact art while footsteps retain ground responses');
 assert.doesNotMatch(effectRendererSource,/particle|ring|ctx\.arc|ctx\.fillRect/,'the generic effect pass must not render procedural shapes');
 assert.match(effectRendererSource,/STARTER_ART\.drops\[key\]/);assert.match(effectRendererSource,/ctx\.drawImage\(image,bounds\.x,bounds\.y,bounds\.w,bounds\.h/,'sale trails must render premium drop PNGs');
-assert.equal(latest.version,'03704');
+assert.equal(latest.version,'03705');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=03704/);
-assert.match(html,/game-data\.js\?v=03704/);
-assert.match(html,/script\.js\?v=03704/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=03704/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=03704/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03704/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03704/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=03704"/);
+assert.match(html,/style\.css\?v=03705/);
+assert.match(html,/game-data\.js\?v=03705/);
+assert.match(html,/script\.js\?v=03705/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=03705/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=03705/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03705/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03705/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=03705"/);
 assert.match(source,/const EMBER_PICKAXE_ORE_REQUIRED=100;/);
 assert.match(source,/const EMBER_MASTERY_SUNSLAG_COSTS=Object\.freeze\(\[0,30,40,50,60,70\]\);/);
 assert.match(source,/const STARFORGE_MATERIAL_REQUIRED=200;/);
@@ -371,32 +371,33 @@ let runtime=createRuntime();
 let api=runtime.api;
 const expectedApiKeys=[
   'activateMiningRush','autoSort','breakDepositRock','breakVeinRock','buyMovementSpeed','buyStorageChest','claimPocketReward','clearMineBarrier','clearSwing','collectGroundDrops',
-  'discoverCavern','discoverDepthEntrance','dismissAchievement','dismissStartMenu','enterDepth','enterMine','evaluateAchievements','exitDepth','exitMine','expireGroundDrops',
+  'discoverCavern','discoverDepthEntrance','dismissAchievement','dismissHeatTutorial','dismissStartMenu','enterDepth','enterMine','evaluateAchievements','exitDepth','exitMine','expireGroundDrops',
   'forceGlobalLootSweep','forgeStarVariant','grantCargo','grantGold','grantMined','hitDepositRock','interact','mineCollisionAt','mineOnce','mineTerrainCell','openAchievementPopup','openAchievements',
   'openChest','openInventory','packBaseModule','placeBaseModule','primePrecision','renderOnce','reset','resetAll','restoreRocks','restoreTerrain','sampleHeadlampRay','save','sellCargo',
-  'setAim','setAudioSetting','setDrillLevel','setMoveVector','setPickaxeLevel','setPosition','setReducedMotion','setStarforgeVariant','setSwingProgress','setTimeScale','settleAchievement',
+  'setAim','setAudioSetting','setDrillLevel','setMiningHeld','setMoveVector','setPickaxeLevel','setPosition','setReducedMotion','setStarforgeVariant','setSwingProgress','setTimeScale','settleAchievement',
   'snapshot','spawnGroundDrops','startEmberdeepGateTransition','startMoonglassGateTransition','startMusic','startStarfallGateTransition','step','stopMove','surfaceBoundaryBlockedAt','takeAllFromChest','unlockAllAreas',
   'unlockStarfall','upgradeDrill'
 ];
 const expectedSnapshotKeys=[
   'achievements','activeContext','ambientLife','assetRendering','assetVersion','biome','bonusVeinRendering','build','camera','characterRendering','chests','controls','depth','discoveryRendering',
-  'effectivePickaxe','emberdeepGateTransition','emberdeepRendering','entranceAssetRendering','feedback','focus','goal','groundDrops','guide','lighting','lootSweep','markerStyle','mine',
+  'effectivePickaxe','emberdeepGateTransition','emberdeepRendering','entranceAssetRendering','feedback','focus','goal','groundDrops','guide','heatStreak','lighting','lootSweep','markerStyle','mine',
   'mineralNodeRenderScale','miningFeedbackRendering','miningRush','moltenRendering','moonglassGateTransition','moonglassRendering','movement','music','patchNotes','player','prismaticRendering',
   'progression','protectedCargo','resourceRendering','rocks','rootwoundRendering','scene','sellableCargo','starfallGateTransition','starfallRendering','startMenu','starterGateRendering',
   'starterRendering','state','surfaceAssetRendering','surfaceBoundaries','surfaceEmberdeepRendering','surfaceMoonglassRendering','surfaceStarfallRendering','toolMode','veins','voidstarRendering','worldLife'
 ];
 assert.deepEqual(Object.keys(api).sort(),expectedApiKeys,'test API contract changed unexpectedly');
 assert.deepEqual(Object.keys(api.snapshot()).sort(),expectedSnapshotKeys,'snapshot contract changed unexpectedly');
-assert.equal(api.snapshot().build.version,'0.37.4');
-assert.equal(api.snapshot().build.name,'ALIGNED GATES');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.37.4');
-assert.equal(api.snapshot().assetVersion,'03704');
+assert.equal(api.snapshot().build.version,'0.37.5');
+assert.equal(api.snapshot().build.name,'HEAT STREAK');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.37.5');
+assert.equal(api.snapshot().assetVersion,'03705');
 const patchNotes=api.snapshot().patchNotes,patchNote=version=>patchNotes.find(note=>note.version===version);
-assert.equal(patchNotes.length,30);assert.match(patchNote('0.37.4').items.join(' '),/high three-quarter perspective/);assert.match(patchNote('0.37.4').items.join(' '),/west to east/);assert.match(patchNote('0.37.3').items.join(' '),/premium silhouette/);assert.match(patchNote('0.37.3').items.join(' '),/physically locked/);assert.match(patchNote('0.37.2').items.join(' '),/dedicated premium mining sheets/);assert.match(patchNote('0.37.2').items.join(' '),/Routine damage, shell, tunnel, pickup, and partial-vein text/);assert.match(patchNote('0.37.1').items.join(' '),/old canvas rings and procedural debris are gone/);assert.match(patchNote('0.37.1').items.join(' '),/real premium drop assets/);assert.match(patchNote('0.37.0').items.join(' '),/premium environmental drift/);assert.match(patchNote('0.37.0').items.join(' '),/Footsteps disturb the ground/);assert.match(patchNote('0.36.4').items.join(' '),/flee continuously/);assert.match(patchNote('0.36.3').items.join(' '),/keep their render slot/);assert.match(patchNote('0.36.2').items.join(' '),/pause and rest naturally/);assert.match(patchNote('0.36.2').items.join(' '),/Nearby mining startles residents/);assert.match(patchNote('0.36.1').items.join(' '),/clearly visible routes/);assert.match(patchNote('0.36.1').items.join(' '),/sampled against terrain/);assert.match(patchNote('0.36.0').items.join(' '),/Four premium animated creatures/);assert.match(patchNote('0.36.0').items.join(' '),/Reduced Motion/);assert.match(patchNote('0.35.11').items.join(' '),/70 Phase Crystal/);assert.match(patchNote('0.35.10').items.join(' '),/DEEPCORE DRILL REQUIRED/);assert.match(patchNote('0.35.9').items.join(' '),/Eight unreachable Astralite nodes/);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
+assert.match(patchNote('0.37.5').items.join(' '),/1.30x speed/);
+assert.equal(patchNotes.length,31);assert.match(patchNote('0.37.4').items.join(' '),/high three-quarter perspective/);assert.match(patchNote('0.37.4').items.join(' '),/west to east/);assert.match(patchNote('0.37.3').items.join(' '),/premium silhouette/);assert.match(patchNote('0.37.3').items.join(' '),/physically locked/);assert.match(patchNote('0.37.2').items.join(' '),/dedicated premium mining sheets/);assert.match(patchNote('0.37.2').items.join(' '),/Routine damage, shell, tunnel, pickup, and partial-vein text/);assert.match(patchNote('0.37.1').items.join(' '),/old canvas rings and procedural debris are gone/);assert.match(patchNote('0.37.1').items.join(' '),/real premium drop assets/);assert.match(patchNote('0.37.0').items.join(' '),/premium environmental drift/);assert.match(patchNote('0.37.0').items.join(' '),/Footsteps disturb the ground/);assert.match(patchNote('0.36.4').items.join(' '),/flee continuously/);assert.match(patchNote('0.36.3').items.join(' '),/keep their render slot/);assert.match(patchNote('0.36.2').items.join(' '),/pause and rest naturally/);assert.match(patchNote('0.36.2').items.join(' '),/Nearby mining startles residents/);assert.match(patchNote('0.36.1').items.join(' '),/clearly visible routes/);assert.match(patchNote('0.36.1').items.join(' '),/sampled against terrain/);assert.match(patchNote('0.36.0').items.join(' '),/Four premium animated creatures/);assert.match(patchNote('0.36.0').items.join(' '),/Reduced Motion/);assert.match(patchNote('0.35.11').items.join(' '),/70 Phase Crystal/);assert.match(patchNote('0.35.10').items.join(' '),/DEEPCORE DRILL REQUIRED/);assert.match(patchNote('0.35.9').items.join(' '),/Eight unreachable Astralite nodes/);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=03704',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=03705',volume:1,loop:true,paused:false}));
 api.dismissStartMenu();
 const viewportElement=runtime.elements.get('viewport'),canvasElement=runtime.elements.get('gameCanvas'),joystickElement=runtime.elements.get('joystick'),mineElement=runtime.elements.get('mineButton');
 viewportElement.dispatchEvent({type:'pointerdown',target:canvasElement,pointerId:301,button:0,clientX:120,clientY:260});
@@ -1037,6 +1038,10 @@ api.grantCargo('astralite',1);api.grantCargo('crownstone',1);api.forgeStarVarian
 
 api.reset();api.setPickaxeLevel(2);api.openChest('moss_ironbound');after=api.snapshot();assert.equal(JSON.stringify(after.state.pendingChestLoot.moss_ironbound),JSON.stringify({coin:75}));assert.equal(after.groundDrops.filter(drop=>drop.sourceChest==='moss_ironbound').length,3);
 api.collectGroundDrops();after=api.snapshot();assert.equal(after.state.gold,75);assert.equal(Object.values(after.state.cargo).reduce((total,amount)=>total+amount,0),0);assert.equal(after.state.pendingChestLoot.moss_ironbound,undefined);
+
+api.reset();api.setStarforgeVariant('swift');api.enterMine('mossMine');api.setPosition(180,503);api.setAim(.899,-.438);api.setMiningHeld(true);for(let index=0;index<8;index++)api.step(.05);
+assert.equal(api.snapshot().heatStreak.unlocked,true);assert.ok(api.snapshot().heatStreak.speedMultiplier>1,'continuous mining must build Heat Streak speed');
+api.setMiningHeld(false);assert.equal(JSON.stringify({active:api.snapshot().heatStreak.active,elapsed:api.snapshot().heatStreak.elapsed,speedMultiplier:api.snapshot().heatStreak.speedMultiplier}),JSON.stringify({active:false,elapsed:0,speedMultiplier:1}));
 
 const migrationState={...after.state,gold:424242};
 storage.clear();storage.set('retiredMiningPrototypeSave',JSON.stringify(migrationState));runtime=createRuntime();after=runtime.api.snapshot();
