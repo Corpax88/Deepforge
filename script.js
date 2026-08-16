@@ -2728,11 +2728,12 @@
   function ambientSurfaceRoute(profile,index,x,y){
     const random=ambientSeed(profile,index,31337),biome=BIOMES.find(item=>item.id===profile.key),direction=random()>.5?1:-1;
     const distanceX=profile.flying?72+random()*54:92+random()*54,distanceY=profile.flying?(30+random()*38)*(random()>.5?1:-1):0;
-    return{routeX:clamp(x+distanceX*direction,biome.start+54,biome.end-54),routeY:clamp(y+distanceY,66,WORLD.height-66)};
+    let routeX=clamp(x+distanceX*direction,biome.start+54,biome.end-54);if(Math.abs(routeX-x)<60)routeX=clamp(x-distanceX*direction,biome.start+54,biome.end-54);
+    return{routeX,routeY:clamp(y+distanceY,66,WORLD.height-66)};
   }
 
   function ambientResident(profile,index,x,y,mine=false,route=null){
-    const random=ambientSeed(profile,index,mine?currentDepth*7919:0),phase=random()*AMBIENT_FRAME_COUNT,speed=profile.flying?(mine?1.02+random()*.3:.64+random()*.24):(mine?1.28+random()*.38:1.08+random()*.34),scale=.82+random()*.25;
+    const random=ambientSeed(profile,index,mine?currentDepth*7919:0),phase=random()*AMBIENT_FRAME_COUNT,speed=profile.flying?(mine?1.35+random()*.35:.64+random()*.24):(mine?1.65+random()*.4:1.08+random()*.34),scale=.82+random()*.25;
     const path=route||ambientSurfaceRoute(profile,index,x,y),routeX=path.routeX,routeY=path.routeY,wave=time*speed+phase*1.7,routeProgress=reducedMotion?0:(1-Math.cos(wave))*.5;
     let worldX=x+(routeX-x)*routeProgress,worldY=y+(routeY-y)*routeProgress,flip=random()>.5;
     if(!reducedMotion&&profile.flying&&!mine){
