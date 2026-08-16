@@ -1,6 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.37.4 - Aligned Gates**
+Current build: **Ever Deeper v0.38.0 - Underground Hub**
+
+Completing Starfall and extracting the first Singularity Core now unlocks a persistent Underground Hub beneath the final world. The Hub is a safe, non-mineable building scene with touch-first wall painting, removable lamps that shape the room lighting, real storage chests, a lift back to Starfall, and an offline elevator reserved for The Deep. Hub construction uses existing Stone and Gold, survives reloads, and never resets expedition progress.
 
 Routine mining, discoveries, upgrades, gates, pickups, and chest openings no longer add generic canvas rings or procedural debris over the production art. Pickaxe and drill impacts now rely on the biome-specific premium response sheets, while sold materials travel to the exchange as their real drop assets. Gameplay-critical targeting, health bars, timed-vein indicators, lighting, and readable text remain intact.
 

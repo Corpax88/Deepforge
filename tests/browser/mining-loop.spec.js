@@ -1361,8 +1361,8 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.37.5',name:'HEAT STREAK'});
-  expect(snapshot.assetVersion).toBe('03705');
+  expect(snapshot.build).toEqual({version:'0.38.0',name:'UNDERGROUND HUB'});
+  expect(snapshot.assetVersion).toBe('03800');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true,emberMine:true,starMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:COMPLETE_DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
@@ -1386,18 +1386,18 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.37.5');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.38.0');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.37.5 · HEAT STREAK');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.38.0 · UNDERGROUND HUB');
 });
 
 test('premium start menu owns continue, new game, achievements, and settings',async({page})=>{
   await page.goto('/');await page.waitForFunction(()=>window.__everDeeperTest);
   await expect(page.locator('#startScreen')).toBeVisible();
   await expect(page.locator('#continueButton')).toBeDisabled();
-  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=03705');
+  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=03800');
   await page.locator('#startAchievementsButton').click();
   await expect(page.locator('#achievementsPanel')).toBeVisible();
   await expect(page.locator('.menu-tabs')).toBeHidden();
@@ -1425,8 +1425,8 @@ test('settings opens first and keeps audio choices separate from stats',async({p
   await expect(page.locator('#menuTitle')).toHaveText('Patch Notes');
   await expect(page.locator('#patchNotesPanel')).toBeVisible();
   const patchNotes=page.locator('.patch-note');
-  await expect(patchNotes).toHaveCount(31);
-  await expect(page.locator('.patch-note.latest')).toContainText('v0.37.5');
+  await expect(patchNotes).toHaveCount(32);
+  await expect(page.locator('.patch-note.latest')).toContainText('v0.38.0');
   await expect(patchNotes.filter({hasText:'v0.37.4'})).toContainText('same high three-quarter perspective');
   await expect(patchNotes.filter({hasText:'v0.37.4'})).toContainText('west to east');
   await expect(patchNotes.filter({hasText:'v0.37.3'})).toContainText('brief light through its premium silhouette');
@@ -1802,11 +1802,11 @@ test('real resource art is shared by goals, bags, recipes, stats and world drops
   expect(contract).toMatchObject({paths:COMPLETE_DROP_PATHS,completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false});
 });
 
-test('v0.37.5 exposes the complete production contracts and premium walk renderer',async({page})=>{
+test('v0.38.0 exposes the complete production contracts and premium walk renderer',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.37.5',name:'HEAT STREAK'});
-  expect(snapshot.assetVersion).toBe('03705');
+  expect(snapshot.build).toEqual({version:'0.38.0',name:'UNDERGROUND HUB'});
+  expect(snapshot.assetVersion).toBe('03800');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.surfaceEmberdeepRendering).toEqual(SURFACE_EMBERDEEP_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);
@@ -2499,14 +2499,66 @@ test('Deepcore to Voidstar to the first Singularity completes and persists the f
   },singularity.id);
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot.state.victory).toBe(true);
+  expect(snapshot.hub.unlocked).toBe(true);
+  expect(snapshot.progression.endgame).toEqual({hubUnlocked:true,hubVisited:false,noPrestigeReset:true,deepElevatorOnline:false});
   expect(snapshot.progression.finalVictory).toEqual(expect.objectContaining({completed:true}));
   expect(snapshot.state.mined.singularity).toBeGreaterThanOrEqual(1);
+  await expect(page.locator('#hubTutorialShade')).toBeVisible();
+  await expect(page.locator('#hubTutorialTitle')).toHaveText('Underground Hub Unlocked');
+  await page.locator('#hubTutorialButton').click();
+  await expect(page.locator('#hubTutorialShade')).toBeHidden();
 
   await page.reload();
   await page.waitForFunction(()=>window.__everDeeperTest);
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot).toMatchObject({scene:'starMine',depth:2,state:{drillLevel:3,victory:true}});
   expect(snapshot.progression.finalVictory).toEqual(expect.objectContaining({completed:true}));
+});
+
+test('Underground Hub unlocks, builds by drag, stores resources, lights the room, and persists',async({page})=>{
+  await freshGame(page);
+  await page.evaluate(()=>{const api=window.__everDeeperTest;api.unlockHub();api.grantCargo('stone',30);api.grantGold(1000);const station=api.snapshot().hub.stations.surfaceEntrance;api.setPosition(station.x,station.y);api.step(.03)});
+  await expect(page.locator('#contextPanel')).toBeVisible();
+  await expect(page.locator('#contextTitle')).toHaveText('Underground Hub');
+  await expect(page.locator('#contextButton')).toHaveText('DESCEND');
+  await page.locator('#contextButton').click();
+  await page.waitForFunction(()=>window.__everDeeperTest.snapshot().scene==='hub');
+  let snapshot=await page.evaluate(()=>{const api=window.__everDeeperTest;api.step(.03);api.renderOnce();return api.snapshot()});
+  expect(snapshot).toMatchObject({scene:'hub',mine:null,toolMode:'builder',hub:{active:true,visited:true,deepElevatorOnline:false,functionalStorage:true,noPrestigeReset:true}});
+  expect(snapshot.goal.title).toBe('Tap BUILD and shape your Hub');
+  await expect(page.locator('#areaName')).toHaveText('UNDERGROUND HUB');
+  await expect(page.locator('#mineAction')).toHaveText('BUILD');
+
+  await page.locator('#mineButton').click();
+  await expect(page.locator('#hubBuildToolbar')).toBeVisible();
+  await expect(page.locator('#mineAction')).toHaveText('DONE');
+  const toolbarBox=await page.locator('#hubBuildToolbar').boundingBox(),doneBox=await page.locator('#mineButton').boundingBox();
+  expect(toolbarBox.right).toBeLessThanOrEqual(doneBox.left+2);
+  const pointFor=async(col,row)=>page.evaluate(({col,row})=>{const snapshot=window.__everDeeperTest.snapshot(),grid=snapshot.hub.grid,rect=document.getElementById('gameCanvas').getBoundingClientRect(),scale=rect.width/snapshot.camera.viewWidth;return{x:rect.left+(grid.originX+(col+.5)*grid.tileSize-snapshot.camera.x)*scale,y:rect.top+(grid.originY+(row+.5)*grid.tileSize-snapshot.camera.y)*scale}},{col,row});
+  const wallStart=await pointFor(3,8),wallEnd=await pointFor(5,8);
+  await page.mouse.move(wallStart.x,wallStart.y);await page.mouse.down();await page.mouse.move(wallEnd.x,wallEnd.y,{steps:12});await page.mouse.up();
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.hub.tiles.filter(tile=>tile.kind==='wall')).toHaveLength(3);
+  expect(snapshot.state.cargo.stone).toBe(15);
+  const wall=snapshot.hub.tiles.find(tile=>tile.col===4&&tile.row===8);expect(await page.evaluate(({x,y})=>window.__everDeeperTest.hubCollisionAt(x,y),wall)).toBe(true);
+
+  await page.locator('#hubBuildLamp').click();const lampPoint=await pointFor(6,8);await page.mouse.click(lampPoint.x,lampPoint.y);
+  await page.locator('#hubBuildStorage').click();const storagePoint=await pointFor(7,8);await page.mouse.click(storagePoint.x,storagePoint.y);
+  snapshot=await page.evaluate(()=>{const api=window.__everDeeperTest;api.renderOnce();return api.snapshot()});
+  expect(snapshot.hub.tiles.filter(tile=>tile.kind==='lamp')).toHaveLength(1);
+  expect(snapshot.state.gold).toBe(670);
+  expect(snapshot.hub.modules.some(module=>module.kind==='storage')).toBe(true);
+  expect(snapshot.lighting.technique).toBe('hub-ambient-lightmap');
+  expect(snapshot.lighting.sources.some(source=>source.kind==='hubLamp')).toBe(true);
+
+  await page.locator('#mineButton').click();await expect(page.locator('#hubBuildToolbar')).toBeHidden();
+  await page.evaluate(()=>{const api=window.__everDeeperTest,chest=api.snapshot().state.base.chests.find(item=>item.scene==='hub'&&!item.packed);api.setPosition(chest.x,chest.y);api.grantCargo('copper',3);api.autoSort();api.save()});
+  snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  const stored=snapshot.state.base.chests.find(chest=>chest.scene==='hub'&&!chest.packed);expect(stored.items.copper).toBe(3);expect(stored.items.stone).toBe(15);
+  await page.reload();await page.waitForFunction(()=>window.__everDeeperTest);snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
+  expect(snapshot.scene).toBe('hub');expect(snapshot.hub.tiles).toHaveLength(4);expect(snapshot.hub.modules.some(module=>module.id===stored.id)).toBe(true);expect(snapshot.state.base.chests.find(chest=>chest.id===stored.id).items.copper).toBe(3);
+  await page.locator('#continueButton').click();await page.evaluate(()=>{const api=window.__everDeeperTest,station=api.snapshot().hub.stations.deepElevator;api.setPosition(station.x,station.y);api.step(.03)});
+  await expect(page.locator('#contextTitle')).toHaveText('Endless Descent');await expect(page.locator('#contextButton')).toBeDisabled();await expect(page.locator('#contextButton')).toHaveText('OFFLINE');
 });
 
 test('Starfall entrance and Voidstar Depths remain readable on compact and tall phones',async({page},testInfo)=>{
