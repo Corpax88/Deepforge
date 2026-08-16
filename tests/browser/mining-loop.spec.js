@@ -2535,15 +2535,19 @@ test('Underground Hub unlocks, builds by drag, stores resources, lights the room
   const toolbarBox=await page.locator('#hubBuildToolbar').boundingBox(),doneBox=await page.locator('#mineButton').boundingBox();
   expect(toolbarBox.x+toolbarBox.width).toBeLessThanOrEqual(doneBox.x+2);
   const pointFor=async(col,row)=>page.evaluate(({col,row})=>{const snapshot=window.__everDeeperTest.snapshot(),grid=snapshot.hub.grid,rect=document.getElementById('gameCanvas').getBoundingClientRect(),scale=rect.width/snapshot.camera.viewWidth;return{x:rect.left+(grid.originX+(col+.5)*grid.tileSize-snapshot.camera.x)*scale,y:rect.top+(grid.originY+(row+.5)*grid.tileSize-snapshot.camera.y)*scale}},{col,row});
-  const wallStart=await pointFor(3,8),wallEnd=await pointFor(5,8);
-  await page.mouse.move(wallStart.x,wallStart.y);await page.mouse.down();await page.mouse.move(wallEnd.x,wallEnd.y,{steps:12});await page.mouse.up();
+  const canvas=page.locator('#gameCanvas'),wallStart=await pointFor(3,4),wallMiddle=await pointFor(4,4),wallEnd=await pointFor(5,4);
+  expect(await page.evaluate(points=>points.map(point=>document.elementFromPoint(point.x,point.y)?.id),[wallStart,wallMiddle,wallEnd])).toEqual(['gameCanvas','gameCanvas','gameCanvas']);
+  await canvas.dispatchEvent('pointerdown',{pointerId:501,pointerType:'touch',button:0,buttons:1,clientX:wallStart.x,clientY:wallStart.y});
+  await canvas.dispatchEvent('pointermove',{pointerId:501,pointerType:'touch',button:0,buttons:1,clientX:wallMiddle.x,clientY:wallMiddle.y});
+  await canvas.dispatchEvent('pointermove',{pointerId:501,pointerType:'touch',button:0,buttons:1,clientX:wallEnd.x,clientY:wallEnd.y});
+  await canvas.dispatchEvent('pointerup',{pointerId:501,pointerType:'touch',button:0,clientX:wallEnd.x,clientY:wallEnd.y});
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot.hub.tiles.filter(tile=>tile.kind==='wall')).toHaveLength(3);
   expect(snapshot.state.cargo.stone).toBe(15);
-  const wall=snapshot.hub.tiles.find(tile=>tile.col===4&&tile.row===8);expect(await page.evaluate(({x,y})=>window.__everDeeperTest.hubCollisionAt(x,y),wall)).toBe(true);
+  const wall=snapshot.hub.tiles.find(tile=>tile.col===4&&tile.row===4);expect(await page.evaluate(({x,y})=>window.__everDeeperTest.hubCollisionAt(x,y),wall)).toBe(true);
 
-  await page.locator('#hubBuildLamp').click();const lampPoint=await pointFor(6,8);await page.mouse.click(lampPoint.x,lampPoint.y);
-  await page.locator('#hubBuildStorage').click();const storagePoint=await pointFor(7,8);await page.mouse.click(storagePoint.x,storagePoint.y);
+  await page.locator('#hubBuildLamp').click();const lampPoint=await pointFor(6,4);await canvas.dispatchEvent('pointerdown',{pointerId:502,pointerType:'touch',button:0,buttons:1,clientX:lampPoint.x,clientY:lampPoint.y});await canvas.dispatchEvent('pointerup',{pointerId:502,pointerType:'touch',button:0,clientX:lampPoint.x,clientY:lampPoint.y});
+  await page.locator('#hubBuildStorage').click();const storagePoint=await pointFor(7,4);await canvas.dispatchEvent('pointerdown',{pointerId:503,pointerType:'touch',button:0,buttons:1,clientX:storagePoint.x,clientY:storagePoint.y});await canvas.dispatchEvent('pointerup',{pointerId:503,pointerType:'touch',button:0,clientX:storagePoint.x,clientY:storagePoint.y});
   snapshot=await page.evaluate(()=>{const api=window.__everDeeperTest;api.renderOnce();return api.snapshot()});
   expect(snapshot.hub.tiles.filter(tile=>tile.kind==='lamp')).toHaveLength(1);
   expect(snapshot.state.gold).toBe(670);
