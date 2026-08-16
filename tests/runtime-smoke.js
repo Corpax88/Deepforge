@@ -57,17 +57,17 @@ assert.match(source,/function playPickaxeTink\(/);assert.match(source,/if\(curre
 assert.match(source,/if\(!rock&&!terrainTarget\)\{if\(manualPress\)sound\('empty'\)/,'held mining misses must stay silent after the initial manual press');
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'03601');
+assert.equal(latest.version,'03602');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=03601/);
-assert.match(html,/game-data\.js\?v=03601/);
-assert.match(html,/script\.js\?v=03601/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=03601/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=03601/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03601/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03601/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=03601"/);
+assert.match(html,/style\.css\?v=03602/);
+assert.match(html,/game-data\.js\?v=03602/);
+assert.match(html,/script\.js\?v=03602/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=03602/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=03602/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03602/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03602/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=03602"/);
 assert.match(source,/const EMBER_PICKAXE_ORE_REQUIRED=100;/);
 assert.match(source,/const EMBER_MASTERY_SUNSLAG_COSTS=Object\.freeze\(\[0,30,40,50,60,70\]\);/);
 assert.match(source,/const STARFORGE_MATERIAL_REQUIRED=200;/);
@@ -356,16 +356,16 @@ const expectedSnapshotKeys=[
 ];
 assert.deepEqual(Object.keys(api).sort(),expectedApiKeys,'test API contract changed unexpectedly');
 assert.deepEqual(Object.keys(api.snapshot()).sort(),expectedSnapshotKeys,'snapshot contract changed unexpectedly');
-assert.equal(api.snapshot().build.version,'0.36.1');
-assert.equal(api.snapshot().build.name,'ROAMING WILDS');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.36.1');
-assert.equal(api.snapshot().assetVersion,'03601');
+assert.equal(api.snapshot().build.version,'0.36.2');
+assert.equal(api.snapshot().build.name,'WILD INSTINCTS');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.36.2');
+assert.equal(api.snapshot().assetVersion,'03602');
 const patchNotes=api.snapshot().patchNotes,patchNote=version=>patchNotes.find(note=>note.version===version);
-assert.equal(patchNotes.length,22);assert.match(patchNote('0.36.1').items.join(' '),/clearly visible routes/);assert.match(patchNote('0.36.1').items.join(' '),/sampled against terrain/);assert.match(patchNote('0.36.0').items.join(' '),/Four premium animated creatures/);assert.match(patchNote('0.36.0').items.join(' '),/Reduced Motion/);assert.match(patchNote('0.35.11').items.join(' '),/70 Phase Crystal/);assert.match(patchNote('0.35.10').items.join(' '),/DEEPCORE DRILL REQUIRED/);assert.match(patchNote('0.35.9').items.join(' '),/Eight unreachable Astralite nodes/);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
+assert.equal(patchNotes.length,23);assert.match(patchNote('0.36.2').items.join(' '),/pause and rest naturally/);assert.match(patchNote('0.36.2').items.join(' '),/Nearby mining startles residents/);assert.match(patchNote('0.36.1').items.join(' '),/clearly visible routes/);assert.match(patchNote('0.36.1').items.join(' '),/sampled against terrain/);assert.match(patchNote('0.36.0').items.join(' '),/Four premium animated creatures/);assert.match(patchNote('0.36.0').items.join(' '),/Reduced Motion/);assert.match(patchNote('0.35.11').items.join(' '),/70 Phase Crystal/);assert.match(patchNote('0.35.10').items.join(' '),/DEEPCORE DRILL REQUIRED/);assert.match(patchNote('0.35.9').items.join(' '),/Eight unreachable Astralite nodes/);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=03601',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=03602',volume:1,loop:true,paused:false}));
 api.dismissStartMenu();
 const viewportElement=runtime.elements.get('viewport'),canvasElement=runtime.elements.get('gameCanvas'),joystickElement=runtime.elements.get('joystick'),mineElement=runtime.elements.get('mineButton');
 viewportElement.dispatchEvent({type:'pointerdown',target:canvasElement,pointerId:301,button:0,clientX:120,clientY:260});
@@ -432,13 +432,15 @@ function exposeRock(testApi,rock,maxHits=8){for(let hit=0;hit<maxHits&&!testApi.
 
 const storageBeforeAmbient=new Map(storage);storage.clear();
 const ambientRuntime=createRuntime(),ambientApi=ambientRuntime.api;ambientApi.dismissStartMenu();
-const ambientContract={frameCount:4,frameSize:256,premiumSpriteSheets:true,trueAnimationFrames:true,deterministicPlacement:true,surfaceMaxVisible:10,mineMaxVisible:6,rareSurfaceCrossings:true,reducedMotionSafe:true,roamingRoutes:true,mineRouteSampling:true,collisionFree:true,gameplayNeutral:true,proceduralCreaturePrimitives:false};
+const ambientContract={frameCount:4,frameSize:256,premiumSpriteSheets:true,trueAnimationFrames:true,deterministicPlacement:true,surfaceMaxVisible:10,mineMaxVisible:6,rareSurfaceCrossings:true,reducedMotionSafe:true,roamingRoutes:true,mineRouteSampling:true,miningReactions:true,restBehavior:true,collisionFree:true,gameplayNeutral:true,proceduralCreaturePrimitives:false};
 let ambientSnapshot=ambientApi.snapshot(),ambientLife=ambientSnapshot.ambientLife;
 assert.deepEqual(Object.fromEntries(Object.keys(ambientContract).map(key=>[key,ambientLife[key]])),ambientContract);
 assert.equal(JSON.stringify(ambientLife.assets),JSON.stringify(ambientAssets));assert.equal(ambientLife.activeProfile,'mossvein');assert.equal(ambientLife.location,'surface');assert.equal(ambientLife.maxVisible,10);
 assert.ok(ambientLife.visible.length>0&&ambientLife.visible.length<=10,'surface ambient life must stay visible and capped');assert.ok(ambientLife.visible.every(instance=>Object.values(ambientAssets).includes(instance.asset)&&instance.frame>=0&&instance.frame<4));
 const surfaceResidentBefore=new Map(ambientLife.visible.filter(instance=>!instance.event).map(instance=>[instance.id,instance]));assert.ok([...surfaceResidentBefore.values()].every(instance=>pointDistance(instance.anchorX,instance.anchorY,instance.routeX,instance.routeY)>=60),'surface residents must have broad routes');
-ambientApi.step(1.4);ambientLife=ambientApi.snapshot().ambientLife;const surfaceResidentAfter=ambientLife.visible.filter(instance=>surfaceResidentBefore.has(instance.id));assert.ok(surfaceResidentAfter.some(instance=>pointDistance(instance.x,instance.y,surfaceResidentBefore.get(instance.id).x,surfaceResidentBefore.get(instance.id).y)>18),'surface residents must visibly travel instead of hovering');
+let surfaceMaxTravel=0,surfaceRestSeen=ambientLife.visible.some(instance=>instance.resting&&instance.frame===0&&(instance.routeProgress===0||instance.routeProgress===1));
+for(let sample=0;sample<16;sample++){ambientApi.step(.5);ambientLife=ambientApi.snapshot().ambientLife;surfaceRestSeen||=ambientLife.visible.some(instance=>instance.resting&&instance.frame===0&&(instance.routeProgress===0||instance.routeProgress===1));for(const instance of ambientLife.visible)if(surfaceResidentBefore.has(instance.id))surfaceMaxTravel=Math.max(surfaceMaxTravel,pointDistance(instance.x,instance.y,surfaceResidentBefore.get(instance.id).x,surfaceResidentBefore.get(instance.id).y))}
+assert.ok(surfaceMaxTravel>18,'surface residents must visibly travel between rests');assert.equal(surfaceRestSeen,true,'surface residents must stop on a route endpoint and rest');
 assert.equal(Object.prototype.hasOwnProperty.call(ambientSnapshot.state,'ambientLife'),false,'ambient life must not leak into gameplay save state');
 const gameplayStateBeforeAmbientRender=JSON.stringify(ambientSnapshot.state);ambientRuntime.drawCalls.length=0;ambientApi.renderOnce();
 assert.equal(JSON.stringify(ambientApi.snapshot().state),gameplayStateBeforeAmbientRender,'renderOnce must not mutate gameplay state');
@@ -450,6 +452,7 @@ ambientApi.setReducedMotion(true);const reducedAmbientBefore=ambientApi.snapshot
 assert.equal(reducedAmbientAfter.reducedMotion,true);assert.equal(reducedAmbientAfter.event.enabled,false);assert.equal(reducedAmbientAfter.event.active,false);
 assert.ok(reducedAmbientAfter.visible.every(instance=>instance.frame===0&&instance.x===instance.anchorX&&instance.y===instance.anchorY),'reduced motion must freeze sprite frames and resident drift');
 assert.equal(JSON.stringify(reducedAmbientAfter.visible.map(({id,x,y})=>({id,x,y}))),JSON.stringify(reducedAmbientBefore.visible.map(({id,x,y})=>({id,x,y}))),'reduced motion ambient placement must remain frozen across time');ambientApi.setReducedMotion(false);
+ambientLife=ambientApi.snapshot().ambientLife;const surfaceReactionTarget=ambientLife.visible.find(instance=>!instance.event&&instance.profile===ambientLife.activeProfile);assert.ok(surfaceReactionTarget);ambientApi.setPosition(surfaceReactionTarget.x,surfaceReactionTarget.y);ambientApi.setSwingProgress(.2);ambientApi.step(.01);const surfaceReaction=ambientApi.snapshot().ambientLife.visible.find(instance=>instance.id===surfaceReactionTarget.id);assert.ok(surfaceReaction&&surfaceReaction.reacting&&surfaceReaction.behavior==='fleeing'&&surfaceReaction.reactionStrength>0,'nearby mining must startle a surface resident');ambientApi.clearSwing();ambientApi.setPosition(330,690);
 ambientLife=ambientApi.snapshot().ambientLife;
 for(let guard=0;!ambientLife.visible.some(instance=>instance.event)&&guard<100;guard++){ambientApi.step(ambientLife.event.active?.12:Math.min(2,ambientLife.event.nextIn+.01));ambientLife=ambientApi.snapshot().ambientLife}
 assert.equal(ambientLife.event.active,true,'a deterministic rare surface crossing must become active within one event interval');assert.ok(ambientLife.visible.some(instance=>instance.event),'an active rare crossing must enter the viewport along its fixed world-space route');assert.ok(ambientLife.visible.length<=10,'rare crossings must respect the surface entity cap');
@@ -458,9 +461,9 @@ for(const [scene,profile] of Object.entries({mossMine:'mossvein',moonMine:'moong
   ambientApi.enterMine(scene);ambientLife=ambientApi.snapshot().ambientLife;
   assert.equal(ambientLife.location,scene+':1');assert.equal(ambientLife.activeProfile,profile);assert.equal(ambientLife.maxVisible,6);assert.ok(ambientLife.visible.length>0&&ambientLife.visible.length<=6,scene+' ambient life must stay visible and capped');
   assert.ok(ambientLife.visible.every(instance=>instance.profile===profile&&instance.asset===ambientAssets[profile]&&!ambientApi.mineCollisionAt(instance.x,instance.y)),scene+' ambient instances must stay in open, reachable cells');
-  const mineResidentBefore=new Map(ambientLife.visible.map(instance=>[instance.id,instance]));assert.ok([...mineResidentBefore.values()].every(instance=>pointDistance(instance.anchorX,instance.anchorY,instance.routeX,instance.routeY)>=20),scene+' must provide real patrol routes');let maxMineTravel=0;
-  for(let sample=0;sample<4;sample++){ambientApi.step(.45);const sampleLife=ambientApi.snapshot().ambientLife;assert.ok(sampleLife.visible.every(instance=>!ambientApi.mineCollisionAt(instance.x,instance.y)),scene+' patrol samples must remain collision-free');for(const instance of sampleLife.visible)if(mineResidentBefore.has(instance.id))maxMineTravel=Math.max(maxMineTravel,pointDistance(instance.x,instance.y,mineResidentBefore.get(instance.id).x,mineResidentBefore.get(instance.id).y))}
-  assert.ok(maxMineTravel>6,scene+' residents must visibly patrol instead of flapping in place');ambientLife=ambientApi.snapshot().ambientLife;
+  const mineResidentBefore=new Map(ambientLife.visible.map(instance=>[instance.id,instance]));assert.ok([...mineResidentBefore.values()].every(instance=>pointDistance(instance.anchorX,instance.anchorY,instance.routeX,instance.routeY)>=20),scene+' must provide real patrol routes');let maxMineTravel=0,mineRestSeen=ambientLife.visible.some(instance=>instance.resting&&instance.frame===0);
+  for(let sample=0;sample<14;sample++){ambientApi.step(.45);const sampleLife=ambientApi.snapshot().ambientLife;mineRestSeen||=sampleLife.visible.some(instance=>instance.resting&&instance.frame===0&&(instance.routeProgress===0||instance.routeProgress===1));assert.ok(sampleLife.visible.every(instance=>!ambientApi.mineCollisionAt(instance.x,instance.y)),scene+' patrol samples must remain collision-free');for(const instance of sampleLife.visible)if(mineResidentBefore.has(instance.id))maxMineTravel=Math.max(maxMineTravel,pointDistance(instance.x,instance.y,mineResidentBefore.get(instance.id).x,mineResidentBefore.get(instance.id).y))}
+  assert.ok(maxMineTravel>6,scene+' residents must visibly patrol between rests');assert.equal(mineRestSeen,true,scene+' residents must rest on safe endpoints');ambientLife=ambientApi.snapshot().ambientLife;const mineReactionTarget=ambientLife.visible[0];ambientApi.setPosition(mineReactionTarget.x,mineReactionTarget.y);ambientApi.setSwingProgress(.2);ambientApi.step(.01);const mineReaction=ambientApi.snapshot().ambientLife.visible.find(instance=>instance.id===mineReactionTarget.id);assert.ok(mineReaction&&mineReaction.reacting&&mineReaction.behavior==='fleeing'&&!ambientApi.mineCollisionAt(mineReaction.x,mineReaction.y),scene+' residents must flee nearby mining without crossing a wall');ambientApi.clearSwing();ambientLife=ambientApi.snapshot().ambientLife;
   ambientRuntime.drawCalls.length=0;ambientApi.renderOnce();ambientDrawCalls=ambientRuntime.drawCalls.filter(call=>call.src.includes('assets/ambient/'));assert.equal(ambientDrawCalls.length,ambientLife.visible.length);assert.ok(ambientDrawCalls.every(call=>call.src.includes(ambientAssets[profile])));ambientApi.exitMine();
 }
 storage.clear();for(const [key,value] of storageBeforeAmbient)storage.set(key,value);

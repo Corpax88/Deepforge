@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='03601';
+  const ASSET_VERSION='03602';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -115,7 +115,7 @@
   const AMBIENT_RENDER_CONTRACT=Object.freeze({
     frameCount:AMBIENT_FRAME_COUNT,frameSize:AMBIENT_FRAME_SIZE,spriteSheetWidth:1024,spriteSheetHeight:256,decodedMemoryBudgetBytes:4194304,premiumSpriteSheets:true,trueAnimationFrames:true,deterministicPlacement:true,
     surfaceMaxVisible:AMBIENT_SURFACE_MAX_VISIBLE,mineMaxVisible:AMBIENT_MINE_MAX_VISIBLE,rareSurfaceCrossings:true,reducedMotionSafe:true,
-    roamingRoutes:true,mineRouteSampling:true,collisionFree:true,gameplayNeutral:true,proceduralCreaturePrimitives:false
+    roamingRoutes:true,mineRouteSampling:true,miningReactions:true,restBehavior:true,collisionFree:true,gameplayNeutral:true,proceduralCreaturePrimitives:false
   });
   const MINE_ENTRANCE_PATHS=Object.freeze({mossMine:'assets/entrances/mossvein-entrance.png',moonMine:'assets/entrances/moonglass-entrance.png',emberMine:'assets/entrances/emberdeep-entrance.png',starMine:'assets/entrances/starfall-entrance.png',depthLamp:'assets/entrances/depth-work-lamp.png'});
   const MOONGLASS_ART={floor:null,floorPattern:null,wall:null,routeMarker:null,pocket:null,rewards:{cache:null,shrine:null},nodes:{},wallHints:{},barriers:{}};
@@ -418,8 +418,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.36.1',name:'ROAMING WILDS'};
+  const BUILD={version:'0.36.2',name:'WILD INSTINCTS'};
   const PATCH_NOTES=[
+    {version:'0.36.2',date:'16 AUG 2026',title:'Wild Instincts',items:['Ambient creatures now pause and rest naturally at both ends of their routes.','Nearby mining startles residents into a quick retreat along their safe patrol path.','Resting creatures stop their animation while startled creatures move and flap faster without entering walls.']},
     {version:'0.36.1',date:'16 AUG 2026',title:'Roaming Wilds',items:['Ambient creatures now follow clearly visible routes instead of hovering in place.','Flying creatures patrol broad loops while Cinder Skinks scurry across the ground.','Every cave route is sampled against terrain and permanent walls before movement begins.']},
     {version:'0.36.0',date:'16 AUG 2026',title:'Living Worlds',items:['Four premium animated creatures now inhabit Mossvein, Moonglass, Emberdeep, and Starfall.','Surface trails and caves use deterministic ambient paths, with occasional biome crossings that never alter collision or progression.','Reduced Motion freezes every creature cleanly, while strict draw budgets keep mobile performance steady.']},
     {version:'0.35.11',date:'16 AUG 2026',title:'Drill Age Pacing',items:['The journey from Starforge to Deepcore now spans full expeditions through Rootwound, Prismatic, and Molten Depths.','Burrower now costs 5,000 gold, 50 Rootiron, and 5 Ambercore; Pulse costs 12,000 gold, 60 Burrowsteel, 40 Prismite, and 4 Lunacore.','Deepcore now costs 25,000 gold, 70 Phase Crystal, 50 Magmaite, 5 Furnace Heart, and 70 Infernium.']},
@@ -467,6 +468,7 @@
   let particles=[],floaters=[],rings=[],groundDrops=[];
   let moonglassGateTransition=null,emberdeepGateTransition=null,starfallGateTransition=null;
   let saleMotes=[];
+  const ambientDisturbance={scene:null,depth:1,x:0,y:0,remaining:0};
   let activeContext=null,uiDirty=true,lastSavedSnapshot='',lastRegion=-1,nextDropId=1,terrainSaveDelay=0,lootSweepCheck=0,lootSweepWarned30=false,lootSweepWarned10=false;
   const miningFeedback={shake:0,shakeTime:0,flash:0,flashColor:'#ffffff',hitStop:0,terrainHitIndex:-1,terrainHitTime:0,lastDiscovery:null,lastDepositBeat:null,lastPocketReward:null};
   let lastHapticAt=-1;
@@ -2339,6 +2341,7 @@
   function update(dt){
     updateLootSweep(dt);achievementCheckTimer=Math.max(0,achievementCheckTimer-dt);if(achievementCheckTimer===0){evaluateAchievements();achievementCheckTimer=.12}if(!menuShade.hidden||!inventoryShade.hidden)return;
     time+=dt;
+    ambientDisturbance.remaining=Math.max(0,ambientDisturbance.remaining-dt);if(player.swing||input.mineHeld){ambientDisturbance.scene=currentScene;ambientDisturbance.depth=currentDepth;ambientDisturbance.x=player.x;ambientDisturbance.y=player.y;ambientDisturbance.remaining=.95}
     if(moonglassGateTransition){
       moonglassGateTransition.elapsed=Math.min(moonglassGateTransition.duration,moonglassGateTransition.elapsed+dt);
       if(moonglassGateTransition.elapsed>=moonglassGateTransition.duration)moonglassGateTransition=null;
@@ -2732,18 +2735,33 @@
     return{routeX,routeY:clamp(y+distanceY,66,WORLD.height-66)};
   }
 
+  function ambientRouteBehavior(profile,index,mine){
+    if(reducedMotion)return{routeProgress:0,resting:true,motionDirection:0,phase:0};
+    const random=ambientSeed(profile,index,(mine?currentDepth*3571:0)^19081),restDuration=1.6+random()*1.8,travelDuration=(profile.flying?3.1:2.35)+random()*(profile.flying?1.15:.85),cycleLength=2*(restDuration+travelDuration),elapsed=(time+random()*cycleLength)%cycleLength;
+    if(elapsed<restDuration)return{routeProgress:0,resting:true,motionDirection:0,phase:elapsed/cycleLength};
+    if(elapsed<restDuration+travelDuration){const progress=(elapsed-restDuration)/travelDuration;return{routeProgress:easeInOut(progress),resting:false,motionDirection:1,phase:elapsed/cycleLength}}
+    if(elapsed<restDuration*2+travelDuration)return{routeProgress:1,resting:true,motionDirection:0,phase:elapsed/cycleLength};
+    const progress=(elapsed-restDuration*2-travelDuration)/travelDuration;return{routeProgress:1-easeInOut(progress),resting:false,motionDirection:-1,phase:elapsed/cycleLength};
+  }
+
   function ambientResident(profile,index,x,y,mine=false,route=null){
-    const random=ambientSeed(profile,index,mine?currentDepth*7919:0),phase=random()*AMBIENT_FRAME_COUNT,speed=profile.flying?(mine?1.35+random()*.35:.64+random()*.24):(mine?1.65+random()*.4:1.08+random()*.34),scale=.82+random()*.25;
-    const path=route||ambientSurfaceRoute(profile,index,x,y),routeX=path.routeX,routeY=path.routeY,wave=time*speed+phase*1.7,routeProgress=reducedMotion?0:(1-Math.cos(wave))*.5;
+    const random=ambientSeed(profile,index,mine?currentDepth*7919:0),phase=random()*AMBIENT_FRAME_COUNT,scale=.82+random()*.25,path=route||ambientSurfaceRoute(profile,index,x,y),routeX=path.routeX,routeY=path.routeY,routeBehavior=ambientRouteBehavior(profile,index,mine);
+    let routeProgress=routeBehavior.routeProgress,resting=routeBehavior.resting,motionDirection=routeBehavior.motionDirection,reactionStrength=0,reacting=false;
     let worldX=x+(routeX-x)*routeProgress,worldY=y+(routeY-y)*routeProgress,flip=random()>.5;
+    const miningActive=!!player.swing||input.mineHeld,disturbanceActive=!reducedMotion&&(miningActive||ambientDisturbance.remaining>0&&ambientDisturbance.scene===currentScene&&ambientDisturbance.depth===currentDepth),disturbanceX=miningActive?player.x:ambientDisturbance.x,disturbanceY=miningActive?player.y:ambientDisturbance.y,disturbanceFade=miningActive?1:ambientDisturbance.remaining/.95,reactionRadius=profile.flying?270:225,playerDistance=distance(disturbanceX,disturbanceY,worldX,worldY);
+    if(disturbanceActive&&playerDistance<reactionRadius){
+      reactionStrength=(1-playerDistance/reactionRadius)*disturbanceFade;const fleeTarget=distance(disturbanceX,disturbanceY,routeX,routeY)>distance(disturbanceX,disturbanceY,x,y)?1:0,dart=(.18+reactionStrength*.62)*disturbanceFade;
+      motionDirection=fleeTarget>routeProgress?1:-1;routeProgress+=(fleeTarget-routeProgress)*dart;resting=false;reacting=true;worldX=x+(routeX-x)*routeProgress;worldY=y+(routeY-y)*routeProgress;
+    }
     if(!reducedMotion&&profile.flying&&!mine){
-      const dx=routeX-x,dy=routeY-y,length=Math.max(1,Math.hypot(dx,dy)),arc=Math.sin(wave*2)*12;
+      const dx=routeX-x,dy=routeY-y,length=Math.max(1,Math.hypot(dx,dy)),arc=Math.sin(routeProgress*Math.PI)*(reacting?18:12);
       worldX+=-dy/length*arc;worldY+=dx/length*arc;
     }
-    if(!reducedMotion&&!profile.flying&&!mine)worldY-=Math.abs(Math.sin(wave*3))*2.4;
-    if(profile.directional&&!reducedMotion)flip=(routeX-x)*Math.sin(wave)<0;
+    if(!reducedMotion&&!profile.flying&&!mine&&!resting)worldY-=Math.abs(Math.sin(time*8+phase))*2.4;
+    if(profile.directional&&!reducedMotion)flip=(routeX-x)*(motionDirection||1)<0;
     if(mine&&!ambientMinePointOpenAt(worldX,worldY)){worldX=x;worldY=y}
-    return{id:(mine?currentScene+':'+currentDepth:profile.key)+':resident:'+index,profile:profile.key,asset:AMBIENT_PATHS[profile.key],x:worldX,y:worldY,anchorX:x,anchorY:y,routeX,routeY,routeProgress,frame:reducedMotion?0:Math.floor((time*profile.fps+phase)%AMBIENT_FRAME_COUNT),size:profile.size*scale,flip,event:false};
+    const behavior=reducedMotion?'reduced':reacting?'fleeing':resting?'resting':'roaming',frame=reducedMotion||resting?0:Math.floor((time*profile.fps*(reacting?1.35:1)+phase)%AMBIENT_FRAME_COUNT);
+    return{id:(mine?currentScene+':'+currentDepth:profile.key)+':resident:'+index,profile:profile.key,asset:AMBIENT_PATHS[profile.key],x:worldX,y:worldY,anchorX:x,anchorY:y,routeX,routeY,routeProgress,behaviorPhase:routeBehavior.phase,behavior,resting,reacting,reactionStrength,frame,size:profile.size*scale,flip,event:false};
   }
 
   function ambientOnScreen(instance,margin=70){
@@ -2762,7 +2780,7 @@
       const local=(cycle-index*.5)/travelDuration;if(local<0||local>1)continue;
       const progress=reverse?1-local:local,start=biome.start-70,end=biome.end+70,x=start+(end-start)*progress;
       const lane=profile.flying?310+index*145:995+index*18,y=clamp(lane+Math.sin(time*(profile.flying?2.1:5.4)+index)* (profile.flying?18:3),56,WORLD.height-56),phase=index*.83;
-      instances.push({id:profile.key+':crossing:'+index,profile:profile.key,asset:AMBIENT_PATHS[profile.key],x,y,anchorX:x,anchorY:y,frame:Math.floor((time*profile.fps+phase)%AMBIENT_FRAME_COUNT),size:profile.size*(.82+index*.07),flip:profile.directional?reverse:index%2===1,event:true});
+      instances.push({id:profile.key+':crossing:'+index,profile:profile.key,asset:AMBIENT_PATHS[profile.key],x,y,anchorX:x,anchorY:y,behavior:'crossing',resting:false,reacting:false,reactionStrength:0,frame:Math.floor((time*profile.fps+phase)%AMBIENT_FRAME_COUNT),size:profile.size*(.82+index*.07),flip:profile.directional?reverse:index%2===1,event:true});
     }
     return instances;
   }
@@ -2855,7 +2873,7 @@
       ...AMBIENT_RENDER_CONTRACT,assets:{...AMBIENT_PATHS},activeProfile:ambientProfileForLocation().key,
       location:currentScene==='surface'?'surface':currentScene+':'+currentDepth,reducedMotion,
       maxVisible:currentScene==='surface'?AMBIENT_SURFACE_MAX_VISIBLE:AMBIENT_MINE_MAX_VISIBLE,
-      visible:visible.map(instance=>({id:instance.id,profile:instance.profile,asset:instance.asset,x:instance.x,y:instance.y,anchorX:instance.anchorX,anchorY:instance.anchorY,routeX:instance.routeX,routeY:instance.routeY,routeProgress:instance.routeProgress,frame:instance.frame,size:instance.size,flip:instance.flip,event:instance.event})),
+      visible:visible.map(instance=>({id:instance.id,profile:instance.profile,asset:instance.asset,x:instance.x,y:instance.y,anchorX:instance.anchorX,anchorY:instance.anchorY,routeX:instance.routeX,routeY:instance.routeY,routeProgress:instance.routeProgress,behaviorPhase:instance.behaviorPhase,behavior:instance.behavior,resting:instance.resting,reacting:instance.reacting,reactionStrength:instance.reactionStrength,frame:instance.frame,size:instance.size,flip:instance.flip,event:instance.event})),
       event
     };
   }
