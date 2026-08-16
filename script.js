@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='03603';
+  const ASSET_VERSION='03604';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -115,7 +115,7 @@
   const AMBIENT_RENDER_CONTRACT=Object.freeze({
     frameCount:AMBIENT_FRAME_COUNT,frameSize:AMBIENT_FRAME_SIZE,spriteSheetWidth:1024,spriteSheetHeight:256,decodedMemoryBudgetBytes:4194304,premiumSpriteSheets:true,trueAnimationFrames:true,deterministicPlacement:true,
     surfaceMaxVisible:AMBIENT_SURFACE_MAX_VISIBLE,mineMaxVisible:AMBIENT_MINE_MAX_VISIBLE,rareSurfaceCrossings:true,reducedMotionSafe:true,
-    roamingRoutes:true,mineRouteSampling:true,miningReactions:true,restBehavior:true,collisionFree:true,gameplayNeutral:true,proceduralCreaturePrimitives:false
+    roamingRoutes:true,mineRouteSampling:true,miningReactions:true,continuousReactions:true,restBehavior:true,collisionFree:true,gameplayNeutral:true,proceduralCreaturePrimitives:false
   });
   const MINE_ENTRANCE_PATHS=Object.freeze({mossMine:'assets/entrances/mossvein-entrance.png',moonMine:'assets/entrances/moonglass-entrance.png',emberMine:'assets/entrances/emberdeep-entrance.png',starMine:'assets/entrances/starfall-entrance.png',depthLamp:'assets/entrances/depth-work-lamp.png'});
   const MOONGLASS_ART={floor:null,floorPattern:null,wall:null,routeMarker:null,pocket:null,rewards:{cache:null,shrine:null},nodes:{},wallHints:{},barriers:{}};
@@ -418,8 +418,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.36.3',name:'STEADY WILDLIFE'};
+  const BUILD={version:'0.36.4',name:'NATURAL RECOVERY'};
   const PATCH_NOTES=[
+    {version:'0.36.4',date:'16 AUG 2026',title:'Natural Recovery',items:['Startled creatures now flee continuously from their current route position instead of resetting every frame.','Stopping the drill sends each creature smoothly back toward its patrol route without teleporting.','Reaction and recovery motion stays collision-safe in every cave.']},
     {version:'0.36.3',date:'16 AUG 2026',title:'Steady Wildlife',items:['Mine residents closest to the player now keep their render slot as the camera moves.','Approaching an ambient creature can no longer make it disappear and reappear.','Creature limits and collision-safe routes remain unchanged for mobile performance.']},
     {version:'0.36.2',date:'16 AUG 2026',title:'Wild Instincts',items:['Ambient creatures now pause and rest naturally at both ends of their routes.','Nearby mining startles residents into a quick retreat along their safe patrol path.','Resting creatures stop their animation while startled creatures move and flap faster without entering walls.']},
     {version:'0.36.1',date:'16 AUG 2026',title:'Roaming Wilds',items:['Ambient creatures now follow clearly visible routes instead of hovering in place.','Flying creatures patrol broad loops while Cinder Skinks scurry across the ground.','Every cave route is sampled against terrain and permanent walls before movement begins.']},
@@ -469,7 +470,8 @@
   let particles=[],floaters=[],rings=[],groundDrops=[];
   let moonglassGateTransition=null,emberdeepGateTransition=null,starfallGateTransition=null;
   let saleMotes=[];
-  const ambientDisturbance={scene:null,depth:1,x:0,y:0,remaining:0};
+  const AMBIENT_FLEE_DURATION=.68,AMBIENT_RECOVERY_DURATION=1.35;
+  const ambientDisturbance={scene:null,depth:1,x:0,y:0,startX:0,startY:0,active:false,startedAt:0,releasedAt:0,activeDuration:0,remaining:0};
   let activeContext=null,uiDirty=true,lastSavedSnapshot='',lastRegion=-1,nextDropId=1,terrainSaveDelay=0,lootSweepCheck=0,lootSweepWarned30=false,lootSweepWarned10=false;
   const miningFeedback={shake:0,shakeTime:0,flash:0,flashColor:'#ffffff',hitStop:0,terrainHitIndex:-1,terrainHitTime:0,lastDiscovery:null,lastDepositBeat:null,lastPocketReward:null};
   let lastHapticAt=-1;
@@ -2342,7 +2344,12 @@
   function update(dt){
     updateLootSweep(dt);achievementCheckTimer=Math.max(0,achievementCheckTimer-dt);if(achievementCheckTimer===0){evaluateAchievements();achievementCheckTimer=.12}if(!menuShade.hidden||!inventoryShade.hidden)return;
     time+=dt;
-    ambientDisturbance.remaining=Math.max(0,ambientDisturbance.remaining-dt);if(player.swing||input.mineHeld){ambientDisturbance.scene=currentScene;ambientDisturbance.depth=currentDepth;ambientDisturbance.x=player.x;ambientDisturbance.y=player.y;ambientDisturbance.remaining=.95}
+    const ambientMining=!!player.swing||input.mineHeld;
+    if(ambientMining){
+      if(!ambientDisturbance.active||ambientDisturbance.scene!==currentScene||ambientDisturbance.depth!==currentDepth){ambientDisturbance.scene=currentScene;ambientDisturbance.depth=currentDepth;ambientDisturbance.startX=player.x;ambientDisturbance.startY=player.y;ambientDisturbance.startedAt=time;ambientDisturbance.activeDuration=0}
+      ambientDisturbance.active=true;ambientDisturbance.x=player.x;ambientDisturbance.y=player.y;ambientDisturbance.activeDuration=Math.max(0,time-ambientDisturbance.startedAt);ambientDisturbance.remaining=AMBIENT_RECOVERY_DURATION;
+    }else if(ambientDisturbance.active){ambientDisturbance.active=false;ambientDisturbance.releasedAt=time;ambientDisturbance.activeDuration=Math.max(0,time-ambientDisturbance.startedAt);ambientDisturbance.remaining=AMBIENT_RECOVERY_DURATION}
+    else ambientDisturbance.remaining=Math.max(0,ambientDisturbance.remaining-dt);
     if(moonglassGateTransition){
       moonglassGateTransition.elapsed=Math.min(moonglassGateTransition.duration,moonglassGateTransition.elapsed+dt);
       if(moonglassGateTransition.elapsed>=moonglassGateTransition.duration)moonglassGateTransition=null;
@@ -2736,9 +2743,9 @@
     return{routeX,routeY:clamp(y+distanceY,66,WORLD.height-66)};
   }
 
-  function ambientRouteBehavior(profile,index,mine){
+  function ambientRouteBehavior(profile,index,mine,sampleTime=time){
     if(reducedMotion)return{routeProgress:0,resting:true,motionDirection:0,phase:0};
-    const random=ambientSeed(profile,index,(mine?currentDepth*3571:0)^19081),restDuration=1.6+random()*1.8,travelDuration=(profile.flying?3.1:2.35)+random()*(profile.flying?1.15:.85),cycleLength=2*(restDuration+travelDuration),elapsed=(time+random()*cycleLength)%cycleLength;
+    const random=ambientSeed(profile,index,(mine?currentDepth*3571:0)^19081),restDuration=1.6+random()*1.8,travelDuration=(profile.flying?3.1:2.35)+random()*(profile.flying?1.15:.85),cycleLength=2*(restDuration+travelDuration),elapsed=(sampleTime+random()*cycleLength)%cycleLength;
     if(elapsed<restDuration)return{routeProgress:0,resting:true,motionDirection:0,phase:elapsed/cycleLength};
     if(elapsed<restDuration+travelDuration){const progress=(elapsed-restDuration)/travelDuration;return{routeProgress:easeInOut(progress),resting:false,motionDirection:1,phase:elapsed/cycleLength}}
     if(elapsed<restDuration*2+travelDuration)return{routeProgress:1,resting:true,motionDirection:0,phase:elapsed/cycleLength};
@@ -2747,12 +2754,14 @@
 
   function ambientResident(profile,index,x,y,mine=false,route=null){
     const random=ambientSeed(profile,index,mine?currentDepth*7919:0),phase=random()*AMBIENT_FRAME_COUNT,scale=.82+random()*.25,path=route||ambientSurfaceRoute(profile,index,x,y),routeX=path.routeX,routeY=path.routeY,routeBehavior=ambientRouteBehavior(profile,index,mine);
-    let routeProgress=routeBehavior.routeProgress,resting=routeBehavior.resting,motionDirection=routeBehavior.motionDirection,reactionStrength=0,reacting=false;
+    let routeProgress=routeBehavior.routeProgress,resting=routeBehavior.resting,motionDirection=routeBehavior.motionDirection,reactionStrength=0,reacting=false,recovering=false;
     let worldX=x+(routeX-x)*routeProgress,worldY=y+(routeY-y)*routeProgress,flip=random()>.5;
-    const miningActive=!!player.swing||input.mineHeld,disturbanceActive=!reducedMotion&&(miningActive||ambientDisturbance.remaining>0&&ambientDisturbance.scene===currentScene&&ambientDisturbance.depth===currentDepth),disturbanceX=miningActive?player.x:ambientDisturbance.x,disturbanceY=miningActive?player.y:ambientDisturbance.y,disturbanceFade=miningActive?1:ambientDisturbance.remaining/.95,reactionRadius=profile.flying?270:225,playerDistance=distance(disturbanceX,disturbanceY,worldX,worldY);
-    if(disturbanceActive&&playerDistance<reactionRadius){
-      reactionStrength=(1-playerDistance/reactionRadius)*disturbanceFade;const fleeTarget=distance(disturbanceX,disturbanceY,routeX,routeY)>distance(disturbanceX,disturbanceY,x,y)?1:0,dart=(.18+reactionStrength*.62)*disturbanceFade;
-      motionDirection=fleeTarget>routeProgress?1:-1;routeProgress+=(fleeTarget-routeProgress)*dart;resting=false;reacting=true;worldX=x+(routeX-x)*routeProgress;worldY=y+(routeY-y)*routeProgress;
+    const disturbanceMatches=!reducedMotion&&ambientDisturbance.scene===currentScene&&ambientDisturbance.depth===currentDepth&&(ambientDisturbance.active||ambientDisturbance.remaining>0),reactionRadius=profile.flying?270:225,startBehavior=disturbanceMatches?ambientRouteBehavior(profile,index,mine,ambientDisturbance.startedAt):routeBehavior,startProgress=startBehavior.routeProgress,startWorldX=x+(routeX-x)*startProgress,startWorldY=y+(routeY-y)*startProgress,playerDistance=distance(ambientDisturbance.startX,ambientDisturbance.startY,startWorldX,startWorldY);
+    if(disturbanceMatches&&playerDistance<reactionRadius){
+      const proximity=1-playerDistance/reactionRadius,fleeTarget=distance(ambientDisturbance.startX,ambientDisturbance.startY,routeX,routeY)>distance(ambientDisturbance.startX,ambientDisturbance.startY,x,y)?1:0,fleeAtRelease=easeInOut(clamp(ambientDisturbance.activeDuration/AMBIENT_FLEE_DURATION,0,1)),releaseProgress=startProgress+(fleeTarget-startProgress)*fleeAtRelease;
+      if(ambientDisturbance.active){const fleeProgress=easeInOut(clamp((time-ambientDisturbance.startedAt)/AMBIENT_FLEE_DURATION,0,1));routeProgress=startProgress+(fleeTarget-startProgress)*fleeProgress;reactionStrength=proximity*(.35+.65*fleeProgress);reacting=true}
+      else{const recoveryProgress=easeInOut(clamp(1-ambientDisturbance.remaining/AMBIENT_RECOVERY_DURATION,0,1));routeProgress=releaseProgress+(routeProgress-releaseProgress)*recoveryProgress;reactionStrength=proximity*(1-recoveryProgress);reacting=ambientDisturbance.remaining>0;recovering=reacting}
+      motionDirection=(recovering?routeBehavior.routeProgress:fleeTarget)>routeProgress?1:-1;resting=false;worldX=x+(routeX-x)*routeProgress;worldY=y+(routeY-y)*routeProgress;
     }
     if(!reducedMotion&&profile.flying&&!mine){
       const dx=routeX-x,dy=routeY-y,length=Math.max(1,Math.hypot(dx,dy)),arc=Math.sin(routeProgress*Math.PI)*(reacting?18:12);
@@ -2761,7 +2770,7 @@
     if(!reducedMotion&&!profile.flying&&!mine&&!resting)worldY-=Math.abs(Math.sin(time*8+phase))*2.4;
     if(profile.directional&&!reducedMotion)flip=(routeX-x)*(motionDirection||1)<0;
     if(mine&&!ambientMinePointOpenAt(worldX,worldY)){worldX=x;worldY=y}
-    const behavior=reducedMotion?'reduced':reacting?'fleeing':resting?'resting':'roaming',frame=reducedMotion||resting?0:Math.floor((time*profile.fps*(reacting?1.35:1)+phase)%AMBIENT_FRAME_COUNT);
+    const behavior=reducedMotion?'reduced':recovering?'returning':reacting?'fleeing':resting?'resting':'roaming',frame=reducedMotion||resting?0:Math.floor((time*profile.fps*(reacting&&!recovering?1.35:1)+phase)%AMBIENT_FRAME_COUNT);
     return{id:(mine?currentScene+':'+currentDepth:profile.key)+':resident:'+index,profile:profile.key,asset:AMBIENT_PATHS[profile.key],x:worldX,y:worldY,anchorX:x,anchorY:y,routeX,routeY,routeProgress,behaviorPhase:routeBehavior.phase,behavior,resting,reacting,reactionStrength,frame,size:profile.size*scale,flip,event:false};
   }
 
