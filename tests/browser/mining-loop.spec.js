@@ -1386,11 +1386,13 @@ test('settings opens first and keeps audio choices separate from stats',async({p
   await expect(page.locator('#menuTitle')).toHaveText('Patch Notes');
   await expect(page.locator('#patchNotesPanel')).toBeVisible();
   const patchNotes=page.locator('.patch-note');
-  await expect(patchNotes).toHaveCount(27);
+  await expect(patchNotes).toHaveCount(28);
   await expect(page.locator('.patch-note.latest')).toContainText('v0.37.2');
-  await expect(page.locator('.patch-note.latest')).toContainText('old canvas rings and procedural debris are gone');
-  await expect(page.locator('.patch-note.latest')).toContainText('premium environmental drift');
-  await expect(page.locator('.patch-note.latest')).toContainText('Footsteps disturb the ground');
+  await expect(page.locator('.patch-note.latest')).toContainText('dedicated premium mining sheets');
+  await expect(page.locator('.patch-note.latest')).toContainText('partial-vein text has been removed');
+  await expect(patchNotes.filter({hasText:'v0.37.1'})).toContainText('old canvas rings and procedural debris are gone');
+  await expect(patchNotes.filter({hasText:'v0.37.0'})).toContainText('premium environmental drift');
+  await expect(patchNotes.filter({hasText:'v0.37.0'})).toContainText('Footsteps disturb the ground');
   await expect(patchNotes.filter({has:page.locator('header span',{hasText:/^v0\.35\.11$/})})).toContainText('70 Phase Crystal');
   await expect(patchNotes.filter({hasText:'v0.35.10'})).toContainText('DEEPCORE DRILL REQUIRED');
   await expect(patchNotes.filter({hasText:'v0.35.9'})).toContainText('Eight unreachable Astralite nodes');
