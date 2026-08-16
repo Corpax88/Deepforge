@@ -57,17 +57,17 @@ assert.match(source,/function playPickaxeTink\(/);assert.match(source,/if\(curre
 assert.match(source,/if\(!rock&&!terrainTarget\)\{if\(manualPress\)sound\('empty'\)/,'held mining misses must stay silent after the initial manual press');
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'03600');
+assert.equal(latest.version,'03601');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=03600/);
-assert.match(html,/game-data\.js\?v=03600/);
-assert.match(html,/script\.js\?v=03600/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=03600/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=03600/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03600/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03600/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=03600"/);
+assert.match(html,/style\.css\?v=03601/);
+assert.match(html,/game-data\.js\?v=03601/);
+assert.match(html,/script\.js\?v=03601/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=03601/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=03601/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03601/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03601/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=03601"/);
 assert.match(source,/const EMBER_PICKAXE_ORE_REQUIRED=100;/);
 assert.match(source,/const EMBER_MASTERY_SUNSLAG_COSTS=Object\.freeze\(\[0,30,40,50,60,70\]\);/);
 assert.match(source,/const STARFORGE_MATERIAL_REQUIRED=200;/);
@@ -356,16 +356,16 @@ const expectedSnapshotKeys=[
 ];
 assert.deepEqual(Object.keys(api).sort(),expectedApiKeys,'test API contract changed unexpectedly');
 assert.deepEqual(Object.keys(api.snapshot()).sort(),expectedSnapshotKeys,'snapshot contract changed unexpectedly');
-assert.equal(api.snapshot().build.version,'0.36.0');
-assert.equal(api.snapshot().build.name,'LIVING WORLDS');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.36.0');
-assert.equal(api.snapshot().assetVersion,'03600');
+assert.equal(api.snapshot().build.version,'0.36.1');
+assert.equal(api.snapshot().build.name,'ROAMING WILDS');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.36.1');
+assert.equal(api.snapshot().assetVersion,'03601');
 const patchNotes=api.snapshot().patchNotes,patchNote=version=>patchNotes.find(note=>note.version===version);
-assert.equal(patchNotes.length,21);assert.match(patchNote('0.36.0').items.join(' '),/Four premium animated creatures/);assert.match(patchNote('0.36.0').items.join(' '),/Reduced Motion/);assert.match(patchNote('0.35.11').items.join(' '),/70 Phase Crystal/);assert.match(patchNote('0.35.10').items.join(' '),/DEEPCORE DRILL REQUIRED/);assert.match(patchNote('0.35.9').items.join(' '),/Eight unreachable Astralite nodes/);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
+assert.equal(patchNotes.length,22);assert.match(patchNote('0.36.1').items.join(' '),/clearly visible routes/);assert.match(patchNote('0.36.1').items.join(' '),/sampled against terrain/);assert.match(patchNote('0.36.0').items.join(' '),/Four premium animated creatures/);assert.match(patchNote('0.36.0').items.join(' '),/Reduced Motion/);assert.match(patchNote('0.35.11').items.join(' '),/70 Phase Crystal/);assert.match(patchNote('0.35.10').items.join(' '),/DEEPCORE DRILL REQUIRED/);assert.match(patchNote('0.35.9').items.join(' '),/Eight unreachable Astralite nodes/);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=03600',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=03601',volume:1,loop:true,paused:false}));
 api.dismissStartMenu();
 const viewportElement=runtime.elements.get('viewport'),canvasElement=runtime.elements.get('gameCanvas'),joystickElement=runtime.elements.get('joystick'),mineElement=runtime.elements.get('mineButton');
 viewportElement.dispatchEvent({type:'pointerdown',target:canvasElement,pointerId:301,button:0,clientX:120,clientY:260});
@@ -426,23 +426,26 @@ assert.doesNotMatch(source,/vein\.label|BONUS VEIN|COOLED/);
 assert.equal(JSON.stringify(api.snapshot().characterRendering),JSON.stringify({baseAsset:'assets/characters/miner-b.png',activeToolKey:'pickaxe-worn',activeRenderAsset:'assets/tools/pickaxe-worn.png',walkSheets:{base:'assets/characters/miner-b-walk.png','drill-burrower':'assets/characters/miner-b-drill-burrower-walk.png','drill-pulse':'assets/characters/miner-b-drill-pulse-walk.png','drill-deepcore':'assets/characters/miner-b-drill-deepcore-walk.png'},activeWalkAsset:'assets/characters/miner-b-walk.png',walkGrid:{columns:6,rows:4,cellSize:256,directions:['down','left','right','up']},walkRenderSize:120,toolLayerCount:8,drillCompositeCount:3,gripCrop:{x:246,y:307,w:69,h:101},gripPivot:{x:14,y:24},gripPoint:{x:42,y:50},layeredTools:true,animatedGrip:true,bodyReaction:true,sharedGripAnchor:true,fullDrillComposites:true,directionalWalk:true,distanceDrivenWalk:true,holsteredWalkTools:true,lazyDrillWalkSheets:true,staticMiningFallback:true,reducedMotion:false,legacyDrillLimbCrops:false,legacyCanvasCharacter:false,legacyCanvasTools:false}));
 function assertRendered(drawCalls,paths){for(const path of paths)assert.ok(drawCalls.some(call=>call.src.includes(path)),path+' must render')}
 function renderAt(testRuntime,testApi,x,y,paths){testApi.setPosition(x,y);testRuntime.drawCalls.length=0;testApi.renderOnce();assertRendered(testRuntime.drawCalls,paths)}
+function pointDistance(x1,y1,x2,y2){return Math.hypot(x2-x1,y2-y1)}
 function terrainIndexForRock(snapshot,rock){const cols=Math.ceil(snapshot.mine.width/snapshot.mine.terrain.tileSize);return Math.floor(rock.y/snapshot.mine.terrain.tileSize)*cols+Math.floor(rock.x/snapshot.mine.terrain.tileSize)}
 function exposeRock(testApi,rock,maxHits=8){for(let hit=0;hit<maxHits&&!testApi.snapshot().rocks.find(item=>item.id===rock.id).exposed;hit++)testApi.mineTerrainCell(terrainIndexForRock(testApi.snapshot(),rock));assert.equal(testApi.snapshot().rocks.find(item=>item.id===rock.id).exposed,true,rock.type+' test node must be exposed')}
 
 const storageBeforeAmbient=new Map(storage);storage.clear();
 const ambientRuntime=createRuntime(),ambientApi=ambientRuntime.api;ambientApi.dismissStartMenu();
-const ambientContract={frameCount:4,frameSize:256,premiumSpriteSheets:true,trueAnimationFrames:true,deterministicPlacement:true,surfaceMaxVisible:10,mineMaxVisible:6,rareSurfaceCrossings:true,reducedMotionSafe:true,collisionFree:true,gameplayNeutral:true,proceduralCreaturePrimitives:false};
+const ambientContract={frameCount:4,frameSize:256,premiumSpriteSheets:true,trueAnimationFrames:true,deterministicPlacement:true,surfaceMaxVisible:10,mineMaxVisible:6,rareSurfaceCrossings:true,reducedMotionSafe:true,roamingRoutes:true,mineRouteSampling:true,collisionFree:true,gameplayNeutral:true,proceduralCreaturePrimitives:false};
 let ambientSnapshot=ambientApi.snapshot(),ambientLife=ambientSnapshot.ambientLife;
 assert.deepEqual(Object.fromEntries(Object.keys(ambientContract).map(key=>[key,ambientLife[key]])),ambientContract);
 assert.equal(JSON.stringify(ambientLife.assets),JSON.stringify(ambientAssets));assert.equal(ambientLife.activeProfile,'mossvein');assert.equal(ambientLife.location,'surface');assert.equal(ambientLife.maxVisible,10);
 assert.ok(ambientLife.visible.length>0&&ambientLife.visible.length<=10,'surface ambient life must stay visible and capped');assert.ok(ambientLife.visible.every(instance=>Object.values(ambientAssets).includes(instance.asset)&&instance.frame>=0&&instance.frame<4));
+const surfaceResidentBefore=new Map(ambientLife.visible.filter(instance=>!instance.event).map(instance=>[instance.id,instance]));assert.ok([...surfaceResidentBefore.values()].every(instance=>pointDistance(instance.anchorX,instance.anchorY,instance.routeX,instance.routeY)>=60),'surface residents must have broad routes');
+ambientApi.step(1.4);ambientLife=ambientApi.snapshot().ambientLife;const surfaceResidentAfter=ambientLife.visible.filter(instance=>surfaceResidentBefore.has(instance.id));assert.ok(surfaceResidentAfter.some(instance=>pointDistance(instance.x,instance.y,surfaceResidentBefore.get(instance.id).x,surfaceResidentBefore.get(instance.id).y)>18),'surface residents must visibly travel instead of hovering');
 assert.equal(Object.prototype.hasOwnProperty.call(ambientSnapshot.state,'ambientLife'),false,'ambient life must not leak into gameplay save state');
 const gameplayStateBeforeAmbientRender=JSON.stringify(ambientSnapshot.state);ambientRuntime.drawCalls.length=0;ambientApi.renderOnce();
 assert.equal(JSON.stringify(ambientApi.snapshot().state),gameplayStateBeforeAmbientRender,'renderOnce must not mutate gameplay state');
 let ambientDrawCalls=ambientRuntime.drawCalls.filter(call=>call.src.includes('assets/ambient/'));assert.equal(ambientDrawCalls.length,ambientLife.visible.length,'renderOnce must draw exactly the visible ambient instances');
 for(const call of ambientDrawCalls){assert.equal(call.args.length,8,'ambient sprites must use cropped nine-argument drawImage');assert.ok([0,256,512,768].includes(call.args[0]),'ambient sprite crop must select one of four frames');assert.deepEqual(call.args.slice(1,4),[0,256,256],'ambient sprite crop must stay within a 4x256 sheet')}
-const ambientSignature=life=>life.visible.map(({id,profile,asset,anchorX,anchorY})=>({id,profile,asset,anchorX,anchorY}));ambientApi.save();
-const ambientReloadRuntime=createRuntime(),ambientReloadApi=ambientReloadRuntime.api;assert.equal(JSON.stringify(ambientSignature(ambientReloadApi.snapshot().ambientLife)),JSON.stringify(ambientSignature(ambientLife)),'ambient placement must be deterministic for a saved world seed');
+const ambientSignature=life=>life.visible.map(({id,profile,asset,anchorX,anchorY,routeX,routeY})=>({id,profile,asset,anchorX,anchorY,routeX,routeY}));ambientApi.save();
+const ambientReloadRuntime=createRuntime(),ambientReloadApi=ambientReloadRuntime.api;assert.equal(JSON.stringify(ambientSignature(ambientReloadApi.snapshot().ambientLife)),JSON.stringify(ambientSignature(ambientSnapshot.ambientLife)),'ambient placement must be deterministic for a saved world seed');
 ambientApi.setReducedMotion(true);const reducedAmbientBefore=ambientApi.snapshot().ambientLife;ambientApi.step(2);const reducedAmbientAfter=ambientApi.snapshot().ambientLife;
 assert.equal(reducedAmbientAfter.reducedMotion,true);assert.equal(reducedAmbientAfter.event.enabled,false);assert.equal(reducedAmbientAfter.event.active,false);
 assert.ok(reducedAmbientAfter.visible.every(instance=>instance.frame===0&&instance.x===instance.anchorX&&instance.y===instance.anchorY),'reduced motion must freeze sprite frames and resident drift');
@@ -455,6 +458,9 @@ for(const [scene,profile] of Object.entries({mossMine:'mossvein',moonMine:'moong
   ambientApi.enterMine(scene);ambientLife=ambientApi.snapshot().ambientLife;
   assert.equal(ambientLife.location,scene+':1');assert.equal(ambientLife.activeProfile,profile);assert.equal(ambientLife.maxVisible,6);assert.ok(ambientLife.visible.length>0&&ambientLife.visible.length<=6,scene+' ambient life must stay visible and capped');
   assert.ok(ambientLife.visible.every(instance=>instance.profile===profile&&instance.asset===ambientAssets[profile]&&!ambientApi.mineCollisionAt(instance.x,instance.y)),scene+' ambient instances must stay in open, reachable cells');
+  const mineResidentBefore=new Map(ambientLife.visible.map(instance=>[instance.id,instance]));assert.ok([...mineResidentBefore.values()].every(instance=>pointDistance(instance.anchorX,instance.anchorY,instance.routeX,instance.routeY)>=20),scene+' must provide real patrol routes');let maxMineTravel=0;
+  for(let sample=0;sample<4;sample++){ambientApi.step(.45);const sampleLife=ambientApi.snapshot().ambientLife;assert.ok(sampleLife.visible.every(instance=>!ambientApi.mineCollisionAt(instance.x,instance.y)),scene+' patrol samples must remain collision-free');for(const instance of sampleLife.visible)if(mineResidentBefore.has(instance.id))maxMineTravel=Math.max(maxMineTravel,pointDistance(instance.x,instance.y,mineResidentBefore.get(instance.id).x,mineResidentBefore.get(instance.id).y))}
+  assert.ok(maxMineTravel>6,scene+' residents must visibly patrol instead of flapping in place');ambientLife=ambientApi.snapshot().ambientLife;
   ambientRuntime.drawCalls.length=0;ambientApi.renderOnce();ambientDrawCalls=ambientRuntime.drawCalls.filter(call=>call.src.includes('assets/ambient/'));assert.equal(ambientDrawCalls.length,ambientLife.visible.length);assert.ok(ambientDrawCalls.every(call=>call.src.includes(ambientAssets[profile])));ambientApi.exitMine();
 }
 storage.clear();for(const [key,value] of storageBeforeAmbient)storage.set(key,value);

@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='03600';
+  const ASSET_VERSION='03601';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -115,7 +115,7 @@
   const AMBIENT_RENDER_CONTRACT=Object.freeze({
     frameCount:AMBIENT_FRAME_COUNT,frameSize:AMBIENT_FRAME_SIZE,spriteSheetWidth:1024,spriteSheetHeight:256,decodedMemoryBudgetBytes:4194304,premiumSpriteSheets:true,trueAnimationFrames:true,deterministicPlacement:true,
     surfaceMaxVisible:AMBIENT_SURFACE_MAX_VISIBLE,mineMaxVisible:AMBIENT_MINE_MAX_VISIBLE,rareSurfaceCrossings:true,reducedMotionSafe:true,
-    collisionFree:true,gameplayNeutral:true,proceduralCreaturePrimitives:false
+    roamingRoutes:true,mineRouteSampling:true,collisionFree:true,gameplayNeutral:true,proceduralCreaturePrimitives:false
   });
   const MINE_ENTRANCE_PATHS=Object.freeze({mossMine:'assets/entrances/mossvein-entrance.png',moonMine:'assets/entrances/moonglass-entrance.png',emberMine:'assets/entrances/emberdeep-entrance.png',starMine:'assets/entrances/starfall-entrance.png',depthLamp:'assets/entrances/depth-work-lamp.png'});
   const MOONGLASS_ART={floor:null,floorPattern:null,wall:null,routeMarker:null,pocket:null,rewards:{cache:null,shrine:null},nodes:{},wallHints:{},barriers:{}};
@@ -418,8 +418,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.36.0',name:'LIVING WORLDS'};
+  const BUILD={version:'0.36.1',name:'ROAMING WILDS'};
   const PATCH_NOTES=[
+    {version:'0.36.1',date:'16 AUG 2026',title:'Roaming Wilds',items:['Ambient creatures now follow clearly visible routes instead of hovering in place.','Flying creatures patrol broad loops while Cinder Skinks scurry across the ground.','Every cave route is sampled against terrain and permanent walls before movement begins.']},
     {version:'0.36.0',date:'16 AUG 2026',title:'Living Worlds',items:['Four premium animated creatures now inhabit Mossvein, Moonglass, Emberdeep, and Starfall.','Surface trails and caves use deterministic ambient paths, with occasional biome crossings that never alter collision or progression.','Reduced Motion freezes every creature cleanly, while strict draw budgets keep mobile performance steady.']},
     {version:'0.35.11',date:'16 AUG 2026',title:'Drill Age Pacing',items:['The journey from Starforge to Deepcore now spans full expeditions through Rootwound, Prismatic, and Molten Depths.','Burrower now costs 5,000 gold, 50 Rootiron, and 5 Ambercore; Pulse costs 12,000 gold, 60 Burrowsteel, 40 Prismite, and 4 Lunacore.','Deepcore now costs 25,000 gold, 70 Phase Crystal, 50 Magmaite, 5 Furnace Heart, and 70 Infernium.']},
     {version:'0.35.10',date:'16 AUG 2026',title:'Clear Requirement',items:['The locked Voidstar entrance now says DEEPCORE DRILL REQUIRED.','The requirement can no longer be mistaken for a separate material called Deepcore.','Progression and the Deepcore Drill recipe are unchanged.']},
@@ -2724,17 +2725,24 @@
     return seededRandom((state.worldSeed^profile.seed^Math.imul(index+1,2654435761)^salt)>>>0);
   }
 
-  function ambientResident(profile,index,x,y,mine=false){
-    const random=ambientSeed(profile,index,mine?currentDepth*7919:0),phase=random()*AMBIENT_FRAME_COUNT,speed=.38+random()*.24,scale=.82+random()*.25;
-    let worldX=x,worldY=y,flip=random()>.5;
-    if(!reducedMotion){
-      const wave=time*speed+phase*1.7;
-      if(profile.flying){worldX+=Math.sin(wave)*(.8+random()*9);worldY+=Math.cos(wave*1.31)*(2+random()*7)}
-      else{worldX+=Math.sin(wave*.72)*(4+random()*8);worldY+=Math.abs(Math.sin(wave*1.44))*1.4}
-      if(profile.directional)flip=Math.cos(wave*(profile.flying?1:.72))<0;
+  function ambientSurfaceRoute(profile,index,x,y){
+    const random=ambientSeed(profile,index,31337),biome=BIOMES.find(item=>item.id===profile.key),direction=random()>.5?1:-1;
+    const distanceX=profile.flying?72+random()*54:92+random()*54,distanceY=profile.flying?(30+random()*38)*(random()>.5?1:-1):0;
+    return{routeX:clamp(x+distanceX*direction,biome.start+54,biome.end-54),routeY:clamp(y+distanceY,66,WORLD.height-66)};
+  }
+
+  function ambientResident(profile,index,x,y,mine=false,route=null){
+    const random=ambientSeed(profile,index,mine?currentDepth*7919:0),phase=random()*AMBIENT_FRAME_COUNT,speed=profile.flying?(mine?1.02+random()*.3:.64+random()*.24):(mine?1.28+random()*.38:1.08+random()*.34),scale=.82+random()*.25;
+    const path=route||ambientSurfaceRoute(profile,index,x,y),routeX=path.routeX,routeY=path.routeY,wave=time*speed+phase*1.7,routeProgress=reducedMotion?0:(1-Math.cos(wave))*.5;
+    let worldX=x+(routeX-x)*routeProgress,worldY=y+(routeY-y)*routeProgress,flip=random()>.5;
+    if(!reducedMotion&&profile.flying&&!mine){
+      const dx=routeX-x,dy=routeY-y,length=Math.max(1,Math.hypot(dx,dy)),arc=Math.sin(wave*2)*12;
+      worldX+=-dy/length*arc;worldY+=dx/length*arc;
     }
+    if(!reducedMotion&&!profile.flying&&!mine)worldY-=Math.abs(Math.sin(wave*3))*2.4;
+    if(profile.directional&&!reducedMotion)flip=(routeX-x)*Math.sin(wave)<0;
     if(mine&&!ambientMinePointOpenAt(worldX,worldY)){worldX=x;worldY=y}
-    return{id:(mine?currentScene+':'+currentDepth:profile.key)+':resident:'+index,profile:profile.key,asset:AMBIENT_PATHS[profile.key],x:worldX,y:worldY,anchorX:x,anchorY:y,frame:reducedMotion?0:Math.floor((time*profile.fps+phase)%AMBIENT_FRAME_COUNT),size:profile.size*scale,flip,event:false};
+    return{id:(mine?currentScene+':'+currentDepth:profile.key)+':resident:'+index,profile:profile.key,asset:AMBIENT_PATHS[profile.key],x:worldX,y:worldY,anchorX:x,anchorY:y,routeX,routeY,routeProgress,frame:reducedMotion?0:Math.floor((time*profile.fps+phase)%AMBIENT_FRAME_COUNT),size:profile.size*scale,flip,event:false};
   }
 
   function ambientOnScreen(instance,margin=70){
@@ -2789,6 +2797,26 @@
     return true;
   }
 
+  function ambientMineSegmentOpen(x,y,routeX,routeY){
+    const samples=Math.max(1,Math.ceil(distance(x,y,routeX,routeY)/8));
+    for(let sample=1;sample<=samples;sample++){
+      const progress=sample/samples;if(!ambientMinePointOpenAt(x+(routeX-x)*progress,y+(routeY-y)*progress))return false;
+    }
+    return true;
+  }
+
+  function ambientMineRoute(profile,id,x,y){
+    const candidates=profile.flying?
+      [[112,0],[-112,0],[0,112],[0,-112],[84,72],[-84,72],[84,-72],[-84,-72],[72,0],[-72,0],[0,72],[0,-72],[48,0],[-48,0],[0,48],[0,-48],[28,0],[-28,0],[0,28],[0,-28]]:
+      [[128,0],[-128,0],[104,0],[-104,0],[88,32],[-88,32],[88,-32],[-88,-32],[72,0],[-72,0],[48,0],[-48,0],[36,0],[-36,0],[28,0],[-28,0]];
+    const start=Math.floor(visualNoise(Math.floor(x/MINE_TILE_SIZE),Math.floor(y/MINE_TILE_SIZE),profile.seed+id)*candidates.length);
+    for(let offset=0;offset<candidates.length;offset++){
+      const vector=candidates[(start+offset)%candidates.length],routeX=x+vector[0],routeY=y+vector[1];
+      if(ambientMineSegmentOpen(x,y,routeX,routeY))return{routeX,routeY};
+    }
+    return{routeX:x,routeY:y};
+  }
+
   function mineAmbientAnchors(terrain,profile){
     const discoveryKey=terrain.caverns.map(cavern=>cavernIsDiscovered(cavern.id)?'1':'0').join('')+(terrain.depthEntrance&&state.discoveredDepthEntrances[currentScene]?'1':'0'),cacheKey=state.worldSeed+':'+profile.key+':'+currentDepth+':'+discoveryKey;
     if(terrain._ambientAnchorKey===cacheKey&&terrain._ambientAnchors)return terrain._ambientAnchors;
@@ -2803,7 +2831,9 @@
       for(const candidate of candidates){
         const x=(candidate.col+.5)*MINE_TILE_SIZE,y=(candidate.row+.5)*MINE_TILE_SIZE;
         if(!ambientMinePointOpenAt(x,y)||anchors.some(anchor=>distance(anchor.x,anchor.y,x,y)<112))continue;
-        anchors.push({id:blockRow*Math.ceil(terrain.cols/blockCells)+blockCol,x,y,score:candidate.score});break;
+        const id=blockRow*Math.ceil(terrain.cols/blockCells)+blockCol,route=ambientMineRoute(profile,id,x,y);
+        if(distance(x,y,route.routeX,route.routeY)<20)continue;
+        anchors.push({id,x,y,routeX:route.routeX,routeY:route.routeY,score:candidate.score});break;
       }
     }
     terrain._ambientAnchorKey=cacheKey;terrain._ambientAnchors=anchors;return anchors;
@@ -2813,7 +2843,7 @@
     const terrain=currentTerrain(),profile=ambientProfileForLocation();if(!terrain)return[];
     const visible=mineAmbientAnchors(terrain,profile).filter(anchor=>ambientOnScreen(anchor)&&ambientMinePointOpenAt(anchor.x,anchor.y));
     visible.sort((a,b)=>a.score-b.score);
-    return visible.slice(0,AMBIENT_MINE_MAX_VISIBLE).map(anchor=>ambientResident(profile,anchor.id,anchor.x,anchor.y,true));
+    return visible.slice(0,AMBIENT_MINE_MAX_VISIBLE).map(anchor=>ambientResident(profile,anchor.id,anchor.x,anchor.y,true,anchor));
   }
 
   function ambientVisibleInstances(){return currentScene==='surface'?surfaceAmbientInstances():mineAmbientInstances()}
@@ -2824,7 +2854,7 @@
       ...AMBIENT_RENDER_CONTRACT,assets:{...AMBIENT_PATHS},activeProfile:ambientProfileForLocation().key,
       location:currentScene==='surface'?'surface':currentScene+':'+currentDepth,reducedMotion,
       maxVisible:currentScene==='surface'?AMBIENT_SURFACE_MAX_VISIBLE:AMBIENT_MINE_MAX_VISIBLE,
-      visible:visible.map(instance=>({id:instance.id,profile:instance.profile,asset:instance.asset,x:instance.x,y:instance.y,anchorX:instance.anchorX,anchorY:instance.anchorY,frame:instance.frame,size:instance.size,flip:instance.flip,event:instance.event})),
+      visible:visible.map(instance=>({id:instance.id,profile:instance.profile,asset:instance.asset,x:instance.x,y:instance.y,anchorX:instance.anchorX,anchorY:instance.anchorY,routeX:instance.routeX,routeY:instance.routeY,routeProgress:instance.routeProgress,frame:instance.frame,size:instance.size,flip:instance.flip,event:instance.event})),
       event
     };
   }

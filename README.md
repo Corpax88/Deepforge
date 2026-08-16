@@ -1,6 +1,6 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.36.0 - Living Worlds**
+Current build: **Ever Deeper v0.36.1 - Roaming Wilds**
 
 Each biome now has its own hand-painted ambient creature: Mossvein glowmoths, Moonglass prism moths, Emberdeep cinder skinks, and Starfall astral rays. They inhabit both the surface and safe open cave cells, occasionally cross the landscape in small groups, freeze under Reduced Motion, and remain strictly visual with tight mobile draw and memory budgets.
 
