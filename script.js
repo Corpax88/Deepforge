@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='03800';
+  const ASSET_VERSION='03801';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=2.4;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -466,8 +466,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.38.0',name:'UNDERGROUND HUB'};
+  const BUILD={version:'0.38.1',name:'UNDERGROUND HUB'};
   const PATCH_NOTES=[
+    {version:'0.38.1',date:'16 AUG 2026',title:'Crownseeker Reforged',items:['Crownseeker now has a bold three-point crown, a large Crownstone core, and one dark mining beak, making its silhouette unmistakable beside the Ember Pickaxe.','This is a visual reforge only; its stats, recipe, and progression are unchanged.']},
     {version:'0.38.0',date:'16 AUG 2026',title:'Underground Hub',items:['Conquering Voidstar now unlocks a permanent Underground Hub and a new lift in Starfall.','The safe Hub has a touch-first build mode: drag to place stone wall panels, add gold-powered lamps, place functional storage, or remove everything without losing materials.','Hub construction, storage contents, exact placement, and your full expedition persist with no prestige reset. The Deep elevator is installed but remains offline for the next phase.']},
     {version:'0.37.5',date:'16 AUG 2026',title:'Heat Streak',items:['Ember Mastery 5 now unlocks Heat Streak.','Holding Mine through a continuous run gradually accelerates pickaxe mining up to 1.30x speed; releasing Mine resets the bonus.','A one-time unlock tutorial explains the new ability as soon as the final Ember rank is reforged.']},
     {version:'0.37.4',date:'16 AUG 2026',title:'Aligned Gates',items:['All three world gates now use new premium assets painted in the same high three-quarter perspective as their biome cliffs.','Gate structures run north-to-south with the wall while the passage reads clearly from west to east.','The old front-facing silhouette, duplicate canvas light seam, and pasted-on shadow are gone.']},

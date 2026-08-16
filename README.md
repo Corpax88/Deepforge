@@ -1,6 +1,6 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.38.0 - Underground Hub**
+Current build: **Ever Deeper v0.38.1 - Crownseeker Reforged**
 
 Completing Starfall and extracting the first Singularity Core now unlocks a persistent Underground Hub beneath the final world. The Hub is a safe, non-mineable building scene with touch-first wall painting, removable lamps that shape the room lighting, real storage chests, a lift back to Starfall, and an offline elevator reserved for The Deep. Hub construction uses existing Stone and Gold, survives reloads, and never resets expedition progress.
 
@@ -136,7 +136,7 @@ Open `http://127.0.0.1:4180` on the same computer.
 - Five Ember Mastery ranks extend progression after the final pickaxe. Each rank needs gold plus a lifetime Sunslag milestone, then grants higher power, swing speed, shell penetration, precision frequency, and bonus yield.
 - Damage left over after breaking an armored shell now carries into the ore core, so stronger pickaxes never waste their extra power at the shell boundary.
 - Ember Mastery 5 opens the Starfall Master Seal and reveals Starfall Depths, armored Astralite, rare Crownstone, and the Starfall Lattice.
-- The Starforge consumes Astralite and Crownstone to unlock three swappable endgame styles: the heavy Astral Crusher, rapid Comet Edge, and high-yield Crownseeker.
+- The Starforge consumes Astralite and Crownstone to unlock three swappable endgame styles: the heavy Astral Crusher, rapid Comet Edge, and high-yield Crownseeker. Crownseeker's three-point Crownstone crest and single mining beak give it a distinct silhouette from the Ember Pickaxe.
 - Three visible rock-damage stages and optional timing-based precision strikes.
 - Stronger mining feedback with staged terrain cracks, brief impact weight, material-tuned audio, optional haptics, escalating vein feedback, and discovery/jackpot bursts, without full-screen shake or flashes.
 - A five-step Mining Focus streak for accurate active play.
