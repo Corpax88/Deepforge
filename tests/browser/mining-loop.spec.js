@@ -1386,9 +1386,10 @@ test('settings opens first and keeps audio choices separate from stats',async({p
   await expect(page.locator('#menuTitle')).toHaveText('Patch Notes');
   await expect(page.locator('#patchNotesPanel')).toBeVisible();
   const patchNotes=page.locator('.patch-note');
-  await expect(patchNotes).toHaveCount(20);
+  await expect(patchNotes).toHaveCount(21);
   await expect(page.locator('.patch-note.latest')).toContainText('v0.36.0');
-  await expect(page.locator('.patch-note.latest')).toContainText('70 Phase Crystal');
+  await expect(page.locator('.patch-note.latest')).toContainText('Four premium animated creatures');
+  await expect(patchNotes.filter({hasText:'v0.35.11'})).toContainText('70 Phase Crystal');
   await expect(patchNotes.filter({hasText:'v0.35.10'})).toContainText('DEEPCORE DRILL REQUIRED');
   await expect(patchNotes.filter({hasText:'v0.35.9'})).toContainText('Eight unreachable Astralite nodes');
   await expect(patchNotes.filter({hasText:'v0.35.8'})).toContainText('30, 40, 50, 60, and 70');
