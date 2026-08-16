@@ -57,6 +57,8 @@ const gateRendererSource=source.match(/function drawGateAt[\s\S]*?function drawV
 assert.match(gateRendererSource,/globalCompositeOperation='screen'[\s\S]*brightness\(2\.35\)/,'gate activation must flash the premium silhouette');
 assert.match(gateRendererSource,/pose\.sink\*238/,'gate activation must sink the full-height asset below ground');
 assert.doesNotMatch(gateRendererSource,/ctx\.scale\(/,'world gates must never be squashed during activation');
+assert.doesNotMatch(gateRendererSource,/ellipse\(0,101/,'premium gates must not receive a procedural canvas shadow');
+assert.doesNotMatch(gateRendererSource,/moveTo\(0,-48\)/,'premium gates must own their energy barrier without a duplicate canvas seam');
 assert.match(source,/drawMineGround\(\);drawMineTerrain\(\);drawWorldLifeDrift\(\);drawAmbientLife\(\);drawMineWalls\(\)/,'world life must render beneath permanent walls');
 assert.match(source,/drawEffects\(false\)[\s\S]*drawMineLighting\(\)/,'terrain responses must remain beneath mine lighting');
 assert.match(source,/function drawWorldLifeDrift\([\s\S]*ctx\.drawImage\(image,instance\.frame\*WORLD_LIFE_FRAME_SIZE/);assert.match(source,/function drawTerrainResponses\([\s\S]*ctx\.drawImage\(image,render\.frame\*WORLD_LIFE_FRAME_SIZE/);
@@ -76,17 +78,17 @@ assert.doesNotMatch(pickupBatchSource,/floaters\.push/,'routine pickups must sta
 assert.match(source,/WORLD_LIFE_ART\[response\.kind==='footstep'\?'response':'impact'\]/,'mining must use dedicated impact art while footsteps retain ground responses');
 assert.doesNotMatch(effectRendererSource,/particle|ring|ctx\.arc|ctx\.fillRect/,'the generic effect pass must not render procedural shapes');
 assert.match(effectRendererSource,/STARTER_ART\.drops\[key\]/);assert.match(effectRendererSource,/ctx\.drawImage\(image,bounds\.x,bounds\.y,bounds\.w,bounds\.h/,'sale trails must render premium drop PNGs');
-assert.equal(latest.version,'03703');
+assert.equal(latest.version,'03704');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=03703/);
-assert.match(html,/game-data\.js\?v=03703/);
-assert.match(html,/script\.js\?v=03703/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=03703/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=03703/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03703/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03703/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=03703"/);
+assert.match(html,/style\.css\?v=03704/);
+assert.match(html,/game-data\.js\?v=03704/);
+assert.match(html,/script\.js\?v=03704/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=03704/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=03704/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03704/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03704/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=03704"/);
 assert.match(source,/const EMBER_PICKAXE_ORE_REQUIRED=100;/);
 assert.match(source,/const EMBER_MASTERY_SUNSLAG_COSTS=Object\.freeze\(\[0,30,40,50,60,70\]\);/);
 assert.match(source,/const STARFORGE_MATERIAL_REQUIRED=200;/);
@@ -168,6 +170,7 @@ const pocketAsset=fs.readFileSync(require('node:path').join(__dirname,'..','asse
 assert.equal(pocketAsset.toString('ascii',1,4),'PNG');assert.ok([4,6].includes(pocketAsset[25])||pocketAsset.includes(Buffer.from('tRNS')),'crystal pocket must preserve alpha');assert.ok(pocketAsset.length<250000,'crystal pocket exceeds mobile asset budget');
 const starterProductionAssets=['assets/surface/assay-station.png','assets/surface/forge-station.png','assets/surface/storage-chest.png','assets/surface/wayfarer-shop.png','assets/surface/treasure-cache-closed.png','assets/surface/treasure-cache-open.png','assets/surface/moonglass-gate.png','assets/surface/mossvein-mine-path.png','assets/mossvein/buried-cache.png','assets/mossvein/mining-rush-shrine.png','assets/drops/stone-drop.png','assets/drops/copper-drop.png','assets/drops/gold-drop.png'];
 for(const relative of starterProductionAssets){const png=fs.readFileSync(require('node:path').join(__dirname,'..',relative));assert.equal(png.toString('ascii',1,4),'PNG');assert.ok([4,6].includes(png[25])||png.includes(Buffer.from('tRNS')),relative+' must preserve transparency');assert.ok(png.length<180000,relative+' exceeds mobile asset budget')}
+assertPng('assets/surface/moonglass-gate.png',475,512,{maxBytes:100000});
 const completeDropPaths={stone:'assets/drops/stone-drop.png',copper:'assets/drops/copper-drop.png',gold:'assets/drops/gold-drop.png',moonglass:'assets/drops/moonglass-drop.png',starshard:'assets/drops/starshard-drop.png',emberstone:'assets/drops/emberstone-drop.png',sunslag:'assets/drops/sunslag-drop.png',astralite:'assets/drops/astralite-drop.png',crownstone:'assets/drops/crownstone-drop.png',deepstone:'assets/drops/deepstone-drop.png',rootiron:'assets/drops/rootiron-drop.png',ambercore:'assets/drops/ambercore-drop.png',prismite:'assets/drops/prismite-drop.png',lunacore:'assets/drops/lunacore-drop.png',magmaite:'assets/drops/magmaite-drop.png',furnaceheart:'assets/drops/furnaceheart-drop.png',voidglass:'assets/drops/voidglass-drop.png',singularity:'assets/drops/singularity-drop.png',burrowsteel:'assets/drops/burrowsteel-drop.png',phasecrystal:'assets/drops/phasecrystal-drop.png',infernium:'assets/drops/infernium-drop.png'};
 for(const [type,relative] of Object.entries(completeDropPaths)){const dimensions=type==='stone'?[256,211]:type==='copper'?[256,239]:type==='gold'?[256,194]:[256,256];assertPng(relative,dimensions[0],dimensions[1],{maxBytes:180000})}
 assertPng('assets/surface/mossvein-mine-path.png',768,341,{maxBytes:100000});
@@ -185,7 +188,7 @@ const moonglassSurfaceAssets={
   'assets/surface/crystal-cache-open.png':[384,350,{maxBytes:120000}],
   'assets/surface/moonglass-reliquary-closed.png':[384,334,{maxBytes:120000}],
   'assets/surface/moonglass-reliquary-open.png':[384,350,{maxBytes:120000}],
-  'assets/surface/emberdeep-seal.png':[512,470,{maxBytes:180000}],
+  'assets/surface/emberdeep-seal.png':[330,512,{maxBytes:100000}],
   'assets/entrances/moonglass-entrance.png':[512,466,{maxBytes:180000}]
 };
 const moonglassMineAssets={
@@ -283,7 +286,7 @@ const starfallSurfaceAssets={
   'assets/surface/starfall-shard-clusters.png':[512,256,{maxBytes:120000}],
   'assets/surface/starfall-lattice-bed.png':[640,280,{maxBytes:120000}],
   'assets/surface/starfall-mine-path.png':[768,341,{maxBytes:180000}],
-  'assets/surface/starfall-seal.png':[512,470,{maxBytes:180000}],
+  'assets/surface/starfall-seal.png':[376,512,{maxBytes:100000}],
   'assets/surface/starfall-seal-mark.png':[512,341,{maxBytes:120000}],
   'assets/entrances/starfall-entrance.png':[512,466,{maxBytes:180000}],
   'assets/surface/astral-cache-closed.png':[384,334,{maxBytes:140000}],
@@ -384,16 +387,16 @@ const expectedSnapshotKeys=[
 ];
 assert.deepEqual(Object.keys(api).sort(),expectedApiKeys,'test API contract changed unexpectedly');
 assert.deepEqual(Object.keys(api.snapshot()).sort(),expectedSnapshotKeys,'snapshot contract changed unexpectedly');
-assert.equal(api.snapshot().build.version,'0.37.3');
-assert.equal(api.snapshot().build.name,'GATE AWAKENING');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.37.3');
-assert.equal(api.snapshot().assetVersion,'03703');
+assert.equal(api.snapshot().build.version,'0.37.4');
+assert.equal(api.snapshot().build.name,'ALIGNED GATES');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.37.4');
+assert.equal(api.snapshot().assetVersion,'03704');
 const patchNotes=api.snapshot().patchNotes,patchNote=version=>patchNotes.find(note=>note.version===version);
-assert.equal(patchNotes.length,29);assert.match(patchNote('0.37.3').items.join(' '),/premium silhouette/);assert.match(patchNote('0.37.3').items.join(' '),/physically locked/);assert.match(patchNote('0.37.2').items.join(' '),/dedicated premium mining sheets/);assert.match(patchNote('0.37.2').items.join(' '),/Routine damage, shell, tunnel, pickup, and partial-vein text/);assert.match(patchNote('0.37.1').items.join(' '),/old canvas rings and procedural debris are gone/);assert.match(patchNote('0.37.1').items.join(' '),/real premium drop assets/);assert.match(patchNote('0.37.0').items.join(' '),/premium environmental drift/);assert.match(patchNote('0.37.0').items.join(' '),/Footsteps disturb the ground/);assert.match(patchNote('0.36.4').items.join(' '),/flee continuously/);assert.match(patchNote('0.36.3').items.join(' '),/keep their render slot/);assert.match(patchNote('0.36.2').items.join(' '),/pause and rest naturally/);assert.match(patchNote('0.36.2').items.join(' '),/Nearby mining startles residents/);assert.match(patchNote('0.36.1').items.join(' '),/clearly visible routes/);assert.match(patchNote('0.36.1').items.join(' '),/sampled against terrain/);assert.match(patchNote('0.36.0').items.join(' '),/Four premium animated creatures/);assert.match(patchNote('0.36.0').items.join(' '),/Reduced Motion/);assert.match(patchNote('0.35.11').items.join(' '),/70 Phase Crystal/);assert.match(patchNote('0.35.10').items.join(' '),/DEEPCORE DRILL REQUIRED/);assert.match(patchNote('0.35.9').items.join(' '),/Eight unreachable Astralite nodes/);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
+assert.equal(patchNotes.length,30);assert.match(patchNote('0.37.4').items.join(' '),/high three-quarter perspective/);assert.match(patchNote('0.37.4').items.join(' '),/west to east/);assert.match(patchNote('0.37.3').items.join(' '),/premium silhouette/);assert.match(patchNote('0.37.3').items.join(' '),/physically locked/);assert.match(patchNote('0.37.2').items.join(' '),/dedicated premium mining sheets/);assert.match(patchNote('0.37.2').items.join(' '),/Routine damage, shell, tunnel, pickup, and partial-vein text/);assert.match(patchNote('0.37.1').items.join(' '),/old canvas rings and procedural debris are gone/);assert.match(patchNote('0.37.1').items.join(' '),/real premium drop assets/);assert.match(patchNote('0.37.0').items.join(' '),/premium environmental drift/);assert.match(patchNote('0.37.0').items.join(' '),/Footsteps disturb the ground/);assert.match(patchNote('0.36.4').items.join(' '),/flee continuously/);assert.match(patchNote('0.36.3').items.join(' '),/keep their render slot/);assert.match(patchNote('0.36.2').items.join(' '),/pause and rest naturally/);assert.match(patchNote('0.36.2').items.join(' '),/Nearby mining startles residents/);assert.match(patchNote('0.36.1').items.join(' '),/clearly visible routes/);assert.match(patchNote('0.36.1').items.join(' '),/sampled against terrain/);assert.match(patchNote('0.36.0').items.join(' '),/Four premium animated creatures/);assert.match(patchNote('0.36.0').items.join(' '),/Reduced Motion/);assert.match(patchNote('0.35.11').items.join(' '),/70 Phase Crystal/);assert.match(patchNote('0.35.10').items.join(' '),/DEEPCORE DRILL REQUIRED/);assert.match(patchNote('0.35.9').items.join(' '),/Eight unreachable Astralite nodes/);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=03703',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=03704',volume:1,loop:true,paused:false}));
 api.dismissStartMenu();
 const viewportElement=runtime.elements.get('viewport'),canvasElement=runtime.elements.get('gameCanvas'),joystickElement=runtime.elements.get('joystick'),mineElement=runtime.elements.get('mineButton');
 viewportElement.dispatchEvent({type:'pointerdown',target:canvasElement,pointerId:301,button:0,clientX:120,clientY:260});
@@ -417,7 +420,7 @@ assert.equal(JSON.stringify(api.snapshot().surfaceAssetRendering),JSON.stringify
 assert.equal(JSON.stringify(api.snapshot().starterRendering),JSON.stringify({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:completeDropPaths,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false}));
 assert.equal(JSON.stringify({...api.snapshot().resourceRendering,paths:undefined,bounds:undefined}),JSON.stringify({completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,objectiveIcons:true,inventoryIcons:true,storageIcons:true,recipeIcons:true,ledgerIcons:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false}));
 assert.equal(JSON.stringify(api.snapshot().resourceRendering.paths),JSON.stringify(completeDropPaths));
-assert.equal(JSON.stringify(api.snapshot().starterGateRendering),JSON.stringify({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepSealMark:'assets/surface/emberdeep-seal-mark.png',starfallSeal:'assets/surface/starfall-seal.png',starfallSealMark:'assets/surface/starfall-seal-mark.png',renderBounds:{maxWidth:260,maxHeight:238,bottom:110},markRenderWidth:300,markSourceBounds:{moonglass:{x:14,y:55,w:484,h:222},emberdeep:{x:28,y:6,w:456,h:329},starfall:{x:34,y:54,w:449,h:231}},collisionFollowsPaintedCliff:true,integratedBoundaryScale:true,animatedMoonglassTransition:true,animatedEmberdeepTransition:true,animatedStarfallTransition:true,activationSequence:['flash','shake','sink'],assetSilhouetteFlash:true,preSinkShake:true,unscaledGroundSink:true,collisionLocksUntilSunk:true,reducedMotionSafe:true,openWorldGatesRemoved:true,legacyStarterGate:false}));
+assert.equal(JSON.stringify(api.snapshot().starterGateRendering),JSON.stringify({moonglassGate:'assets/surface/moonglass-gate.png',moonglassGateMark:'assets/surface/moonglass-gate-mark.png',emberdeepSeal:'assets/surface/emberdeep-seal.png',emberdeepSealMark:'assets/surface/emberdeep-seal-mark.png',starfallSeal:'assets/surface/starfall-seal.png',starfallSealMark:'assets/surface/starfall-seal-mark.png',renderBounds:{maxWidth:260,maxHeight:238,bottom:110},markRenderWidth:300,markSourceBounds:{moonglass:{x:14,y:55,w:484,h:222},emberdeep:{x:28,y:6,w:456,h:329},starfall:{x:34,y:54,w:449,h:231}},collisionFollowsPaintedCliff:true,integratedBoundaryScale:true,biomeAlignedPerspective:true,northSouthStructure:true,westEastPassage:true,premiumEnergyBarrier:true,duplicateCanvasSeam:false,proceduralGateShadow:false,animatedMoonglassTransition:true,animatedEmberdeepTransition:true,animatedStarfallTransition:true,activationSequence:['flash','shake','sink'],assetSilhouetteFlash:true,preSinkShake:true,unscaledGroundSink:true,collisionLocksUntilSunk:true,reducedMotionSafe:true,openWorldGatesRemoved:true,legacyStarterGate:false}));
 const storageBeforeBoundaries=new Map(storage),boundaryRuntime=createRuntime(),boundaryApi=boundaryRuntime.api;boundaryApi.dismissStartMenu();
 for(const [x,asset] of [[1110,'boundary-mossvein-moonglass.png'],[2240,'boundary-moonglass-emberdeep.png'],[3360,'boundary-emberdeep-starfall.png']]){boundaryRuntime.drawCalls.length=0;boundaryApi.setPosition(x,650);boundaryApi.renderOnce();assert.ok(boundaryRuntime.drawCalls.some(call=>call.src.includes(asset)),asset+' must render at its world gate')}
 boundaryApi.setPosition(900,650);boundaryApi.setMoveVector(1,0);boundaryApi.step(.6);assert.ok(boundaryApi.snapshot().player.x<=950,'locked Moonglass gate must stop outside its visual footprint');
