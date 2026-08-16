@@ -1,6 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.37.0 - World in Motion**
+Current build: **Ever Deeper v0.37.1 - Premium Impacts**
+
+Routine mining, discoveries, upgrades, gates, pickups, and chest openings no longer add generic canvas rings or procedural debris over the production art. Pickaxe and drill impacts now rely on the biome-specific premium response sheets, while sold materials travel to the exchange as their real drop assets. Gameplay-critical targeting, health bars, timed-vein indicators, lighting, and readable text remain intact.
 
 The world now breathes around the player through eight biome-specific premium animation sheets: slow Mossvein spores, Moonglass wisps, Emberdeep ash, and Starfall void motes, plus matching reactions for footsteps, pickaxe hits, drill impacts, and breaks. The layer stays world-anchored beneath mine lighting, clears cleanly between scenes, freezes under Reduced Motion, and is capped for mobile rendering and decoded memory.
 

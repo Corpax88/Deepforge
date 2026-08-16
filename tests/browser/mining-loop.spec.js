@@ -1322,8 +1322,8 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
   await freshGame(page);
   await page.evaluate(()=>window.__everDeeperTest.enterMine('mossMine'));
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.37.0',name:'WORLD IN MOTION'});
-  expect(snapshot.assetVersion).toBe('03700');
+  expect(snapshot.build).toEqual({version:'0.37.1',name:'PREMIUM IMPACTS'});
+  expect(snapshot.assetVersion).toBe('03701');
   expect(snapshot.entranceAssetRendering).toEqual({mossMine:true,moonMine:true,emberMine:true,starMine:true});
   expect(snapshot.surfaceAssetRendering).toEqual({mossveinGround:true,mainRoad:{mossvein:'assets/surface/road-mossvein.png',moonglass:'assets/surface/road-moonglass.png',emberdeep:'assets/surface/road-emberdeep.png',starfall:'assets/surface/road-starfall.png'},seamlessBiomeRoad:true,roadCrossfadeWidth:80,mossveinMineApproach:'assets/surface/mossvein-mine-path.png',mossveinMineApproachBounds:{x:125,y:728,w:700,h:200},mossveinMinePosition:{x:180,y:830},branchUnderMainRoad:true,naturalCaveOverlap:true,naturalRoadOverlap:true,legacyBakedMainRoad:false,legacyMossveinGrid:false,legacyMossveinPath:false,legacyMossveinDecorations:false});
   expect(snapshot.starterRendering).toEqual({sellStation:'assets/surface/assay-station.png',forgeStation:'assets/surface/forge-station.png',storageChest:'assets/surface/storage-chest.png',wayfarerShop:'assets/surface/wayfarer-shop.png',treasureClosed:'assets/surface/treasure-cache-closed.png',treasureOpen:'assets/surface/treasure-cache-open.png',groundDrops:COMPLETE_DROP_PATHS,legacyCanvasStations:false,legacyMossveinChests:false,legacyStarterDrops:false});
@@ -1347,18 +1347,18 @@ test('expanded mine depths use lazy terrain chunks and a following camera',async
 
 test('the exact build version is always visible in the game HUD',async({page})=>{
   await freshGame(page);
-  await expect(page.locator('#buildVersion')).toHaveText('v0.37.0');
+  await expect(page.locator('#buildVersion')).toHaveText('v0.37.1');
   await expect(page.locator('.brand-logo')).toHaveAttribute('alt','Ever Deeper');
   await expect(page.locator('.brand-logo')).toHaveJSProperty('complete',true);
   await page.locator('#menuButton').click();
-  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.37.0 · WORLD IN MOTION');
+  await expect(page.locator('#menuBuildVersion')).toHaveText('EVER DEEPER v0.37.1 · PREMIUM IMPACTS');
 });
 
 test('premium start menu owns continue, new game, achievements, and settings',async({page})=>{
   await page.goto('/');await page.waitForFunction(()=>window.__everDeeperTest);
   await expect(page.locator('#startScreen')).toBeVisible();
   await expect(page.locator('#continueButton')).toBeDisabled();
-  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=03700');
+  await expect(page.locator('.start-logo')).toHaveAttribute('src','assets/branding/ever-deeper-logo.png?v=03701');
   await page.locator('#startAchievementsButton').click();
   await expect(page.locator('#achievementsPanel')).toBeVisible();
   await expect(page.locator('.menu-tabs')).toBeHidden();
@@ -1386,8 +1386,9 @@ test('settings opens first and keeps audio choices separate from stats',async({p
   await expect(page.locator('#menuTitle')).toHaveText('Patch Notes');
   await expect(page.locator('#patchNotesPanel')).toBeVisible();
   const patchNotes=page.locator('.patch-note');
-  await expect(patchNotes).toHaveCount(26);
-  await expect(page.locator('.patch-note.latest')).toContainText('v0.37.0');
+  await expect(patchNotes).toHaveCount(27);
+  await expect(page.locator('.patch-note.latest')).toContainText('v0.37.1');
+  await expect(page.locator('.patch-note.latest')).toContainText('old canvas rings and procedural debris are gone');
   await expect(page.locator('.patch-note.latest')).toContainText('premium environmental drift');
   await expect(page.locator('.patch-note.latest')).toContainText('Footsteps disturb the ground');
   await expect(patchNotes.filter({has:page.locator('header span',{hasText:/^v0\.35\.11$/})})).toContainText('70 Phase Crystal');
@@ -1424,7 +1425,7 @@ test('one text-free visual guide leads to the next action and fades nearby',asyn
   let snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot.guide).toEqual(expect.objectContaining({kind:'rock',scene:'surface',visible:true}));
   expect(snapshot.markerStyle.bonusVeinRings).toBe(false);
-  expect(snapshot.miningFeedbackRendering).toEqual({routineImpactRings:false,routineBreakRings:false,drillVibration:true,drillVibrationMaxOffset:2.05,cameraShake:false});
+  expect(snapshot.miningFeedbackRendering).toEqual({routineImpactRings:false,routineBreakRings:false,routineImpactParticles:false,routineBreakParticles:false,discoveryCanvasBursts:false,upgradeCanvasRings:false,premiumTerrainResponses:true,premiumSaleAssets:true,drillVibration:true,drillVibrationMaxOffset:2.05,cameraShake:false});
   await page.evaluate(guide=>window.__everDeeperTest.setPosition(guide.x,guide.y),snapshot.guide);
   snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot.guide.visible).toBe(false);
@@ -1536,7 +1537,7 @@ test('terrain strikes produce weighted mining feedback without changing targetin
   await page.evaluate(()=>window.__everDeeperTest.mineOnce());
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
   expect(snapshot.feedback.terrainHitIndex).toBe(target);
-  expect(snapshot.feedback.particleCount).toBeGreaterThan(0);
+  expect(snapshot.feedback.particleCount).toBe(0);
   expect(snapshot.feedback.shake).toBe(0);
   expect(snapshot.feedback.flash).toBe(0);
   expect(snapshot.feedback.hitStop).toBeGreaterThan(0);
@@ -1551,7 +1552,7 @@ test('connected discovery veins build to a clear jackpot finish',async({page})=>
   const feedback=await page.evaluate(()=>window.__everDeeperTest.snapshot().feedback);
   expect(feedback.lastDepositBeat).toEqual({id:deposit.id,type:deposit.type,broken:deposit.size,total:deposit.size,jackpot:true});
   expect(feedback.floaters).toContain('VEIN CLEARED!');
-  expect(feedback.particleCount).toBeGreaterThanOrEqual(28);
+  expect(feedback.particleCount).toBe(0);
 });
 
 test('held movement targets the first blocking terrain cell instead of skipping deeper',async({page})=>{
@@ -1587,8 +1588,7 @@ test('terrain hits trigger bounded satisfaction feedback without changing target
   expect(after.feedback.shake).toBe(0);
   expect(after.feedback.flash).toBe(0);
   expect(after.feedback.terrainHitIndex).toBe(target.index);
-  expect(after.feedback.particleCount).toBeGreaterThan(0);
-  expect(after.feedback.particleCount).toBeLessThanOrEqual(260);
+  expect(after.feedback.particleCount).toBe(0);
   expect(after.mine.terrain.target.index).toBe(target.index);
 });
 
@@ -1649,7 +1649,7 @@ test('breaking into a hidden chamber reveals its rare find and persists discover
   expect(snapshot.mine.discovery.caverns.find(item=>item.id===cavern.id).discovered).toBe(true);
   expect(snapshot.rocks.find(rock=>rock.id===rareFind.id).exposed).toBe(true);
   expect(snapshot.feedback.lastDiscovery).toMatchObject({type:rareFind.type,rare:true});
-  expect(snapshot.feedback.particleCount).toBeLessThanOrEqual(260);
+  expect(snapshot.feedback.particleCount).toBe(0);
 
   await page.reload();
   await page.waitForFunction(()=>window.__everDeeperTest);
@@ -1759,11 +1759,11 @@ test('real resource art is shared by goals, bags, recipes, stats and world drops
   expect(contract).toMatchObject({paths:COMPLETE_DROP_PATHS,completeResourceSet:true,sharedWorldAndUiAssets:true,transparentBoundsNormalized:true,nodeAssetCoverage:true,croppedGroundDrops:true,legacyCanvasResourceSymbols:false,legacyCanvasResourceDrops:false});
 });
 
-test('v0.37.0 exposes the complete production contracts and premium walk renderer',async({page})=>{
+test('v0.37.1 exposes the complete production contracts and premium walk renderer',async({page})=>{
   await freshGame(page);
   const snapshot=await page.evaluate(()=>window.__everDeeperTest.snapshot());
-  expect(snapshot.build).toEqual({version:'0.37.0',name:'WORLD IN MOTION'});
-  expect(snapshot.assetVersion).toBe('03700');
+  expect(snapshot.build).toEqual({version:'0.37.1',name:'PREMIUM IMPACTS'});
+  expect(snapshot.assetVersion).toBe('03701');
   expect(snapshot.surfaceMoonglassRendering).toEqual(SURFACE_MOONGLASS_RENDERING);
   expect(snapshot.surfaceEmberdeepRendering).toEqual(SURFACE_EMBERDEEP_RENDERING);
   expect(snapshot.moonglassRendering).toEqual(MOONGLASS_RENDERING);
