@@ -4,7 +4,7 @@
   const canvas=document.getElementById('gameCanvas');
   const game=document.getElementById('game');
   const ctx=canvas.getContext('2d',{alpha:false});
-  const ASSET_VERSION='03602';
+  const ASSET_VERSION='03603';
   const MOONGLASS_SURFACE_BLEND=24;
   const MOONGLASS_GATE_TRANSITION_DURATION=1.8;
   const EMBERDEEP_SURFACE_BLEND=24;
@@ -418,8 +418,9 @@
   const buyChestCost=document.getElementById('buyChestCost');
   const baseModuleList=document.getElementById('baseModuleList');
 
-  const BUILD={version:'0.36.2',name:'WILD INSTINCTS'};
+  const BUILD={version:'0.36.3',name:'STEADY WILDLIFE'};
   const PATCH_NOTES=[
+    {version:'0.36.3',date:'16 AUG 2026',title:'Steady Wildlife',items:['Mine residents closest to the player now keep their render slot as the camera moves.','Approaching an ambient creature can no longer make it disappear and reappear.','Creature limits and collision-safe routes remain unchanged for mobile performance.']},
     {version:'0.36.2',date:'16 AUG 2026',title:'Wild Instincts',items:['Ambient creatures now pause and rest naturally at both ends of their routes.','Nearby mining startles residents into a quick retreat along their safe patrol path.','Resting creatures stop their animation while startled creatures move and flap faster without entering walls.']},
     {version:'0.36.1',date:'16 AUG 2026',title:'Roaming Wilds',items:['Ambient creatures now follow clearly visible routes instead of hovering in place.','Flying creatures patrol broad loops while Cinder Skinks scurry across the ground.','Every cave route is sampled against terrain and permanent walls before movement begins.']},
     {version:'0.36.0',date:'16 AUG 2026',title:'Living Worlds',items:['Four premium animated creatures now inhabit Mossvein, Moonglass, Emberdeep, and Starfall.','Surface trails and caves use deterministic ambient paths, with occasional biome crossings that never alter collision or progression.','Reduced Motion freezes every creature cleanly, while strict draw budgets keep mobile performance steady.']},
@@ -2860,9 +2861,12 @@
 
   function mineAmbientInstances(){
     const terrain=currentTerrain(),profile=ambientProfileForLocation();if(!terrain)return[];
-    const visible=mineAmbientAnchors(terrain,profile).filter(anchor=>ambientOnScreen(anchor)&&ambientMinePointOpenAt(anchor.x,anchor.y));
-    visible.sort((a,b)=>a.score-b.score);
-    return visible.slice(0,AMBIENT_MINE_MAX_VISIBLE).map(anchor=>ambientResident(profile,anchor.id,anchor.x,anchor.y,true,anchor));
+    const visible=mineAmbientAnchors(terrain,profile)
+      .filter(anchor=>ambientOnScreen(anchor,150)&&ambientMinePointOpenAt(anchor.x,anchor.y))
+      .map(anchor=>({anchor,instance:ambientResident(profile,anchor.id,anchor.x,anchor.y,true,anchor)}))
+      .filter(candidate=>ambientOnScreen(candidate.instance,90));
+    visible.sort((a,b)=>distance(a.instance.x,a.instance.y,player.x,player.y)-distance(b.instance.x,b.instance.y,player.x,player.y)||a.anchor.score-b.anchor.score);
+    return visible.slice(0,AMBIENT_MINE_MAX_VISIBLE).map(candidate=>candidate.instance);
   }
 
   function ambientVisibleInstances(){return currentScene==='surface'?surfaceAmbientInstances():mineAmbientInstances()}

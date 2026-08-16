@@ -57,17 +57,17 @@ assert.match(source,/function playPickaxeTink\(/);assert.match(source,/if\(curre
 assert.match(source,/if\(!rock&&!terrainTarget\)\{if\(manualPress\)sound\('empty'\)/,'held mining misses must stay silent after the initial manual press');
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'03602');
+assert.equal(latest.version,'03603');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=03602/);
-assert.match(html,/game-data\.js\?v=03602/);
-assert.match(html,/script\.js\?v=03602/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=03602/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=03602/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03602/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03602/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=03602"/);
+assert.match(html,/style\.css\?v=03603/);
+assert.match(html,/game-data\.js\?v=03603/);
+assert.match(html,/script\.js\?v=03603/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=03603/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=03603/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03603/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03603/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=03603"/);
 assert.match(source,/const EMBER_PICKAXE_ORE_REQUIRED=100;/);
 assert.match(source,/const EMBER_MASTERY_SUNSLAG_COSTS=Object\.freeze\(\[0,30,40,50,60,70\]\);/);
 assert.match(source,/const STARFORGE_MATERIAL_REQUIRED=200;/);
@@ -356,16 +356,16 @@ const expectedSnapshotKeys=[
 ];
 assert.deepEqual(Object.keys(api).sort(),expectedApiKeys,'test API contract changed unexpectedly');
 assert.deepEqual(Object.keys(api.snapshot()).sort(),expectedSnapshotKeys,'snapshot contract changed unexpectedly');
-assert.equal(api.snapshot().build.version,'0.36.2');
-assert.equal(api.snapshot().build.name,'WILD INSTINCTS');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.36.2');
-assert.equal(api.snapshot().assetVersion,'03602');
+assert.equal(api.snapshot().build.version,'0.36.3');
+assert.equal(api.snapshot().build.name,'STEADY WILDLIFE');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.36.3');
+assert.equal(api.snapshot().assetVersion,'03603');
 const patchNotes=api.snapshot().patchNotes,patchNote=version=>patchNotes.find(note=>note.version===version);
-assert.equal(patchNotes.length,23);assert.match(patchNote('0.36.2').items.join(' '),/pause and rest naturally/);assert.match(patchNote('0.36.2').items.join(' '),/Nearby mining startles residents/);assert.match(patchNote('0.36.1').items.join(' '),/clearly visible routes/);assert.match(patchNote('0.36.1').items.join(' '),/sampled against terrain/);assert.match(patchNote('0.36.0').items.join(' '),/Four premium animated creatures/);assert.match(patchNote('0.36.0').items.join(' '),/Reduced Motion/);assert.match(patchNote('0.35.11').items.join(' '),/70 Phase Crystal/);assert.match(patchNote('0.35.10').items.join(' '),/DEEPCORE DRILL REQUIRED/);assert.match(patchNote('0.35.9').items.join(' '),/Eight unreachable Astralite nodes/);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
+assert.equal(patchNotes.length,24);assert.match(patchNote('0.36.3').items.join(' '),/keep their render slot/);assert.match(patchNote('0.36.2').items.join(' '),/pause and rest naturally/);assert.match(patchNote('0.36.2').items.join(' '),/Nearby mining startles residents/);assert.match(patchNote('0.36.1').items.join(' '),/clearly visible routes/);assert.match(patchNote('0.36.1').items.join(' '),/sampled against terrain/);assert.match(patchNote('0.36.0').items.join(' '),/Four premium animated creatures/);assert.match(patchNote('0.36.0').items.join(' '),/Reduced Motion/);assert.match(patchNote('0.35.11').items.join(' '),/70 Phase Crystal/);assert.match(patchNote('0.35.10').items.join(' '),/DEEPCORE DRILL REQUIRED/);assert.match(patchNote('0.35.9').items.join(' '),/Eight unreachable Astralite nodes/);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=03602',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=03603',volume:1,loop:true,paused:false}));
 api.dismissStartMenu();
 const viewportElement=runtime.elements.get('viewport'),canvasElement=runtime.elements.get('gameCanvas'),joystickElement=runtime.elements.get('joystick'),mineElement=runtime.elements.get('mineButton');
 viewportElement.dispatchEvent({type:'pointerdown',target:canvasElement,pointerId:301,button:0,clientX:120,clientY:260});
@@ -463,9 +463,13 @@ for(const [scene,profile] of Object.entries({mossMine:'mossvein',moonMine:'moong
   assert.ok(ambientLife.visible.every(instance=>instance.profile===profile&&instance.asset===ambientAssets[profile]&&!ambientApi.mineCollisionAt(instance.x,instance.y)),scene+' ambient instances must stay in open, reachable cells');
   const mineResidentBefore=new Map(ambientLife.visible.map(instance=>[instance.id,instance]));assert.ok([...mineResidentBefore.values()].every(instance=>pointDistance(instance.anchorX,instance.anchorY,instance.routeX,instance.routeY)>=20),scene+' must provide real patrol routes');let maxMineTravel=0,mineRestSeen=ambientLife.visible.some(instance=>instance.resting&&instance.frame===0);
   for(let sample=0;sample<14;sample++){ambientApi.step(.45);const sampleLife=ambientApi.snapshot().ambientLife;mineRestSeen||=sampleLife.visible.some(instance=>instance.resting&&instance.frame===0&&(instance.routeProgress===0||instance.routeProgress===1));assert.ok(sampleLife.visible.every(instance=>!ambientApi.mineCollisionAt(instance.x,instance.y)),scene+' patrol samples must remain collision-free');for(const instance of sampleLife.visible)if(mineResidentBefore.has(instance.id))maxMineTravel=Math.max(maxMineTravel,pointDistance(instance.x,instance.y,mineResidentBefore.get(instance.id).x,mineResidentBefore.get(instance.id).y))}
-  assert.ok(maxMineTravel>6,scene+' residents must visibly patrol between rests');assert.equal(mineRestSeen,true,scene+' residents must rest on safe endpoints');ambientLife=ambientApi.snapshot().ambientLife;const mineReactionTarget=ambientLife.visible[0];ambientApi.setPosition(mineReactionTarget.x,mineReactionTarget.y);ambientApi.setSwingProgress(.2);ambientApi.step(.01);const mineReaction=ambientApi.snapshot().ambientLife.visible.find(instance=>instance.id===mineReactionTarget.id);assert.ok(mineReaction&&mineReaction.reacting&&mineReaction.behavior==='fleeing'&&!ambientApi.mineCollisionAt(mineReaction.x,mineReaction.y),scene+' residents must flee nearby mining without crossing a wall');ambientApi.clearSwing();ambientLife=ambientApi.snapshot().ambientLife;
+  assert.ok(maxMineTravel>6,scene+' residents must visibly patrol between rests');assert.equal(mineRestSeen,true,scene+' residents must rest on safe endpoints');ambientLife=ambientApi.snapshot().ambientLife;
+  for(const target of ambientLife.visible){ambientApi.setPosition(target.x,target.y);assert.ok(ambientApi.snapshot().ambientLife.visible.some(instance=>instance.id===target.id),scene+' residents must retain a render slot when approached')}
+  ambientLife=ambientApi.snapshot().ambientLife;const mineReactionTarget=ambientLife.visible[0];ambientApi.setPosition(mineReactionTarget.x,mineReactionTarget.y);ambientApi.setSwingProgress(.2);ambientApi.step(.01);const mineReaction=ambientApi.snapshot().ambientLife.visible.find(instance=>instance.id===mineReactionTarget.id);assert.ok(mineReaction&&mineReaction.reacting&&mineReaction.behavior==='fleeing'&&!ambientApi.mineCollisionAt(mineReaction.x,mineReaction.y),scene+' residents must flee nearby mining without crossing a wall');ambientApi.clearSwing();ambientLife=ambientApi.snapshot().ambientLife;
   ambientRuntime.drawCalls.length=0;ambientApi.renderOnce();ambientDrawCalls=ambientRuntime.drawCalls.filter(call=>call.src.includes('assets/ambient/'));assert.equal(ambientDrawCalls.length,ambientLife.visible.length);assert.ok(ambientDrawCalls.every(call=>call.src.includes(ambientAssets[profile])));ambientApi.exitMine();
 }
+ambientApi.enterMine('starMine');ambientApi.setDrillLevel(3);if(!ambientApi.snapshot().mine.depthEntrance.discovered)assert.equal(ambientApi.discoverDepthEntrance(),true);assert.equal(ambientApi.enterDepth(),true);ambientLife=ambientApi.snapshot().ambientLife;
+assert.equal(ambientLife.location,'starMine:2');assert.ok(ambientLife.visible.length>0,'Voidstar must contain ambient residents');for(const target of ambientLife.visible){ambientApi.setPosition(target.x,target.y);assert.ok(ambientApi.snapshot().ambientLife.visible.some(instance=>instance.id===target.id),'Voidstar residents must not disappear when approached')}ambientApi.exitDepth();ambientApi.exitMine();
 storage.clear();for(const [key,value] of storageBeforeAmbient)storage.set(key,value);
 
 const storageBeforeAchievements=new Map(storage),achievementRuntime=createRuntime(),achievementApi=achievementRuntime.api;
