@@ -1,6 +1,8 @@
 # Ever Deeper
 
-Current build: **Ever Deeper v0.36.4 - Natural Recovery**
+Current build: **Ever Deeper v0.37.0 - World in Motion**
+
+The world now breathes around the player through eight biome-specific premium animation sheets: slow Mossvein spores, Moonglass wisps, Emberdeep ash, and Starfall void motes, plus matching reactions for footsteps, pickaxe hits, drill impacts, and breaks. The layer stays world-anchored beneath mine lighting, clears cleanly between scenes, freezes under Reduced Motion, and is capped for mobile rendering and decoded memory.
 
 Each biome now has its own hand-painted ambient creature: Mossvein glowmoths, Moonglass prism moths, Emberdeep cinder skinks, and Starfall astral rays. They inhabit both the surface and safe open cave cells, occasionally cross the landscape in small groups, freeze under Reduced Motion, and remain strictly visual with tight mobile draw and memory budgets.
 

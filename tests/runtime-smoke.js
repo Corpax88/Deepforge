@@ -52,22 +52,25 @@ assert.doesNotMatch(source,/drawSection\(0,gapTop\)|drawSection\(gapBottom,WORLD
 for(const asset of ['boundary-mossvein-moonglass.png','boundary-moonglass-emberdeep.png','boundary-emberdeep-starfall.png'])assert.ok(fs.existsSync(path.join(repositoryRoot,'assets','surface',asset)),asset+' must exist');
 for(const [biome,asset] of [['mossvein','unbreakable-wall.png'],['moonglass','unbreakable-wall.png'],['emberdeep','unbreakable-wall.png'],['starfall','unbreakable-wall.png']])assert.ok(fs.existsSync(path.join(repositoryRoot,'assets',biome,asset)),biome+' unbreakable wall must exist');
 assert.match(source,/function drawUnbreakableSolidWall/);assert.match(source,/legacyCanvasSolidWalls:false/);
+assert.match(source,/drawMineGround\(\);drawMineTerrain\(\);drawWorldLifeDrift\(\);drawAmbientLife\(\);drawMineWalls\(\)/,'world life must render beneath permanent walls');
+assert.match(source,/drawEffects\(false\)[\s\S]*drawMineLighting\(\)/,'terrain responses must remain beneath mine lighting');
+assert.match(source,/function drawWorldLifeDrift\([\s\S]*ctx\.drawImage\(image,instance\.frame\*WORLD_LIFE_FRAME_SIZE/);assert.match(source,/function drawTerrainResponses\([\s\S]*ctx\.drawImage\(image,render\.frame\*WORLD_LIFE_FRAME_SIZE/);
 assert.match(source,/fullDrillComposites:true,legacyDrillLimbCrops:false/);
 assert.match(source,/function playPickaxeTink\(/);assert.match(source,/if\(currentDrill\(\)\).*playImpactNoise[\s\S]*else playPickaxeTink\(materialTone\)/,'pickaxe tink must remain separate from drill impact audio');
 assert.match(source,/if\(!rock&&!terrainTarget\)\{if\(manualPress\)sound\('empty'\)/,'held mining misses must stay silent after the initial manual press');
 const oreDiscoverySource=source.match(/function spawnDiscoveryBurst[\s\S]*?function spawnJackpot/)[0];
 assert.doesNotMatch(oreDiscoverySource,/showAreaBanner|floaters\.push/,'ore discovery must stay text-free, including rare finds');
-assert.equal(latest.version,'03604');
+assert.equal(latest.version,'03700');
 assert.match(html,/version\.json\?t=/);
 assert.match(html,/cache:'no-store'/);
-assert.match(html,/style\.css\?v=03604/);
-assert.match(html,/game-data\.js\?v=03604/);
-assert.match(html,/script\.js\?v=03604/);
-assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=03604/);
-assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=03604/);
-assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03604/);
-assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03604/);
-assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=03604"/);
+assert.match(html,/style\.css\?v=03700/);
+assert.match(html,/game-data\.js\?v=03700/);
+assert.match(html,/script\.js\?v=03700/);
+assert.match(html,/assets\/branding\/ever-deeper-logo\.png\?v=03700/);
+assert.match(html,/assets\/characters\/miner-b-walk\.png\?v=03700/);
+assert.match(html,/id="toolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03700/);
+assert.match(html,/id="mineToolIcon"[^>]+assets\/tools\/pickaxe-worn\.png\?v=03700/);
+assert.match(html,/rel="manifest" href="manifest\.webmanifest\?v=03700"/);
 assert.match(source,/const EMBER_PICKAXE_ORE_REQUIRED=100;/);
 assert.match(source,/const EMBER_MASTERY_SUNSLAG_COSTS=Object\.freeze\(\[0,30,40,50,60,70\]\);/);
 assert.match(source,/const STARFORGE_MATERIAL_REQUIRED=200;/);
@@ -136,6 +139,15 @@ for(const relative of Object.values(ambientAssets)){
   ambientAssetBytes+=fs.statSync(path.join(repositoryRoot,relative)).size;
 }
 assert.ok(ambientAssetBytes<900000,'ambient sprite sheets exceed their combined 900KB mobile budget');
+const worldLifeAssets={
+  mossvein:{drift:'assets/world-life/mossvein-drift.png',response:'assets/world-life/mossvein-response.png'},
+  moonglass:{drift:'assets/world-life/moonglass-drift.png',response:'assets/world-life/moonglass-response.png'},
+  emberdeep:{drift:'assets/world-life/emberdeep-drift.png',response:'assets/world-life/emberdeep-response.png'},
+  starfall:{drift:'assets/world-life/starfall-drift.png',response:'assets/world-life/starfall-response.png'}
+};
+let worldLifeAssetBytes=0;
+for(const paths of Object.values(worldLifeAssets))for(const relative of Object.values(paths)){assertPng(relative,1024,256,{maxBytes:350000});worldLifeAssetBytes+=fs.statSync(path.join(repositoryRoot,relative)).size}
+assert.ok(worldLifeAssetBytes<2100000,'world-life sprite sheets exceed their combined 2.1MB mobile budget');
 const pocketAsset=fs.readFileSync(require('node:path').join(__dirname,'..','assets/mossvein/magic-crystal-pocket.png'));
 assert.equal(pocketAsset.toString('ascii',1,4),'PNG');assert.ok([4,6].includes(pocketAsset[25])||pocketAsset.includes(Buffer.from('tRNS')),'crystal pocket must preserve alpha');assert.ok(pocketAsset.length<250000,'crystal pocket exceeds mobile asset budget');
 const starterProductionAssets=['assets/surface/assay-station.png','assets/surface/forge-station.png','assets/surface/storage-chest.png','assets/surface/wayfarer-shop.png','assets/surface/treasure-cache-closed.png','assets/surface/treasure-cache-open.png','assets/surface/moonglass-gate.png','assets/surface/mossvein-mine-path.png','assets/mossvein/buried-cache.png','assets/mossvein/mining-rush-shrine.png','assets/drops/stone-drop.png','assets/drops/copper-drop.png','assets/drops/gold-drop.png'];
@@ -320,7 +332,7 @@ function createRuntime({failWalkSheets=false,reducedMotion=false}={}){
   const document={hidden:false,getElementById:element,addEventListener(){},createElement:tag=>tag==='canvas'?{width:1,height:1,src:'[lightmap]',getContext:()=>canvasContext}:createElement('dynamic-'+tag)};
   const window={devicePixelRatio:2,addEventListener(){},confirm:()=>true,matchMedia:()=>({matches:reducedMotion,addEventListener(){},addListener(){}})};
   class TestAudio{constructor(src){this.src=src;this.volume=1;this.loop=false;this.paused=true;this.preload='';this.playsInline=false}play(){this.paused=false;return Promise.resolve()}pause(){this.paused=true}}
-  class TestImage{constructor(){this.complete=true;this.naturalWidth=512;this.naturalHeight=512;this.decoding='async';this.onload=null;this._src=''}set src(value){this._src=value;if(value.includes('assets/ambient/')){this.naturalWidth=1024;this.naturalHeight=256}else if(value.includes('-walk.png')){this.naturalWidth=failWalkSheets?0:1536;this.naturalHeight=failWalkSheets?0:1024;this.complete=!failWalkSheets}else if(value.includes('-drop.png')){this.naturalWidth=256;this.naturalHeight=256}else if(value.includes('magic-crystal-pocket')){this.naturalWidth=640;this.naturalHeight=358}else if(value.includes('miner-b-drill-burrower')){this.naturalWidth=348;this.naturalHeight=512}else if(value.includes('miner-b-drill-pulse')){this.naturalWidth=361;this.naturalHeight=512}else if(value.includes('miner-b-drill-deepcore')){this.naturalWidth=354;this.naturalHeight=512}else if(value.includes('miner-b')){this.naturalWidth=315;this.naturalHeight=512}else this.naturalWidth=512;queueMicrotask(()=>this.onload&&this.onload())}get src(){return this._src}}
+  class TestImage{constructor(){this.complete=true;this.naturalWidth=512;this.naturalHeight=512;this.decoding='async';this.onload=null;this._src=''}set src(value){this._src=value;if(value.includes('assets/ambient/')||value.includes('assets/world-life/')){this.naturalWidth=1024;this.naturalHeight=256}else if(value.includes('-walk.png')){this.naturalWidth=failWalkSheets?0:1536;this.naturalHeight=failWalkSheets?0:1024;this.complete=!failWalkSheets}else if(value.includes('-drop.png')){this.naturalWidth=256;this.naturalHeight=256}else if(value.includes('magic-crystal-pocket')){this.naturalWidth=640;this.naturalHeight=358}else if(value.includes('miner-b-drill-burrower')){this.naturalWidth=348;this.naturalHeight=512}else if(value.includes('miner-b-drill-pulse')){this.naturalWidth=361;this.naturalHeight=512}else if(value.includes('miner-b-drill-deepcore')){this.naturalWidth=354;this.naturalHeight=512}else if(value.includes('miner-b')){this.naturalWidth=315;this.naturalHeight=512}else this.naturalWidth=512;queueMicrotask(()=>this.onload&&this.onload())}get src(){return this._src}}
   const browserStorage={
     get length(){return storage.size},key:index=>Array.from(storage.keys())[index]??null,
     getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)
@@ -352,20 +364,20 @@ const expectedSnapshotKeys=[
   'effectivePickaxe','emberdeepGateTransition','emberdeepRendering','entranceAssetRendering','feedback','focus','goal','groundDrops','guide','lighting','lootSweep','markerStyle','mine',
   'mineralNodeRenderScale','miningFeedbackRendering','miningRush','moltenRendering','moonglassGateTransition','moonglassRendering','movement','music','patchNotes','player','prismaticRendering',
   'progression','protectedCargo','resourceRendering','rocks','rootwoundRendering','scene','sellableCargo','starfallGateTransition','starfallRendering','startMenu','starterGateRendering',
-  'starterRendering','state','surfaceAssetRendering','surfaceBoundaries','surfaceEmberdeepRendering','surfaceMoonglassRendering','surfaceStarfallRendering','toolMode','veins','voidstarRendering'
+  'starterRendering','state','surfaceAssetRendering','surfaceBoundaries','surfaceEmberdeepRendering','surfaceMoonglassRendering','surfaceStarfallRendering','toolMode','veins','voidstarRendering','worldLife'
 ];
 assert.deepEqual(Object.keys(api).sort(),expectedApiKeys,'test API contract changed unexpectedly');
 assert.deepEqual(Object.keys(api.snapshot()).sort(),expectedSnapshotKeys,'snapshot contract changed unexpectedly');
-assert.equal(api.snapshot().build.version,'0.36.4');
-assert.equal(api.snapshot().build.name,'NATURAL RECOVERY');
-assert.equal(runtime.elements.get('buildVersion').textContent,'v0.36.4');
-assert.equal(api.snapshot().assetVersion,'03604');
+assert.equal(api.snapshot().build.version,'0.37.0');
+assert.equal(api.snapshot().build.name,'WORLD IN MOTION');
+assert.equal(runtime.elements.get('buildVersion').textContent,'v0.37.0');
+assert.equal(api.snapshot().assetVersion,'03700');
 const patchNotes=api.snapshot().patchNotes,patchNote=version=>patchNotes.find(note=>note.version===version);
-assert.equal(patchNotes.length,25);assert.match(patchNote('0.36.4').items.join(' '),/flee continuously/);assert.match(patchNote('0.36.3').items.join(' '),/keep their render slot/);assert.match(patchNote('0.36.2').items.join(' '),/pause and rest naturally/);assert.match(patchNote('0.36.2').items.join(' '),/Nearby mining startles residents/);assert.match(patchNote('0.36.1').items.join(' '),/clearly visible routes/);assert.match(patchNote('0.36.1').items.join(' '),/sampled against terrain/);assert.match(patchNote('0.36.0').items.join(' '),/Four premium animated creatures/);assert.match(patchNote('0.36.0').items.join(' '),/Reduced Motion/);assert.match(patchNote('0.35.11').items.join(' '),/70 Phase Crystal/);assert.match(patchNote('0.35.10').items.join(' '),/DEEPCORE DRILL REQUIRED/);assert.match(patchNote('0.35.9').items.join(' '),/Eight unreachable Astralite nodes/);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
+assert.equal(patchNotes.length,26);assert.match(patchNote('0.37.0').items.join(' '),/premium environmental drift/);assert.match(patchNote('0.37.0').items.join(' '),/Footsteps disturb the ground/);assert.match(patchNote('0.36.4').items.join(' '),/flee continuously/);assert.match(patchNote('0.36.3').items.join(' '),/keep their render slot/);assert.match(patchNote('0.36.2').items.join(' '),/pause and rest naturally/);assert.match(patchNote('0.36.2').items.join(' '),/Nearby mining startles residents/);assert.match(patchNote('0.36.1').items.join(' '),/clearly visible routes/);assert.match(patchNote('0.36.1').items.join(' '),/sampled against terrain/);assert.match(patchNote('0.36.0').items.join(' '),/Four premium animated creatures/);assert.match(patchNote('0.36.0').items.join(' '),/Reduced Motion/);assert.match(patchNote('0.35.11').items.join(' '),/70 Phase Crystal/);assert.match(patchNote('0.35.10').items.join(' '),/DEEPCORE DRILL REQUIRED/);assert.match(patchNote('0.35.9').items.join(' '),/Eight unreachable Astralite nodes/);assert.match(patchNote('0.35.8').items.join(' '),/30, 40, 50, 60, and 70/);assert.match(patchNote('0.35.7').items.join(' '),/Holding Mine/);assert.match(patchNote('0.35.7').items.join(' '),/manual press/);assert.match(patchNote('0.35.6').items.join(' '),/painted width/);assert.match(patchNote('0.35.5').items.join(' '),/tink-tink-tink/);assert.match(patchNote('0.35.4').items.join(' '),/complete passage/);assert.match(patchNote('0.35.3').items.join(' '),/natural openings/);assert.match(patchNote('0.35.2').items.join(' '),/unbreakable-wall PNG/);assert.match(patchNote('0.35.1').items.join(' '),/production PNGs/);assert.match(patchNote('0.35.0').items.join(' '),/Physical biome walls/);assert.match(patchNote('0.34.7').items.join(' '),/Gameplay, balance, progression, controls, and visuals are unchanged/);assert.match(patchNote('0.34.6').items.join(' '),/Reset All Progress/);assert.match(patchNote('0.34.1').items.join(' '),/100 Emberstone/);assert.match(patchNote('0.34.1').items.join(' '),/200 Astralite and 200 Crownstone/);assert.equal(api.snapshot().lighting.readableTextOverlay,true);assert.equal(api.snapshot().lighting.textPass,'after-lighting');
 assert.equal(JSON.stringify(api.snapshot().startMenu.actions),JSON.stringify(['continue','new-game','achievements','settings']));
 assert.equal(api.snapshot().startMenu.achievementsInPause,false);
 assert.equal(JSON.stringify(api.snapshot().music),JSON.stringify({asset:'assets/audio/ever-deeper-drift-loop.mp3',volume:1,loop:true,started:false,enabled:true,effectsEnabled:true}));
-assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=03604',volume:1,loop:true,paused:false}));
+assert.equal(JSON.stringify(api.startMusic()),JSON.stringify({src:'assets/audio/ever-deeper-drift-loop.mp3?v=03700',volume:1,loop:true,paused:false}));
 api.dismissStartMenu();
 const viewportElement=runtime.elements.get('viewport'),canvasElement=runtime.elements.get('gameCanvas'),joystickElement=runtime.elements.get('joystick'),mineElement=runtime.elements.get('mineButton');
 viewportElement.dispatchEvent({type:'pointerdown',target:canvasElement,pointerId:301,button:0,clientX:120,clientY:260});
@@ -448,6 +460,7 @@ let ambientDrawCalls=ambientRuntime.drawCalls.filter(call=>call.src.includes('as
 for(const call of ambientDrawCalls){assert.equal(call.args.length,8,'ambient sprites must use cropped nine-argument drawImage');assert.ok([0,256,512,768].includes(call.args[0]),'ambient sprite crop must select one of four frames');assert.deepEqual(call.args.slice(1,4),[0,256,256],'ambient sprite crop must stay within a 4x256 sheet')}
 const ambientSignature=life=>life.visible.map(({id,profile,asset,anchorX,anchorY,routeX,routeY})=>({id,profile,asset,anchorX,anchorY,routeX,routeY}));ambientApi.save();
 const ambientReloadRuntime=createRuntime(),ambientReloadApi=ambientReloadRuntime.api;assert.equal(JSON.stringify(ambientSignature(ambientReloadApi.snapshot().ambientLife)),JSON.stringify(ambientSignature(ambientSnapshot.ambientLife)),'ambient placement must be deterministic for a saved world seed');
+const worldLifeSignature=life=>life.drift.map(({id,profile,asset,anchorX,anchorY,x,y,size})=>({id,profile,asset,anchorX,anchorY,x,y,size}));assert.equal(JSON.stringify(worldLifeSignature(ambientReloadApi.snapshot().worldLife)),JSON.stringify(worldLifeSignature(ambientSnapshot.worldLife)),'environmental drift placement must be deterministic for a saved world seed');
 ambientApi.setReducedMotion(true);const reducedAmbientBefore=ambientApi.snapshot().ambientLife;ambientApi.step(2);const reducedAmbientAfter=ambientApi.snapshot().ambientLife;
 assert.equal(reducedAmbientAfter.reducedMotion,true);assert.equal(reducedAmbientAfter.event.enabled,false);assert.equal(reducedAmbientAfter.event.active,false);
 assert.ok(reducedAmbientAfter.visible.every(instance=>instance.frame===0&&instance.x===instance.anchorX&&instance.y===instance.anchorY),'reduced motion must freeze sprite frames and resident drift');
@@ -470,6 +483,18 @@ for(const [scene,profile] of Object.entries({mossMine:'mossvein',moonMine:'moong
 }
 ambientApi.enterMine('starMine');ambientApi.setDrillLevel(3);if(!ambientApi.snapshot().mine.depthEntrance.discovered)assert.equal(ambientApi.discoverDepthEntrance(),true);assert.equal(ambientApi.enterDepth(),true);ambientLife=ambientApi.snapshot().ambientLife;
 assert.equal(ambientLife.location,'starMine:2');assert.ok(ambientLife.visible.length>0,'Voidstar must contain ambient residents');for(const target of ambientLife.visible){ambientApi.setPosition(target.x,target.y);assert.ok(ambientApi.snapshot().ambientLife.visible.some(instance=>instance.id===target.id),'Voidstar residents must not disappear when approached')}ambientApi.exitDepth();ambientApi.exitMine();
+
+const worldLifeContract={frameCount:4,frameSize:256,spriteSheetWidth:1024,spriteSheetHeight:256,decodedMemoryBudgetBytes:8388608,premiumSpriteSheets:true,trueAnimationFrames:true,surfaceMaxVisible:4,mineMaxVisible:3,responseMaxVisible:12,worldAnchored:true,deterministicPlacement:true,biomeSpecific:true,footstepResponses:true,miningResponses:true,underMineLighting:true,reducedMotionSafe:true,gameplayNeutral:true,proceduralEffectPrimitives:false};
+let worldLife=ambientApi.snapshot().worldLife;
+assert.deepEqual(Object.fromEntries(Object.keys(worldLifeContract).map(key=>[key,worldLife[key]])),worldLifeContract);assert.equal(JSON.stringify(worldLife.assets),JSON.stringify(worldLifeAssets));assert.equal(worldLife.activeProfile,'mossvein');assert.equal(worldLife.location,'surface');assert.equal(worldLife.maxVisible,4);
+assert.ok(worldLife.drift.length>0&&worldLife.drift.length<=4,'surface environmental drift must stay visible and capped');assert.ok(worldLife.drift.every(instance=>instance.asset===worldLifeAssets[instance.profile].drift&&instance.frame>=0&&instance.frame<4));assert.equal(worldLife.responses.length,0);
+assert.equal(Object.prototype.hasOwnProperty.call(ambientApi.snapshot().state,'worldLife'),false,'world life must not leak into gameplay save state');
+const worldStateBeforeRender=JSON.stringify(ambientApi.snapshot().state);ambientRuntime.drawCalls.length=0;ambientApi.renderOnce();assert.equal(JSON.stringify(ambientApi.snapshot().state),worldStateBeforeRender,'world-life rendering must not mutate gameplay state');
+let worldLifeDrawCalls=ambientRuntime.drawCalls.filter(call=>call.src.includes('assets/world-life/'));assert.equal(worldLifeDrawCalls.length,worldLife.drift.length);for(const call of worldLifeDrawCalls){assert.equal(call.args.length,8,'world-life sprites must use cropped nine-argument drawImage');assert.ok([0,256,512,768].includes(call.args[0]));assert.deepEqual(call.args.slice(1,4),[0,256,256])}
+ambientApi.setPosition(600,700);ambientApi.setMoveVector(1,0);for(let sample=0;sample<6;sample++)ambientApi.step(.05);ambientApi.stopMove();worldLife=ambientApi.snapshot().worldLife;assert.ok(worldLife.responses.some(response=>response.kind==='footstep'&&response.profile==='mossvein'),'walking must disturb the biome floor with premium art');
+ambientApi.unlockAllAreas();ambientApi.setPickaxeLevel(5);ambientApi.setDrillLevel(3);ambientApi.enterMine('mossMine');worldLife=ambientApi.snapshot().worldLife;assert.equal(worldLife.location,'mossMine:1');assert.ok(worldLife.drift.length>0&&worldLife.drift.length<=3);assert.ok(worldLife.drift.every(instance=>instance.profile==='mossvein'&&!ambientApi.mineCollisionAt(instance.x,instance.y)),'mine drift must stay in open cells');
+ambientApi.setPickaxeLevel(1);ambientApi.setDrillLevel(0);const responseDeposit=ambientApi.snapshot().rocks.find(rock=>rock.scene==='mossMine'&&rock.depth===1&&rock.depositId&&rock.requiredPickaxe<=1&&!rock.requiresDeepTool&&!rock.requiresDrillLevel);assert.ok(responseDeposit);const hitResult=ambientApi.hitDepositRock(responseDeposit.depositId,0);assert.ok(hitResult);const hitResponseRock=ambientApi.snapshot().rocks.find(rock=>rock.id===hitResult.id);ambientApi.setPosition(hitResponseRock.x,hitResponseRock.y);worldLife=ambientApi.snapshot().worldLife;assert.ok(worldLife.responses.some(response=>response.kind==='mine'&&response.profile==='mossvein'),'a real mining hit must trigger a biome terrain response');ambientApi.breakDepositRock(responseDeposit.depositId,0);worldLife=ambientApi.snapshot().worldLife;assert.ok(worldLife.responses.some(response=>response.kind==='break'),'a broken node must strengthen the terrain response');
+ambientApi.setReducedMotion(true);const reducedWorldBefore=ambientApi.snapshot().worldLife;ambientApi.step(2);const reducedWorldAfter=ambientApi.snapshot().worldLife;assert.equal(reducedWorldAfter.reducedMotion,true);assert.equal(reducedWorldAfter.responses.length,0);assert.ok(reducedWorldAfter.drift.every(instance=>instance.frame===0&&instance.x===instance.anchorX&&instance.y===instance.anchorY));assert.equal(JSON.stringify(reducedWorldAfter.drift.map(({id,x,y})=>({id,x,y}))),JSON.stringify(reducedWorldBefore.drift.map(({id,x,y})=>({id,x,y}))));ambientApi.setReducedMotion(false);ambientApi.exitMine();
 storage.clear();for(const [key,value] of storageBeforeAmbient)storage.set(key,value);
 
 const storageBeforeAchievements=new Map(storage),achievementRuntime=createRuntime(),achievementApi=achievementRuntime.api;
